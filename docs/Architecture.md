@@ -2,7 +2,7 @@
 
 ```mermaid
 ---
-title: Dlinear Theory SmtSolver
+title: Delpi Theory SmtSolver
 ---
 classDiagram
 

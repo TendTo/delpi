@@ -10,15 +10,9 @@
 
 #include <iostream>
 
-#include "delpi/utils/calculator.h"
 #include "delpi/version.h"
 
-int main(int argc, char** argv) {
-  int verbose = 0;
-  if (argc > 1) {
-    verbose = std::stoi(argv[1]);
-  }
-
+int main(int, char**) {
   fmt::println("Hello world!");
   fmt::println("Version: {}", DELPI_VERSION_STRING);
 
@@ -28,10 +22,4 @@ int main(int argc, char** argv) {
   fmt::println("Insert the second number: ");
   int b;
   std::cin >> b;
-
-  delpi::Calculator calc{verbose};
-  fmt::println("Sum: {}", calc.add(a, b));
-  fmt::println("Subtraction: {}", calc.subtract(a, b));
-  fmt::println("Multiplication: {}", calc.multiply(a, b));
-  fmt::println("Division: {}", calc.divide(a, b));
 }

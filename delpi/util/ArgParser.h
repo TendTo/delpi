@@ -12,7 +12,7 @@
 // Argparse library is used to parse the command line arguments.
 #include <argparse/argparse.hpp>
 
-#include "delpi/util/config.h"
+#include "delpi/util/Config.h"
 
 namespace delpi {
 

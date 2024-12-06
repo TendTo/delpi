@@ -1,9 +1,22 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:rules_cc.bzl", "DELPI_NAME", "DELPI_VERSION", "delpi_cc_binary", "delpi_cc_library", "delpi_srcs")
+load("//tools:rules_cc.bzl", "DELPI_NAME", "DELPI_VERSION", "delpi_cc_binary", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
+
+package(default_visibility = ["//visibility:public"])
 
 delpi_srcs(
     name = "srcs",
-    deps = ["//delpi/util:all_srcs"],
+    deps = [
+        "//delpi/libs:all_srcs",
+        "//delpi/util:all_srcs",
+    ],
+)
+
+delpi_hdrs_tar(
+    name = "hdrs_tar",
+    deps = [
+        "//delpi/libs:hdrs_tar",
+        "//delpi/util:hdrs_tar",
+    ],
 )
 
 genrule(
@@ -28,8 +41,21 @@ delpi_cc_binary(
     srcs = ["main.cpp"],
     deps = [
         ":version",
-        "//delpi/util:calculator",
         "@fmt",
+    ],
+)
+
+cc_shared_library(
+    name = "libdelpi.so",
+    shared_lib_name = "libdelpi.so",
+    tags = [
+        "manual",
+        "no-dwyu",
+        "no-iwyu",
+    ],
+    deps = [
+        "//delpi/util:argparser",
+        "//delpi/util:config",
     ],
 )
 

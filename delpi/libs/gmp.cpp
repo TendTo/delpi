@@ -20,7 +20,7 @@ size_t gmpz_hash(const mpz_t val) {
   for (int i = 0, n = mpz_size(val); i < n; ++i) {
     const mp_limb_t limb = mpz_getlimbn(val, i);
     hash = hash * 2;
-    hash = hash xor limb;
+    hash = hash ^ limb;
   }
   return hash;
 }
@@ -36,7 +36,7 @@ size_t gmpz_hash(const mpz_t val) {
 size_t std::hash<mpq_class>::operator()(const mpq_class &val) const noexcept {
   const size_t numeratorHash = gmpz_hash(val.get_num_mpz_t());
   const size_t denominatorHash = gmpz_hash(val.get_den_mpz_t());
-  return numeratorHash xor denominatorHash;
+  return numeratorHash ^ denominatorHash;
 }
 
 namespace delpi {

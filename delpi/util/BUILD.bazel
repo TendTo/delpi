@@ -1,20 +1,22 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_srcs")
+load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
 
 package(default_visibility = [
     "//delpi:__subpackages__",
     "//tests:__subpackages__",
 ])
 
-delpi_srcs(
-    name = "srcs",
-    subfolder = "utils",
+delpi_srcs(name = "srcs")
+
+delpi_hdrs_tar(
+    name = "hdrs_tar",
+    subfolder = "util",
 )
 
 delpi_cc_library(
     name = "argparser",
-    srcs = ["argparser.cpp"],
-    hdrs = ["argparser.h"],
+    srcs = ["ArgParser.cpp"],
+    hdrs = ["ArgParser.h"],
     implementation_deps = [
         ":error",
         ":filesystem",
@@ -36,10 +38,10 @@ delpi_cc_library(
 
 delpi_cc_library(
     name = "config",
-    srcs = ["config.cpp"],
+    srcs = ["Config.cpp"],
     hdrs = [
-        "config.h",
-        "option_value.hpp",
+        "Config.h",
+        "OptionValue.hpp",
     ],
     implementation_deps = [
         ":error",
@@ -77,8 +79,8 @@ delpi_cc_library(
 
 delpi_cc_library(
     name = "stats",
-    srcs = ["stats.cpp"],
-    hdrs = ["stats.h"],
+    srcs = ["Stats.cpp"],
+    hdrs = ["Stats.h"],
     implementation_deps = ["@fmt"],
     tags = ["no-dwyu"],
     deps = [":timer"],
@@ -93,8 +95,8 @@ delpi_cc_library(
 
 delpi_cc_library(
     name = "timer",
-    srcs = ["timer.cpp"],
-    hdrs = ["timer.h"],
+    srcs = ["Timer.cpp"],
+    hdrs = ["Timer.h"],
     implementation_deps = [
         ":exception",
         ":logging",

@@ -15,7 +15,6 @@
  */
 #pragma once
 
-#include <iostream>
 #include <utility>
 
 namespace delpi {
@@ -124,21 +123,5 @@ class OptionValue {
   T value_;    ///< Value the class holds.
   Type type_;  ///< Type of the value.
 };
-
-template <class T>
-std::ostream &operator<<(std::ostream &os, typename OptionValue<T>::Type type) {
-  switch (type) {
-    case OptionValue<T>::Type::DEFAULT:
-      return os << "DEFAULT";
-    case OptionValue<T>::Type::FROM_FILE:
-      return os << "FROM_FILE";
-    case OptionValue<T>::Type::FROM_COMMAND_LINE:
-      return os << "FROM_COMMAND_LINE";
-    case OptionValue<T>::Type::FROM_CODE:
-      return os << "FROM_CODE";
-    default:
-      return os << "INVALID";
-  }
-}
 
 }  // namespace delpi

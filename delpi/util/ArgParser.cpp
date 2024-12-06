@@ -12,16 +12,16 @@
 #include <stdexcept>
 
 #ifdef DELPI_ENABLED_QSOPTEX
-#include "delpi/libs/libqsopt_ex.h"
+#include "delpi/libs/qsopt_ex.h"
 #endif
 #ifdef DELPI_ENABLED_SOPLEX
-#include "delpi/libs/libsoplex.h"
+#include "delpi/libs/soplex.h"
 #endif
 
+#include "delpi/util/OptionValue.hpp"
 #include "delpi/util/error.h"
 #include "delpi/util/filesystem.h"
 #include "delpi/util/logging.h"
-#include "delpi/util/option_value.hpp"
 #include "delpi/version.h"
 
 namespace delpi {

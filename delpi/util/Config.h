@@ -14,7 +14,7 @@
 #include <string>
 #include <string_view>
 
-#include "delpi/util/option_value.hpp"
+#include "delpi/util/OptionValue.hpp"
 
 namespace delpi {
 
@@ -141,14 +141,12 @@ std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
 }  // namespace delpi
 
 #ifdef DELPI_INCLUDE_FMT
+
 #include "delpi/util/logging.h"
 
 OSTREAM_FORMATTER(delpi::Config);
-OSTREAM_FORMATTER(delpi::Config::SatDefaultPhase);
 OSTREAM_FORMATTER(delpi::Config::LPSolver);
-OSTREAM_FORMATTER(delpi::Config::SatSolver);
 OSTREAM_FORMATTER(delpi::Config::Format);
 OSTREAM_FORMATTER(delpi::Config::LPMode);
-OSTREAM_FORMATTER(delpi::Config::ExecutionStep);
 
 #endif
