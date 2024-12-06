@@ -6,7 +6,10 @@ package(default_visibility = [
     "//tests:__subpackages__",
 ])
 
-delpi_srcs(name = "srcs")
+delpi_srcs(
+    name = "srcs",
+    subfolder = "utils",
+)
 
 delpi_cc_library(
     name = "calculator",

@@ -1,17 +1,19 @@
 /**
- * @file main.cpp
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
- * @copyright 2024
- * @licence Apache-2.0 license
+ * @copyright 2024 delpi
+ * @licence BSD 3-Clause License
+ * Entry point of delpi.
+ *
+ * Use the @verbatim-h @endverbatim flag to show the help tooltip.
  */
 #include <fmt/core.h>
 
 #include <iostream>
 
-#include "delpi/util/calculator.h"
+#include "delpi/utils/calculator.h"
 #include "delpi/version.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   int verbose = 0;
   if (argc > 1) {
     verbose = std::stoi(argv[1]);

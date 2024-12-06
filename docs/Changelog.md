@@ -11,6 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[0.0.1]: https://github.com/TendTo/dlinear
+[0.0.1]: https://github.com/TendTo/delpi
 
-[NEXT.VERSION]: https://github.com/TendTo/dlinear
+[NEXT.VERSION]: https://github.com/TendTo/delpi

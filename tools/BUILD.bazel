@@ -11,7 +11,7 @@ exports_files(["generate_version_header.bat"])
 #
 # Pass them to bazel with --//tools:<flag>=<value>
 # Example:
-# bazel build //myapp:main --//tools:enable_dynamic_build=True
+# bazel build //delpi:main --//tools:enable_dynamic_build=True
 ######################################################################################
 
 bool_flag(
@@ -21,6 +21,26 @@ bool_flag(
 
 bool_flag(
     name = "enable_static_build",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "enable_qsoptex",
+    build_setting_default = True,
+)
+
+bool_flag(
+    name = "enable_soplex",
+    build_setting_default = True,
+)
+
+bool_flag(
+    name = "enable_python_build",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "enable_fpic_build",
     build_setting_default = False,
 )
 
@@ -36,6 +56,31 @@ config_setting(
 config_setting(
     name = "static_build",
     flag_values = {":enable_static_build": "True"},
+)
+
+config_setting(
+    name = "python_build",
+    flag_values = {":enable_python_build": "True"},
+)
+
+config_setting(
+    name = "fpic_build",
+    flag_values = {":enable_fpic_build": "True"},
+)
+
+config_setting(
+    name = "enabled_qsoptex",
+    flag_values = {":enable_qsoptex": "True"},
+)
+
+config_setting(
+    name = "enabled_soplex",
+    flag_values = {":enable_soplex": "True"},
+)
+
+config_setting(
+    name = "enabled_patchelf",
+    flag_values = {":enable_patchelf": "True"},
 )
 
 config_setting(

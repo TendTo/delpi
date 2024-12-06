@@ -1,12 +1,17 @@
-# Workspace status command
-build --enable_platform_specific_config
-build --experimental_cc_shared_library
-
 # Flag aliases
 build --flag_alias=enable_static_build=//tools:enable_static_build
 build --flag_alias=enable_dynamic_build=//tools:enable_dynamic_build
+build --flag_alias=enable_python_build=//tools:enable_python_build
+build --flag_alias=enable_fpic_build=//tools:enable_fpic_build
+build --flag_alias=static_boost=@boost//:use_linkstatic
+build --flag_alias=python_version=@rules_python//python/config_settings:python_version
 
 # Default build
+build --enable_platform_specific_config
+build --experimental_cc_shared_library
+# build --static_boost
+
+# Workspace status command
 build:windows --cxxopt=/std:c++20
 build:windows --workspace_status_command=tools/workspace_status.bat
 
@@ -15,3 +20,27 @@ build:linux --workspace_status_command=tools/workspace_status.sh
 
 build:macos --cxxopt=-std=c++20
 build:macos --workspace_status_command=tools/workspace_status.sh
+
+# Debug build
+build:dbg --compilation_mode=dbg
+build:dbg --cxxopt=-O0
+build:dbg --cxxopt=-ggdb3
+
+# Optimized build
+build:opt --compilation_mode=opt
+build:opt --cxxopt=-O3
+
+# Build for benchmarking
+build:bench --compilation_mode=opt
+build:bench --cxxopt=-O3
+build:bench --cxxopt=-DNLOG
+build:bench --enable_static_build
+
+# Building python bindings
+build:python --compilation_mode=opt
+build:python --enable_static_build
+build:python --enable_fpic_build
+build:python --enable_python_build
+
+# Dependency clean
+build:dwyu --aspects=//tools:dwyu.bzl%dwyu --output_groups=dwyu

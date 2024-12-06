@@ -1,18 +1,18 @@
 /**
  * @file TestArgparser.cpp
- * @author myapp (https://github.com/TendTo/myapp)
- * @copyright 2024 myapp
+ * @author delpi (https://github.com/TendTo/delpi)
+ * @copyright 2024 delpi
  * @licence Apache-2.0 license
  */
 #include <gtest/gtest.h>
 
-#include "myapp/util/calculator.h"
+#include "delpi/utils/calculator.h"
 
-using myapp::Calculator;
+using delpi::Calculator;
 
 class TestCalculator : public ::testing::Test {
  protected:
-  myapp::Calculator calculator{};
+  delpi::Calculator calculator{};
 };
 
 TEST_F(TestCalculator, DefaultConstructor) {

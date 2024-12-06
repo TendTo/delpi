@@ -82,7 +82,7 @@ sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libm
 ## From Docker
 
 A pre-build Docker image is available on
-the [GitHub repository](https://github.com/TendTo/dlinear/pkgs/container/dlinear).
+the [GitHub repository](https://github.com/TendTo/delpi/pkgs/container/delpi).
 To use it, run the following command:
 
 ```bash

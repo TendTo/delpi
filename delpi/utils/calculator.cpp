@@ -1,10 +1,9 @@
 /**
- * @file calculator.cpp
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024
  * @licence Apache-2.0 license
  */
-#include "delpi/util/calculator.h"
+#include "delpi/utils/calculator.h"
 
 namespace delpi {
 
