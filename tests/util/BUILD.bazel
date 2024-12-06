@@ -2,15 +2,38 @@
 
 load("//tools:rules_cc.bzl", "delpi_cc_googletest")
 
-# Since we are using the delpi_cc_googletest rule, a lot of the boilerplate
-# is taken care of for us.
-# If src is not specified, the rule will look for a file named TestCalculator.cpp
-# in the same directory as the BUILD file.
-# It will also automatically add the calculator tag to the test to allow filtering.
-# More tags can be added manually if needed.
-# See //tools:delpi.bzl > delpi_cc_googletest for more information.
 delpi_cc_googletest(
-    name = "test_calculator",
+    name = "test_argparser",
     tags = ["util"],
-    deps = ["//delpi/util:calculator"],
+    deps = ["//delpi/util:argparser"],
+)
+
+delpi_cc_googletest(
+    name = "test_config",
+    tags = ["util"],
+    deps = ["//delpi/util:config"],
+)
+
+delpi_cc_googletest(
+    name = "test_error",
+    tags = ["util"],
+    deps = ["//delpi/util:error"],
+)
+
+delpi_cc_googletest(
+    name = "test_filesystem",
+    tags = ["util"],
+    deps = ["//delpi/util:filesystem"],
+)
+
+delpi_cc_googletest(
+    name = "test_logging",
+    tags = ["util"],
+    deps = ["//delpi/util:logging"],
+)
+
+delpi_cc_googletest(
+    name = "test_timer",
+    tags = ["util"],
+    deps = ["//delpi/util:timer"],
 )
