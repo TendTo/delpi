@@ -4,7 +4,12 @@ load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["generate_version_header.bat"])
+exports_files([
+    "generate_version_header.bat",
+    #    "pytest_main.py",
+    #    "requirements.txt",
+    "ignore_includes.json",
+])
 
 ######################################################################################
 # Custom flags that control build behavior
@@ -76,11 +81,6 @@ config_setting(
 config_setting(
     name = "enabled_soplex",
     flag_values = {":enable_soplex": "True"},
-)
-
-config_setting(
-    name = "enabled_patchelf",
-    flag_values = {":enable_patchelf": "True"},
 )
 
 config_setting(

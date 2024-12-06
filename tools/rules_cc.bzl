@@ -4,6 +4,7 @@ Inspired by Drake's drake.bzl file https://github.com/RobotLocomotion/drake/blob
 """
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 # Warning: The following comment is used to extract metadata from this file. Do not remove it.
 # GLOBAL VARIABLES
@@ -97,7 +98,7 @@ MSVC_CL_TEST_FLAGS = []
 CLANG_CL_TEST_FLAGS = []
 
 # Default defines for all C++ rules in the project.
-DELPI_DEFINES = []
+DELPI_DEFINES = ["DELPI_INCLUDE_FMT"]
 
 def _get_copts(rule_copts, cc_test = False):
     """Alter the provided rule specific copts, adding the platform-specific ones.
@@ -332,7 +333,7 @@ def delpi_cc_googletest(
         **kwargs
     )
 
-def delpi_srcs(name, srcs = None, hdrs = None, deps = [], visibility = ["//visibility:public"]):
+def delpi_srcs(name, srcs = None, hdrs = None, deps = [], subfolder = "", visibility = ["//visibility:public"]):
     """Returns three different lists of source files based on the name.
 
     Args:
@@ -354,15 +355,40 @@ def delpi_srcs(name, srcs = None, hdrs = None, deps = [], visibility = ["//visib
     native.filegroup(
         name = srcs_name,
         srcs = srcs + hdrs,
+        tags = ["no-cpplint"],
         visibility = visibility,
     )
     native.filegroup(
         name = hdrs_name,
         srcs = hdrs,
+        tags = ["no-cpplint"],
         visibility = visibility,
     )
     native.filegroup(
         name = all_srcs_name,
         srcs = srcs + hdrs + deps,
+        tags = ["no-cpplint"],
+        visibility = visibility,
+    )
+
+def delpi_hdrs_tar(name, hdrs = None, deps = [], subfolder = "", visibility = ["//visibility:public"]):
+    """Returns three different lists of source files based on the name.
+
+    Args:
+        name: The name of the target. If the name is "srcs", the default "srcs", "hdrs", and "all_srcs" will be used.
+            Otherwise, "srcs_" + name, "hdrs_" + name, and "all_srcs_" + name will be used.
+        srcs: A list of source files include in the filegroup. If None, common c++ source files extensions will be used.
+        hdrs: A list of header files to include in the filegroup. If None, common c++ header files extensions will be used.
+        deps: A list of dependencies. Used for the all_srcs filegroup.
+        visibility: A list of visibility labels to apply to the filegroups.
+    """
+    if hdrs == None:
+        hdrs = native.glob(["*.h", "*.hpp"])
+    pkg_tar(
+        name = name,
+        srcs = hdrs,
+        extension = "tar.gz",
+        package_dir = subfolder,
+        deps = deps,
         visibility = visibility,
     )
