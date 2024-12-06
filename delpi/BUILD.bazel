@@ -1,0 +1,36 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:rules_cc.bzl", "DELPI_NAME", "DELPI_VERSION", "delpi_cc_binary", "delpi_cc_library", "delpi_srcs")
+
+delpi_srcs(
+    name = "srcs",
+    deps = ["//delpi/util:all_srcs"],
+)
+
+genrule(
+    name = "generate_version_header",
+    outs = ["version.h"],
+    cmd = "$(location //tools:generate_version_header) %s %s > $@" % (DELPI_NAME, DELPI_VERSION),
+    cmd_bat = "$(location //tools:generate_version_header.bat) %s %s $@" % (DELPI_NAME, DELPI_VERSION),
+    stamp = True,
+    tools = [
+        "//tools:generate_version_header",
+        "//tools:generate_version_header.bat",
+    ],
+)
+
+delpi_cc_library(
+    name = "version",
+    hdrs = [":generate_version_header"],
+)
+
+delpi_cc_binary(
+    name = "delpi",
+    srcs = ["main.cpp"],
+    deps = [
+        ":version",
+        "//delpi/util:calculator",
+        "@fmt",
+    ],
+)
+
+cpplint()

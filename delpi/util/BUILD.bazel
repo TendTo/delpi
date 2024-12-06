@@ -1,14 +1,14 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:rules_cc.bzl", "myapp_cc_library", "myapp_srcs")
+load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_srcs")
 
 package(default_visibility = [
-    "//myapp:__subpackages__",
+    "//delpi:__subpackages__",
     "//tests:__subpackages__",
 ])
 
-myapp_srcs(name = "srcs")
+delpi_srcs(name = "srcs")
 
-myapp_cc_library(
+delpi_cc_library(
     name = "calculator",
     srcs = ["calculator.cpp"],
     hdrs = ["calculator.h"],

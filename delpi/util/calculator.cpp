@@ -4,9 +4,9 @@
  * @copyright 2024
  * @licence Apache-2.0 license
  */
-#include "myapp/util/calculator.h"
+#include "delpi/util/calculator.h"
 
-namespace myapp {
+namespace delpi {
 
 Calculator::Calculator(int verbose) : verbose_{verbose} {
   // Se the level of the logger globally.
@@ -30,4 +30,4 @@ int Calculator::getVerbose() {
   return verbose_;
 }
 
-}  // namespace myapp
+}  // namespace delpi

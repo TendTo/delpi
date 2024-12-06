@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="logo" width="48" height="48" viewBox="0 0 12.7 12.7" version="1.1" xmlns="http://www.w3.org/2000/svg"
+        xmlns:svg="http://www.w3.org/2000/svg">
+        <style>
+                #logo * {
+                        fill: #000;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                        #logo * {
+                                fill: #fff;
+                        }
+                }
+        </style>
+        <g transform="translate(-18.182149,-2.712943)">
+                <g transform="matrix(0,0.10594542,0.10594542,0,20.716348,5.7944085)">
+                        <path d="M 1.0458574,70.014307 30.851167,2.0190374 h 1.66677 L 60.656377,70.014307 Z M 48.940737,65.847387 29.086397,17.021177 7.6141374,65.847387 Z"
+                                style="stroke-width:0.264583" />
+                        <path d="m 30.851167,2.0190371 29.80531,67.9952719 h 1.66677 L 90.461687,2.0190371 Z m 47.89488,4.16692 L 58.891707,55.012168 37.419446,6.1859571 Z"
+                                style="stroke-width:0.264583" />
+                        <path d="m -28.759453,2.019035 29.80531,67.995272 h 1.66677 L 30.851067,2.019035 Z m 47.89488,4.16692 -19.85434,48.826211 -21.472261,-48.826211 z"
+                                style="stroke-width:0.264583" />
+                </g>
+        </g>
+</svg>

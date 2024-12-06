@@ -12,7 +12,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace myapp {
+namespace delpi {
 
 class Calculator {
  private:
@@ -59,4 +59,4 @@ inline T Calculator::divide(T a, T b) {
   return a / b;
 }
 
-}  // namespace myapp
+}  // namespace delpi
