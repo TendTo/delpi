@@ -6,33 +6,68 @@ module(name = "delpi")
 # Available dependencies from the Bazel registry (https://registry.bazel.build/)
 #################################################################################
 
-# rules_cc for building C++ libraries with Bazel
+# Apache License 2.0 | rules_cc for building C++ libraries with Bazel
 bazel_dep(name = "rules_cc", version = "0.0.17")
 
-# Utility rules for Bazel
+# Apache License 2.0 | rules_foreign_cc for building C++ libraries with other build systems
+bazel_dep(name = "rules_foreign_cc", version = "0.12.0")
+
+# Apache License 2.0 | utility rules for Bazel
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
-# argparse implementation for modern C++
+# Apache License 2.0 | Bazel rules for packaging the project
+bazel_dep(name = "rules_pkg", version = "1.0.1")
+
+# Apache License 2.0 | rules_python for building python targets
+bazel_dep(name = "rules_python", version = "1.0.0")
+
+# MIT | argparse implementation for modern C++
 bazel_dep(name = "argparse", version = "3.0.0")
 
-# C++ library for formatting strings
+# MIT | C++ library for formatting text
 bazel_dep(name = "fmt", version = "11.0.2")
 
-# Google C++ Style Guide
+# https://github.com/madler/zlib/blob/develop/LICENSE | zlib compression library
+bazel_dep(name = "zlib", version = "1.3.1.bcr.3")
+
+# https://github.com/libarchive/bzip2/blob/master/COPYING | Compression library
+bazel_dep(name = "bzip2", version = "1.0.8")
+
+# BSD | lexical analyser generator
+bazel_dep(name = "rules_flex", version = "0.2.1")
+
+# https://www.gnu.org/software/bison/manual/html_node/Conditions.html | Bison parser generator
+bazel_dep(name = "rules_bison", version = "0.2.2")
+
+# MIT | rules for dealing with target dependencies
+bazel_dep(name = "depend_on_what_you_use", version = "0.5.0", dev_dependency = True)
+
+# https://github.com/cpplint/cpplint/blob/develop/LICENSE | Google C++ Style Guide
 bazel_dep(name = "cpplint", version = "1.6.1", dev_dependency = True)
 
-# C++ test suite by Google
+# BSD-3-Clause license | C++ test suite by Google
 bazel_dep(name = "googletest", version = "1.15.2", dev_dependency = True)
 
-# Doxygen documentation generator
+# Apache License 2.0 | Doxygen documentation generator
 bazel_dep(name = "rules_doxygen", version = "2.0.0", dev_dependency = True)
+
+# Apache License 2.0 | Integration of Boost into Bazel
+bazel_dep(name = "com_github_nelhage_rules_boost", version = "0.0.1")
+git_override(
+    module_name = "com_github_nelhage_rules_boost",
+    commit = "37043509947dc88627b45c283b974e05ad308bdc",
+    remote = "https://github.com/TendTo/rules_boost.git",
+)
 
 #################################################################################
 # External dependencies not available in the Bazel registry
 #################################################################################
+
+# GitHub repositories
+
 github_archive = use_repo_rule("//tools:git_archive.bzl", "github_archive")
 
-# Logging library
+# MIT | logging library
 github_archive(
     name = "spdlog",
     build_file = "//third_party:spdlog.BUILD.bazel",  # custom build file
@@ -41,8 +76,131 @@ github_archive(
     sha256 = "4dccf2d10f410c1e2feaff89966bfc49a1abb29ef6f08246335b110e001e09a9",
 )
 
+# Apache License 2.0 | exact linear programming solver
+github_archive(
+    name = "soplex",
+    build_file = "//third_party:soplex.BUILD.bazel",
+    commit = "91f8c2a8b92fd67d474c9195917f1ff527f05aca",
+    repository = "TendTo/soplex",
+    sha256 = "09cef69536bdb11af9d148c28a36289d7a7a196052c46fbfa7e049ca6b005d14",
+)
+
+# GNU General Public License v3.0 | delta-complete linear programming solver
+github_archive(
+    name = "qsopt_ex",
+    build_file = "//third_party:qsopt_ex.BUILD.bazel",
+    commit = "4646dc3bec76532827c479f7c51d8a71a35806de",
+    repository = "TendTo/qsopt-ex",
+    sha256 = "610222f0023213e17b395d23fdcaf918d6102b020e445902014e0518a30c900d",
+)
+
+## HTTP repositories
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# GNU Lesser General Public License v3.0 | arbitrary precision arithmetic library
+http_archive(
+    name = "gmp",
+    build_file = "//third_party:gmp.BUILD.bazel",
+    sha256 = "a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898",
+    strip_prefix = "gmp-6.3.0",
+    url = "https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz",
+)
+
+# MIT | c++ library for arbitrary precision arithmetic
+http_archive(
+    name = "mpfr",
+    build_file = "//third_party:mpfr.BUILD.bazel",
+    sha256 = "277807353a6726978996945af13e52829e3abd7a9a5b7fb2793894e18f1fcbb2",
+    strip_prefix = "mpfr-4.2.1",
+    url = "https://www.mpfr.org/mpfr-current/mpfr-4.2.1.tar.xz",
+)
+
 #################################################################################
 # Load module extensions
 #################################################################################
+
+boost_modules = use_extension("@com_github_nelhage_rules_boost//:extensions.bzl", "boost_modules")
+boost_modules.version(
+    sha256 = "4d27e9efed0f6f152dc28db6430b9d3dfb40c0345da7342eaa5a987dde57bd95",
+    version = "1.84.0",
+)
+use_repo(boost_modules, "boost")
+
+flex = use_extension("@rules_flex//flex/extensions:flex_repository_ext.bzl", "flex_repository_ext")
+flex.repository(
+    name = "flex",
+    extra_copts = ["-O3"],
+    version = "2.6.4",
+)
+use_repo(flex, "flex")
+
+register_toolchains("@flex//:toolchain")
+
+bison = use_extension("@rules_bison//bison/extensions:bison_repository_ext.bzl", "bison_repository_ext")
+bison.repository(
+    name = "bison",
+    extra_copts = ["-O3"],
+    version = "3.3.2",
+)
+use_repo(bison, "bison")
+
+register_toolchains("@bison//:toolchain")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.8",
+)
+python.toolchain(
+    python_version = "3.9",
+)
+python.toolchain(
+    is_default = True,
+    python_version = "3.10",
+)
+python.toolchain(
+    python_version = "3.11",
+)
+python.toolchain(
+    python_version = "3.12",
+)
+use_repo(
+    python,
+    "python_3_10",
+    "python_3_11",
+    "python_3_12",
+    "python_3_8",
+    "python_3_9",
+    "python_versions",
+)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pypi",
+    python_version = "3.8",
+    requirements_lock = "//tools:requirements.txt",
+)
+pip.parse(
+    hub_name = "pypi",
+    python_version = "3.9",
+    requirements_lock = "//tools:requirements.txt",
+)
+pip.parse(
+    hub_name = "pypi",
+    python_version = "3.10",
+    requirements_lock = "//tools:requirements.txt",
+)
+pip.parse(
+    hub_name = "pypi",
+    python_version = "3.11",
+    requirements_lock = "//tools:requirements.txt",
+)
+pip.parse(
+    hub_name = "pypi",
+    python_version = "3.12",
+    requirements_lock = "//tools:requirements.txt",
+)
+use_repo(pip, "pypi")
+
 doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension")
 use_repo(doxygen_extension, "doxygen")

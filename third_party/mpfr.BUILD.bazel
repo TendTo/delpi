@@ -8,7 +8,7 @@ licenses(["notice"])
 configure_make(
     name = "mpfr",
     configure_options = select({
-        "@dlinear//tools:fpic_build": ["--with-pic"],
+        "@delpi//tools:fpic_build": ["--with-pic"],
         "//conditions:default": [],
     }),
     lib_name = "libmpfr",
@@ -21,10 +21,6 @@ configure_make(
     lib_source = ":all_srcs",
     visibility = ["//visibility:public"],
     deps = ["@gmp"],
-    postfix_script = select({
-        "@dlinear//tools:enabled_patchelf": "patchelf --set-soname libmpfr.so $INSTALLDIR/lib/libmpfr.so",
-        "//conditions:default": "",
-    }),
 )
 
 filegroup(

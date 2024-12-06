@@ -11,7 +11,7 @@ licenses(["notice"])
 configure_make(
     name = "gmp",
     configure_options = select({
-        "@dlinear//tools:fpic_build": ["--with-pic"],
+        "@delpi//tools:fpic_build": ["--with-pic"],
         "//conditions:default": [],
     }),
     lib_name = "libgmp",
@@ -19,32 +19,24 @@ configure_make(
     out_shared_libs = ["libgmp.so"],
     lib_source = ":all_srcs_gmp",
     visibility = ["//visibility:public"],
-    postfix_script = select({
-        "@dlinear//tools:enabled_patchelf": "patchelf --set-soname libgmp.so $INSTALLDIR/lib/libgmp.so",
-        "//conditions:default": "echo 'No patchelf, skipping soname fixup.'",
-    }),
 )
 
 configure_make(
     name = "gmpxx",
     configure_options = ["--enable-cxx"] + select({
-        "@dlinear//tools:fpic_build": ["--with-pic"],
+        "@delpi//tools:fpic_build": ["--with-pic"],
         "//conditions:default": [],
     }),
     lib_name = "libgmpxx",
     out_static_libs = ["libgmpxx.a"],
     out_shared_libs = ["libgmpxx.so"],
     env = select({
-        "@dlinear//tools:clang_build": {"CXX": "clang"},
+        "@delpi//tools:clang_build": {"CXX": "clang"},
         "//conditions:default": {"CXX": "g++"},
     }),
     lib_source = ":all_srcs_gmpxx",
     visibility = ["//visibility:public"],
     deps = [":gmp"],
-    postfix_script = select({
-        "@dlinear//tools:enabled_patchelf": "patchelf --set-soname libgmpxx.so $INSTALLDIR/lib/libgmpxx.so",
-        "//conditions:default": "echo 'No patchelf, skipping soname fixup.'",
-    }),
 )
 
 filegroup(
