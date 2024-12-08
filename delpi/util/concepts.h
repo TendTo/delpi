@@ -14,7 +14,24 @@
 namespace delpi {
 
 /**
- * Check if the type T is an iterable type
+ * Check if the type `T` is a self-reference counter type, i.e. it has both `AddRef` and `Release` methods.
+ *
+ * The `AddRef` method should increment the internal reference counter.
+ * The `Release` method should decrement it, and if it reaches zero, the object should be deleted using its destructor.
+ * @code
+ * template <Iterable T>
+ * void foo(T t); // T can be any iterable type
+ * @endcode
+ * @tparam T type to check
+ */
+template <class T>
+concept SelfReferenceCounter = requires(T t) {
+  { t.AddRef() };
+  { t.Release() };
+};  // NOLINT(readability/braces) per C++ standard concept definition
+
+/**
+ * Check if the type `T` is an iterable type.
  * @code
  * template <Iterable T>
  * void foo(T t); // T can be any iterable type
@@ -28,7 +45,7 @@ concept Iterable = requires(T t) {
 };  // NOLINT(readability/braces) per C++ standard concept definition
 
 /**
- * Check if the type T is an iterable type with a size() method
+ * Check if the type `T` is an iterable type with a `size()` method.
  * @code
  * template <SizedIterable T>
  * void foo(T t); // T can be any iterable type with a size() method
@@ -43,7 +60,7 @@ concept SizedIterable = requires(T t) {
 };  // NOLINT(readability/braces) per C++ standard concept definition
 
 /**
- * Check if the type T is an iterable type with elements of type U
+ * Check if the type `T` is an iterable type with elements of type `U`.
  * @code
  * template <TypedIterable<int> T>
  * void foo(T t); // T can be any iterable type with elements of type int
@@ -58,7 +75,7 @@ concept TypedIterable = requires(T t, U u) {
 } && std::same_as<typename T::value_type, U>;
 
 /**
- * Check if the type T is an iterable type with elements of type U and a size() method
+ * Check if the type `T` is an iterable type with elements of type `U` and a `size()` method.
  * @code
  * template <TypedSizedIterable<int> T>
  * void foo(T t); // T can be any iterable type with elements of type int and a size() method
@@ -74,7 +91,7 @@ concept SizedTypedIterable = requires(T t, U u) {
 } && std::same_as<typename T::value_type, U>;
 
 /**
- * Check if the type T is any of the types U
+ * Check if the type `T` is any of the types `U`.
  * @code
  * template <IsAnyOf<int, float, bool> T>
  * void foo(T t); // T can be either int, float or bool
@@ -86,7 +103,7 @@ template <typename T, typename... U>
 concept IsAnyOf = (std::same_as<T, U> || ...);
 
 /**
- * Check if the type T is not any of the types U
+ * Check if the type `T` is not any of the types `U`.
  * @code
  * template <IsNotAnyOf<int, float, bool> T>
  * void foo(T t); // T can be any type except int, float or bool
@@ -98,7 +115,7 @@ template <typename T, typename... U>
 concept IsNotAnyOf = !IsAnyOf<T, U...>;
 
 /**
- * Check if the type T supports the arithmetic operations +, -, *, /
+ * Check if the type `T` supports the arithmetic operations `+`, `-`, `*`, `/`.
  * @code
  * template <Arithmetic T>
  * void foo(T a, T b); // a and b can be added, subtracted, multiplied and divided with the corresponding operator
@@ -114,7 +131,8 @@ concept Arithmetic = requires(T a, T b) {
 };  // NOLINT(readability/braces) per C++ standard concept definition
 
 /**
- * Check if the type T supports the arithmetic operations +, -, *, / and the comparison operators <, >, <=, >=
+ * Check if the type `T` supports the arithmetic operations `+`, `-`, `*`, `/`
+ * and the comparison operators `<, `>`, `<=`, `>=`.
  * @code
  * template <Numeric T>
  * void foo(T a); // a can be added, subtracted, multiplied, divided and ordered with the corresponding operator

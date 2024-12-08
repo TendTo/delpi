@@ -113,4 +113,9 @@ delpi_cc_library(
     hdrs = ["concepts.h"],
 )
 
+delpi_cc_library(
+    name = "intrusive_ptr",
+    hdrs = ["intrusive_ptr.hpp"],
+)
+
 cpplint()
