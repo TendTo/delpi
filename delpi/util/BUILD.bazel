@@ -118,4 +118,9 @@ delpi_cc_library(
     hdrs = ["intrusive_ptr.hpp"],
 )
 
+delpi_cc_library(
+    name = "hash",
+    hdrs = ["hash.hpp"],
+)
+
 cpplint()

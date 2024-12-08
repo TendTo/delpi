@@ -1,0 +1,31 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
+
+package(default_visibility = [
+    "//delpi:__subpackages__",
+    "//test:__subpackages__",
+])
+
+delpi_srcs(name = "srcs")
+
+delpi_hdrs_tar(
+    name = "hdrs_tar",
+    subfolder = "symbolic",
+)
+
+delpi_cc_library(
+    name = "variable",
+    srcs = ["Variable.cpp"],
+    hdrs = ["Variable.h"],
+    implementation_deps = ["//delpi/util:error"],
+)
+
+delpi_cc_library(
+    name = "expression",
+    srcs = ["Expression.cpp"],
+    hdrs = ["Expression.h"],
+    implementation_deps = ["//delpi/util:error"],
+    deps = [":variable"],
+)
+
+cpplint()
