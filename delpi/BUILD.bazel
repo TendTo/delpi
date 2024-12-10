@@ -1,5 +1,5 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:rules_cc.bzl", "DELPI_NAME", "DELPI_VERSION", "delpi_cc_binary", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
+load("//tools:rules_cc.bzl", "DELPI_DESCRIPTION", "DELPI_NAME", "DELPI_VERSION", "delpi_cc_binary", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -23,8 +23,8 @@ delpi_hdrs_tar(
 genrule(
     name = "generate_version_header",
     outs = ["version.h"],
-    cmd = "$(location //tools:generate_version_header) %s %s > $@" % (DELPI_NAME, DELPI_VERSION),
-    cmd_bat = "$(location //tools:generate_version_header.bat) %s %s $@" % (DELPI_NAME, DELPI_VERSION),
+    cmd = "$(location //tools:generate_version_header) %s %s '%s' > $@" % (DELPI_NAME, DELPI_VERSION, DELPI_DESCRIPTION),
+    cmd_bat = "$(location //tools:generate_version_header.bat) %s %s '%s' $@" % (DELPI_NAME, DELPI_VERSION, DELPI_VERSION),
     stamp = True,
     tools = [
         "//tools:generate_version_header",

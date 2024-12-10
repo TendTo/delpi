@@ -39,6 +39,9 @@ bazel_dep(name = "rules_flex", version = "0.2.1")
 # https://www.gnu.org/software/bison/manual/html_node/Conditions.html | Bison parser generator
 bazel_dep(name = "rules_bison", version = "0.2.2")
 
+# https://github.com/pybind/pybind11_bazel/blob/master/LICENSE | pybind11 for binding C++ and Python
+bazel_dep(name = "pybind11_bazel", version = "2.12.0")
+
 # MIT | rules for dealing with target dependencies
 bazel_dep(name = "depend_on_what_you_use", version = "0.5.0", dev_dependency = True)
 

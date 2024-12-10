@@ -1,13 +1,16 @@
 """A BUILD file providing the configuration for the project."""
 
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load("@pypi//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary")
+load("//tools:make_var_substitution.bzl", "make_var_substitution")
 
 package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "generate_version_header.bat",
-    #    "pytest_main.py",
-    #    "requirements.txt",
+    "pytest_main.py",
+    "requirements.txt",
     "ignore_includes.json",
 ])
 
@@ -138,4 +141,24 @@ config_setting(
 sh_binary(
     name = "generate_version_header",
     srcs = ["generate_version_header.sh"],
+)
+
+###########################################
+# Make variable substitution toolchain
+###########################################
+make_var_substitution(
+    name = "make_var_substitution",
+)
+
+###########################################
+# Bash autocomplete script generator
+###########################################
+py_binary(
+    name = "bash_autocomplete",
+    srcs = ["bash_autocomplete.py"],
+    main = "bash_autocomplete.py",
+    python_version = "PY3",
+    deps = [
+        requirement("shtab"),
+    ],
 )

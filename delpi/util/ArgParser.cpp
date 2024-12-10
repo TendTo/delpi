@@ -218,7 +218,7 @@ std::string ArgParser::prompt() const {
     repo_stat = " (repository: " + repo_stat + ")";
   }
 
-  std::string vstr = fmt::format("{} (v{}): delta-complete SMT solver ({} Build) {}", DELPI_PROGRAM_NAME, version(),
+  std::string vstr = fmt::format("{} (v{}): {} ({} Build) {}", DELPI_PROGRAM_NAME, DELPI_DESCRIPTION, version(),
                                  build_type, repo_stat);
   if (!qsoptex_hash_.empty()) vstr += fmt::format(" (qsopt-ex: {})", qsoptex_hash_);
   if (!soplex_hash_.empty()) vstr += fmt::format(" (soplex: {})", soplex_hash_);

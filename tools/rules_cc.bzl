@@ -3,6 +3,7 @@ This makes it easy to change the build configuration for all C++ rules in the pr
 Inspired by Drake's drake.bzl file https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl.
 """
 
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension", "pybind_library")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
@@ -114,10 +115,10 @@ def _get_copts(rule_copts, cc_test = False):
         A list of copts.
     """
     return select({
-        "//tools:gcc_build": GCC_FLAGS + GCC_TEST_FLAGS if cc_test else [] + rule_copts,
-        "//tools:clang_build": CLANG_FLAGS + CLANG_CL_TEST_FLAGS if cc_test else [] + rule_copts,
-        "//tools:msvc_cl_build": MSVC_CL_FLAGS + MSVC_CL_TEST_FLAGS if cc_test else [] + rule_copts,
-        "//tools:clang_cl_build": CLANG_CL_FLAGS + CLANG_CL_TEST_FLAGS if cc_test else [] + rule_copts,
+        "//tools:gcc_build": GCC_FLAGS + (GCC_TEST_FLAGS if cc_test else []) + rule_copts,
+        "//tools:clang_build": CLANG_FLAGS + (CLANG_CL_TEST_FLAGS if cc_test else []) + rule_copts,
+        "//tools:msvc_cl_build": MSVC_CL_FLAGS + (MSVC_CL_TEST_FLAGS if cc_test else []) + rule_copts,
+        "//tools:clang_cl_build": CLANG_CL_FLAGS + (CLANG_CL_TEST_FLAGS if cc_test else []) + rule_copts,
         "//conditions:default": CXX_FLAGS + rule_copts,
     })
 
@@ -141,6 +142,9 @@ def _get_defines(rule_defines):
         "//conditions:default": [],
     }) + select({
         "//tools:python_build": ["DELPI_PYTHON"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:thread_safe_build": ["DELPI_THREAD_SAFE"],
         "//conditions:default": [],
     })
 
@@ -391,4 +395,59 @@ def delpi_hdrs_tar(name, hdrs = None, deps = [], subfolder = "", visibility = ["
         package_dir = subfolder,
         deps = deps,
         visibility = visibility,
+    )
+
+def delpi_pyblind_library(
+        name,
+        srcs = None,
+        deps = [],
+        copts = [],
+        linkstatic = None,
+        defines = [],
+        features = [],
+        **kwargs):
+    """Creates a rule to declare a pybind11 library.
+
+    Args:
+        name: The name of the library.
+        srcs: A list of source files to compile.
+        deps: A list of dependencies.
+        copts: A list of compiler options.
+        linkstatic: Whether to link statically.
+        defines: A list of defines to add to the library.
+        features: A list of features to add to the library.
+        **kwargs: Additional arguments to pass to pybind_library.
+    """
+    print(_get_copts(copts))
+    pybind_library(
+        name = name,
+        srcs = srcs,
+        deps = deps,
+        copts = _get_copts(copts),
+        linkstatic = _get_static(linkstatic),
+        defines = _get_defines(defines),
+        **kwargs
+    )
+
+def delpi_pybind_extension(name, srcs, deps = [], copts = [], linkstatic = None, defines = [], features = [], **kwargs):
+    """Creates a rule to declare a pybind11 extension.
+
+    Args:
+        name: The name of the extension.
+        srcs: A list of source files to compile.
+        deps: A list of dependencies.
+        copts: A list of compiler options.
+        linkstatic: Whether to link statically.
+        defines: A list of defines to add to the extension.
+        features: A list of features to add to the extension.
+        **kwargs: Additional arguments to pass to pybind_extension.
+    """
+    pybind_extension(
+        name = name,
+        srcs = srcs,
+        deps = deps,
+        copts = _get_copts(copts),
+        linkstatic = _get_static(linkstatic),
+        defines = _get_defines(defines),
+        **kwargs
     )

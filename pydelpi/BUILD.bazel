@@ -1,0 +1,122 @@
+load("@pypi//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("@rules_python//python:packaging.bzl", "py_wheel")
+load("//tools:rules_cc.bzl", "DELPI_AUTHOR", "DELPI_AUTHOR_EMAIL", "DELPI_CLASSIFIERS", "DELPI_DESCRIPTION", "DELPI_HOMEPAGE", "DELPI_LICENSE", "DELPI_SOURCE", "DELPI_TRACKER", "DELPI_VERSION", "delpi_pybind_extension", "delpi_pyblind_library")
+
+delpi_pyblind_library(
+    name = "interrupt",
+    srcs = ["interrupt.cpp"],
+    hdrs = ["interrupt.h"],
+    visibility = ["//delpi:__subpackages__"],
+)
+
+delpi_pybind_extension(
+    name = "_pydelpi",
+    srcs = [
+        "lib.cpp",
+        "pydelpi.cpp",
+        "pydelpi.h",
+        "solver.cpp",
+        "symbolic.cpp",
+        "util.cpp",
+    ],
+    linkstatic = select({
+        "//tools:static_build": True,
+        "//conditions:default": False,
+    }),
+    deps = [
+        "//delpi:version",
+        "//delpi/libs:gmp",
+        "//delpi/solver",
+        "//delpi/symbolic",
+        "//delpi/util:argparser",
+        "//delpi/util:config",
+    ],
+)
+
+py_library(
+    name = "pydelpi_lib",
+    srcs = [
+        "__init__.py",
+        "__main__.py",
+    ],
+    data = [":_pydelpi.so"],
+    imports = ["."],
+    srcs_version = "PY3",
+)
+
+py_binary(
+    name = "pydelpi",
+    srcs = ["__main__.py"],
+    imports = ["."],
+    main = "__main__.py",
+    python_version = "PY3",
+    deps = [
+        ":pydelpi_lib",
+    ],
+)
+
+py_binary(
+    name = "stubgen_bin",
+    srcs = ["_stubgen.py"],
+    imports = ["."],
+    main = "_stubgen.py",
+    python_version = "PY3",
+    deps = [
+        requirement("pybind11_stubgen"),
+        ":pydelpi_lib",
+    ],
+)
+
+genrule(
+    name = "stubgen",
+    outs = [
+        "_pydelpi.pyi",
+        "__init__.pyi",
+        "py.typed",
+    ],
+    cmd = "$(location :stubgen_bin) $(OUTS)",
+    tools = [":stubgen_bin"],
+)
+
+filegroup(
+    name = "pydelpi_files",
+    srcs = [
+        ":_pydelpi",
+        ":pydelpi_lib",
+        ":stubgen",
+    ],
+)
+
+py_wheel(
+    name = "pydelpi_wheel",
+    abi = "$(PYTHON_ABI_TAG)",
+    author = DELPI_AUTHOR,
+    author_email = DELPI_AUTHOR_EMAIL,
+    classifiers = DELPI_CLASSIFIERS,
+    description_content_type = "text/markdown",
+    description_file = "//:README.md",
+    distribution = "pydelpi",
+    entry_points = {
+        "console_scripts": ["pydelpi = pydelpi.__main__:main"],
+    },
+    homepage = DELPI_HOMEPAGE,
+    license = DELPI_LICENSE,
+    platform = select({
+        "@bazel_tools//src/conditions:windows_x64": "win_amd64",
+        "@bazel_tools//src/conditions:windows_arm64": "win_arm64",
+        "@bazel_tools//src/conditions:darwin_x86_64": "macosx_12_0_x86_64",
+        "@bazel_tools//src/conditions:darwin_arm64": "macosx_12_0_arm64",
+        "@bazel_tools//src/conditions:linux_x86_64": "manylinux_2_34_x86_64",
+        "@bazel_tools//src/conditions:linux_aarch64": "manylinux_2_34_aarch64",
+    }),
+    project_urls = {
+        "Source": DELPI_SOURCE,
+        "Tracker": DELPI_TRACKER,
+    },
+    python_tag = "$(PYTHON_TAG)",
+    summary = DELPI_DESCRIPTION,
+    toolchains = ["//tools:make_var_substitution"],
+    version = DELPI_VERSION,
+    deps = [":pydelpi_files"],
+)
