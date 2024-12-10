@@ -1,14 +1,20 @@
+/**
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 delpi
+ * @licence BSD 3-Clause License
+ * Hashing functions.
+ */
 #pragma once
 
 #include <cstddef>
 #include <functional>
 #include <map>
 #include <set>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
-namespace delpi {
+/** @namespace hash Namespace containing all the hash functions and utilities */
+namespace delpi::hash {
 
 /** Combines a given hash value @p seed and a hash of parameter @p v. */
 template <class T>
@@ -59,12 +65,6 @@ struct hash_value<std::map<T1, T2>> {
   size_t operator()(const std::map<T1, T2> &map) const { return hash_range(map.begin(), map.end()); }
 };
 
-/** Computes the hash value of an unordered_map @p map. */
-template <class T1, class T2>
-struct hash_value<std::unordered_map<T1, T2>> {
-  size_t operator()(const std::unordered_map<T1, T2> &map) const { return hash_range(map.begin(), map.end()); }
-};
-
 /** Combines two hash values into one. The following code is public domain
  *  according to http://www.burtleburtle.net/bob/hash/doobs.html. */
 template <class T>
@@ -73,4 +73,4 @@ inline size_t hash_combine(size_t seed, const T &v) {
   return seed;
 }
 
-}  // namespace delpi
+}  // namespace delpi::hash

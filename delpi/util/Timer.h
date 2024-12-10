@@ -14,6 +14,7 @@
 
 namespace delpi {
 
+// Forward declaration. Found later in this file
 struct user_clock;
 
 /**
@@ -94,7 +95,12 @@ extern template class TimerBase<chosen_steady_clock>;
 /** Timer class using the a steady clock. */
 class Timer : public TimerBase<chosen_steady_clock> {};
 
-struct user_clock {  // Implements the Clock interface of std::chrono
+/**
+ * Structure that will hold the user clock data.
+ *
+ * It implements the Clock interface of std::chrono.
+ */
+struct user_clock {
   typedef uint64_t rep;
   typedef std::micro period;
   typedef std::chrono::duration<rep, period> duration;

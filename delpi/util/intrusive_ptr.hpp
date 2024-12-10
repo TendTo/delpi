@@ -3,9 +3,7 @@
  * @copyright 2024 delpi
  * @copyright Electronic Arts Inc. All rights reserved.
  * @licence BSD 3-Clause License
- * Utilities for filesystem operations.
- *
- * Simple utilities that make operations on the filesystem easier.
+ * intrusive_ptr class.
  */
 #pragma once
 
@@ -21,7 +19,7 @@ namespace delpi {
  * @tparam T class the intrusive_ptr is pointing to.
  * Must have `AddRef` and `Release` methods.
  */
-template <SelfReferenceCounter T>
+template <class T>
 class intrusive_ptr {
  public:
   typedef T element_type;  ///< The type this intrusive_ptr points to.
@@ -170,7 +168,7 @@ class intrusive_ptr {
   bool operator!() const { return ptr_ == nullptr; }
 
  protected:
-  T* ptr_;
-};  // class intrusive_ptr
+  T* ptr_;  ///< Raw pointer to the data
+};
 
 }  // namespace delpi

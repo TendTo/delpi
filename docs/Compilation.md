@@ -85,6 +85,7 @@ But if you need more control when compiling, the following flags are supported:
 - `--enable_dynamic_build` to use dynamic linking between all the submodules and the binary. Default is `False`
 - `--enable_python_build` to build the python bindings. Default is `False`
 - `--enable_fpic_build` to enable position independent code. Default is `False`
+- `--enable_thread_safe_build` to ensure the internal reference counting is handled in a thread safe manner. Default is `False`
 - `--static_boost` build boost statically. Default is `True`
 - `--enable_qsoptex` to include the QSOptEx LP solver. Default is `True`
 - `--enable_soplex` to include the SoPlex LP solver. Default is `True`

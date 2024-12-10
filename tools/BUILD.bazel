@@ -49,6 +49,11 @@ bool_flag(
     build_setting_default = False,
 )
 
+bool_flag(
+    name = "enable_thread_safe_build",
+    build_setting_default = False,
+)
+
 ###########################################
 # Configuration settings
 ###########################################
@@ -71,6 +76,11 @@ config_setting(
 config_setting(
     name = "fpic_build",
     flag_values = {":enable_fpic_build": "True"},
+)
+
+config_setting(
+    name = "thread_safe_build",
+    flag_values = {":enable_thread_safe_build": "True"},
 )
 
 config_setting(

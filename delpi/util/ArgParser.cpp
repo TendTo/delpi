@@ -136,7 +136,7 @@ void ArgParser::AddOptions() {
       if (value == "pure-precision-boosting" || value == "2") return Config::LPMode::PURE_PRECISION_BOOSTING;
       if (value == "pure-iterative-refinement" || value == "3") return Config::LPMode::PURE_ITERATIVE_REFINEMENT;
       if (value == "hybrid" || value == "4") return Config::LPMode::HYBRID;);
-  DELPI_PARSE_PARAM_ENUM(parser_, format, "--format", "[ auto | smt2 | mps  | vnnlib ] or [ 1 | 2 | 3 | 4 ]",
+  DELPI_PARSE_PARAM_ENUM(parser_, format, "--format", "[ auto | mps ] or [ 1 | 2 ]",
                          if (value == "auto" || value == "1") return Config::Format::AUTO;
                          if (value == "mps" || value == "2") return Config::Format::MPS;);
   DELPI_PARSE_PARAM_ENUM(parser_, lp_solver, "--lp-solver", "[ soplex | qsoptex ] or [ 1 | 2 ]",

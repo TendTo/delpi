@@ -1,0 +1,73 @@
+/**
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 delpi
+ * @licence BSD 3-Clause License
+ * SelfReferenceCountingObject class.
+ */
+#pragma once
+
+#include <cstddef>
+
+#ifdef DELPI_THREAD_SAFE
+#include <atomic>
+#endif
+
+namespace delpi {
+
+/**
+ * Utility class to be inherited from to obtain compatibility with the intrusive_ptr.
+ *
+ * It implements both @ref AddRef and @ref Release methods and supports both thread safe and unsafe reference counting.
+ * This class (and its subclasses) are meant to be initialised and used through an intrusive_ptr.
+ * @code
+ * class MyClass : public SelfReferenceCountingObject {
+ *  public:
+ *    static intrusive_ptr New() { return intrusive_ptr new MyClass(); }
+ *  private:
+ *    MyClass() = default;
+ * };
+ *
+ * int main() {
+ *   const intrusive_ptr<MyClass> ptr{MyClass::New()};
+ * }
+ * @endcode
+ */
+class SelfReferenceCountingObject {
+ public:
+  /** @addref{object} */
+  void AddRef() {
+#ifdef DELPI_THREAD_SAFE
+    ref_count_.fetch_add(1);
+#else
+    ref_count_++;
+#endif
+  }
+  /** @release{object} */
+  void Release() {
+#ifdef DELPI_THREAD_SAFE
+    if (ref_count_.fetch_sub(1) == 1) {
+#else
+    if (--ref_count_ == 0) {
+#endif
+      delete this;
+    }
+  }
+
+  /** @getter{reference counter, object} */
+  [[nodiscard]] std::size_t use_count() const noexcept {
+#ifdef DELPI_THREAD_SAFE
+    return ref_count_.load();
+#else
+    return ref_count_;
+#endif
+  }
+
+ private:
+#ifdef DELPI_THREAD_SAFE
+  std::atomic<std::size_t> ref_count_;  ///< Thread safe reference counter
+#else
+  std::size_t ref_count_{0};  ///< Reference counter
+#endif
+};
+
+}  // namespace delpi

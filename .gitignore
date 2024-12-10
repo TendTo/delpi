@@ -75,6 +75,7 @@ coverage.xml
 
 # Docs
 docs/out/
+docs/pub/
 
 # Temporary files and directories
 temp/

@@ -19,8 +19,8 @@ namespace delpi {
  * Extracts the extension from @p name, meaning the part of the file name
  * after the last dot.
  * @note It returns an empty string if there is no extension in @p name.
- * @param name The name of the file.
- * @return The extension of the file.
+ * @param name name of the file
+ * @return extension of the file
  */
 std::string GetExtension(const std::string &name);
 
@@ -38,8 +38,9 @@ std::vector<std::string> SplitStringByWhitespace(const char *in);
 /**
  * Get the files in a directory.
  *
- * @param path The path to the directory.
- * @return A vector of strings, each string being the path to each file in the directory.
+ * @param path path to the directory
+ * @param extension filter the selection to files that have a matching extension
+ * @return vector of strings, each string being the path to each file in the directory.
  */
 std::vector<std::string> GetFiles(const std::string &path, const std::string& extension = "");
 
