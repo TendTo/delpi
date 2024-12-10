@@ -20,3 +20,11 @@ struct LinearMonomial {
 std::ostream& operator<<(std::ostream&, const LinearMonomial& linear_monomial);
 
 }  // namespace delpi
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::LinearMonomial);
+
+#endif

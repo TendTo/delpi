@@ -19,3 +19,9 @@ delpi_cc_googletest(
     tags = ["symbolic"],
     deps = ["//delpi/symbolic:expression"],
 )
+
+delpi_cc_googletest(
+    name = "test_formula",
+    tags = ["symbolic"],
+    deps = ["//delpi/symbolic:formula"],
+)

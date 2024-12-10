@@ -39,6 +39,7 @@ std::vector<Variable> ExpressionCell::variables() const {
 }
 
 bool ExpressionCell::equal_to(const ExpressionCell& o) const noexcept {
+  if (this == &o) return true;
   return std::ranges::equal(
       addends_, o.addends_,
       [](const std::pair<const Variable, mpq_class>& p1, const std::pair<const Variable, mpq_class>& p2) {
@@ -47,6 +48,7 @@ bool ExpressionCell::equal_to(const ExpressionCell& o) const noexcept {
 }
 bool ExpressionCell::less(const ExpressionCell& o) const noexcept {
   // Compare the two maps.
+  if (this == &o) return false;
   return std::ranges::lexicographical_compare(
       addends_, o.addends_,
       [](const std::pair<const Variable, mpq_class>& p1, const std::pair<const Variable, mpq_class>& p2) {

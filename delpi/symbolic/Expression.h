@@ -59,20 +59,16 @@ class Expression {
   /** @getter{reference counter, underlying expression cell} */
   [[nodiscard]] std::size_t use_count() const;
 
-  /**
-   * Checks structural equality.
-   *
-   * Two expressions e1 and e2 are structurally equal when they have the same representation.
-   */
+  /** @equal_to{expressions, Two expressions are structurally equal when they have the same representation.} */
   [[nodiscard]] bool equal_to(const Expression& o) const noexcept;
   /** @less{expressions} */
   [[nodiscard]] bool less(const Expression& o) const noexcept;
   /** @hash{expression} */
   [[nodiscard]] std::size_t hash() const noexcept;
-
   /**
    * Evaluates using a given environment (by default, an empty environment).
    * @param env map between each variable and its value
+   * @return value of the expression in the given environment
    * @throws std::exception if there exists variable in this expression whose assignment is not provided by @p env
    */
   [[nodiscard]] mpq_class Evaluate(const Environment& env = {}) const;
@@ -83,9 +79,9 @@ class Expression {
    *
    * Note that the substitutions occur simultaneously.
    * @code
-   * Expression e = x / y;
+   * Expression e = x + 2 * y;
    * Substitution s = {{x, y}, {y, x}};
-   * e.Substitute(s);  // returns y / x
+   * e.Substitute(s);  // returns y + 2 * x
    * @endcode
    * @param s map of substitutions. Maps the old variable to the new one.
    * @return expression produced by the substitution
@@ -110,6 +106,9 @@ class Expression {
    * @return reference to this object
    */
   Expression& Subtract(const Variable& var, const mpq_class& coeff);
+
+  Expression operator-() const;
+  Expression operator+() const;
 
   Expression& operator*=(const mpq_class& o);
   Expression& operator/=(const mpq_class& o);
@@ -177,3 +176,11 @@ struct std::equal_to<delpi::Expression> {
     return lhs.equal_to(rhs);
   }
 };
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::Expression);
+
+#endif

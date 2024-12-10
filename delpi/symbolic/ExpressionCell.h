@@ -38,7 +38,7 @@ class ExpressionCell : public SelfReferenceCountingObject {
   [[nodiscard]] bool equal_to(const ExpressionCell& o) const noexcept;
   /** @less{expression cells} */
   [[nodiscard]] bool less(const ExpressionCell& o) const noexcept;
-  /** @hash{expression cells} */
+  /** @hash{expression cell} */
   [[nodiscard]] std::size_t hash() const noexcept;
 
   /**

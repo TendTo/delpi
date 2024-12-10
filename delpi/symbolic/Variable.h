@@ -54,6 +54,8 @@ class Variable {
   /** @hash{variable, The hash is based on the ID of the variable.} */
   [[nodiscard]] size_t hash() const noexcept { return std::hash<Id>{}(id_); }
 
+  Variable operator+() const { return *this; }
+
  private:
   static std::vector<std::string> names_;  ///< Names of all existing variables.
   /**
@@ -85,3 +87,11 @@ template <>
 struct std::equal_to<delpi::Variable> {
   bool operator()(const delpi::Variable &lhs, const delpi::Variable &rhs) const noexcept { return lhs.equal_to(rhs); }
 };
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::Variable);
+
+#endif

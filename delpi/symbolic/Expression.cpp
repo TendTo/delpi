@@ -71,7 +71,11 @@ Expression& Expression::Add(const Variable& var, const mpq_class& coeff) {
   ptr_->Add(var, coeff);
   return *this;
 }
+
 Expression& Expression::Subtract(const Variable& var, const mpq_class& coeff) { return Add(var, -coeff); }
+
+Expression Expression::operator-() const { return *this * -1; }
+Expression Expression::operator+() const { return *this; }
 
 Expression& Expression::operator+=(const Variable& o) { return Add(o, 1); }
 Expression& Expression::operator-=(const Variable& o) { return Subtract(o, 1); }
