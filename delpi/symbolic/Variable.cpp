@@ -29,7 +29,7 @@ Variable::Id Variable::GetNextId() {
 Variable::Variable(std::string name) : id_{GetNextId()} {
   DELPI_ASSERT(id_ < std::numeric_limits<Id>::max(), "The ID of the variable has reached the maximum value.");
   names_.push_back(std::move(name));
-  DELPI_ASSERT(names_.size() == id_ + 1u, "The size of the names vector is not equal to the ID of the variable.");
+  DELPI_ASSERT(names_.size() == id_ + 2u, "The size of the names vector is not equal to the ID + dummy string.");
 }
 
 ostream &operator<<(ostream &os, const Variable &var) { return os << var.name(); }

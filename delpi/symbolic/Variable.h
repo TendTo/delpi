@@ -45,7 +45,7 @@ class Variable {
   /** @getter{id, variable} */
   [[nodiscard]] Id id() const { return id_; }
   /** @getter{name, variable} */
-  [[nodiscard]] const std::string &name() const { return names_[id_]; }
+  [[nodiscard]] const std::string &name() const { return names_[id_ + 1]; }
 
   /** @equal_to{variable, Two variables are the same if their @ref id_ is the same, regardless of their name.} */
   [[nodiscard]] bool equal_to(const Variable &o) const { return id_ == o.id_; }
