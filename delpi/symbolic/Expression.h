@@ -15,97 +15,65 @@
 #include <unordered_map>
 #include <vector>
 
-#include "LinearMonomial.h"
 #include "delpi/libs/gmp.h"
+#include "delpi/symbolic/LinearMonomial.h"
 #include "delpi/symbolic/Variable.h"
-#include "delpi/util/hash.hpp"
+#include "delpi/util/intrusive_ptr.hpp"
 
 namespace delpi {
+
+// Forward declaration. Found in "delpi/symbolic/ExpressionCell.h"
+class ExpressionCell;
 
 /**
  * Represents a symbolic form of an expression.
  *
  * Its syntax tree is as follows:
- *
- * @verbatim
- * E := Var | Constant | E + ... + E | Constant * E | inf | NaN
- * @endverbatim
- * In the implementation, Expression directly stores an intrusive_ptr to a const ExpressionCell class
- * that is a super-class of different kinds of symbolic expressions (e.g. ExpressionAdd, ExpressionConst, ...),
- * which makes it efficient to copy, move, and assign to another Expression.
- * @note -E is represented as -1 * E internally.
- * @note A subtraction E1 - E2 is represented as E1 + (-1 * E2) internally.
- * The following simple simplifications are implemented:
- * @verbatim
- * E + 0             ->  E
- * 0 + E             ->  E
- * E - 0             ->  E
- * E - E             ->  0
- * E * 1             ->  E
- * 1 * E             ->  E
- * E * 0             ->  0
- * 0 * E             ->  0
- * @endverbatim
- * Constant folding is implemented:
- * @verbatim
- * E(c1) + E(c2)  ->  E(c1 + c2)    // c1, c2 are constants
- * E(c1) - E(c2)  ->  E(c1 - c2)
- * E(c1) * E(c2)  ->  E(c1 * c2)
- * E(c1) / E(c2)  ->  E(c1 / c2)
- * @endverbatim
- * Relational operators over expressions (==, !=, <, >, <=, >=) return a Formula instead of bool.
- * Those operations are declared in formula.h file.
+ * ```
+ * E := Var | E + ... + E | Constant * E
+ * ```
  * To check structural equality between two expressions use @ref Expression::equal_to.
  */
 class Expression {
  public:
+  using Addend = std::pair<Variable, mpq_class>;
   using Addends = std::map<Variable, mpq_class>;
   using Environment = std::map<Variable, mpq_class>;
+  using SubstitutionMap = std::unordered_map<Variable, Variable>;
 
   /** @constructor{expression, Default to zero} */
-  Expression() = default;
-  Expression(const LinearMonomial& linear_monomial);  // NOLINT (runtime/explicit): This conversion is desirable.
+  Expression();
+  Expression(Variable var);                    // NOLINT (runtime/explicit): This conversion is desirable.
+  Expression(LinearMonomial linear_monomial);  // NOLINT (runtime/explicit): This conversion is desirable.
   explicit Expression(Addends addends);
+  Expression(const Expression& e);
+  Expression(Expression&& e) noexcept;
+  Expression& operator=(const Expression& e);
+  Expression& operator=(Expression&& e) noexcept;
+  ~Expression();
 
   /** @getter{variables, expression} */
   [[nodiscard]] std::vector<Variable> variables() const;
+  /** @getter{variables, expression} */
+  [[nodiscard]] const Addends& addends() const;
+  /** @getter{reference counter, underlying expression cell} */
+  [[nodiscard]] std::size_t use_count() const;
 
   /**
    * Checks structural equality.
    *
-   * Two expressions e1 and e2 are structurally equal when they have the same
-   * internal AST(abstract-syntax tree) representation. Please note that we can
-   * have two computationally (or extensionally) equivalent expressions which
-   * are not structurally equal. For example, consider:
-   * @f[
-   *    e1 = 2 * (x + y) \\
-   *    e2 = 2x + 2y
-   * @f]
-   * Obviously, we know that e1 and e2 are evaluated to the same value for all
-   * assignments to x and y. However, e1 and e2 are not structurally equal by
-   * the definition. Note that e1 is a multiplication expression
-   * (is_multiplication(e1) is true) while e2 is an addition expression
-   * (is_addition(e2) is true).
-   *
-   * Note that for polynomial cases, you can use Expand method and check if two
-   * polynomial expressions p1 and p2 are computationally equal. To do so, you
-   * check the following:
-   * @code
-   *     p1.Expand().EqualTo(p2.Expand())
-   * @endcode
+   * Two expressions e1 and e2 are structurally equal when they have the same representation.
    */
-  [[nodiscard]] bool equal_to(const Expression& e) const;
+  [[nodiscard]] bool equal_to(const Expression& o) const noexcept;
   /** @less{expressions} */
-  [[nodiscard]] bool less(const Expression& e) const;
+  [[nodiscard]] bool less(const Expression& o) const noexcept;
   /** @hash{expression} */
-  [[nodiscard]] std::size_t hash() const noexcept { return hash_value<Addends>{}(addends_); }
+  [[nodiscard]] std::size_t hash() const noexcept;
 
   /**
    * Evaluates using a given environment (by default, an empty environment).
-   * @throws std::exception if there exists a non-random variable in this expression
-   * whose assignment is not provided by @p env
-   * @throws std::exception if an unassigned random variable is detected while @p random_generator is `nullptr`
-   * @throws std::exception if NaN is detected during evaluation.
+   * @param env map between each variable and its value
+   * @throws std::exception if there exists variable in this expression whose assignment is not provided by @p env
    */
   [[nodiscard]] mpq_class Evaluate(const Environment& env = {}) const;
 
@@ -119,14 +87,29 @@ class Expression {
    * Substitution s = {{x, y}, {y, x}};
    * e.Substitute(s);  // returns y / x
    * @endcode
-   * @throws std::exception if NaN is detected during substitution.
+   * @param s map of substitutions. Maps the old variable to the new one.
+   * @return expression produced by the substitution
    */
-  [[nodiscard]] Expression Substitute(const std::unordered_map<Variable, Variable>& s) const;
-  /** @getter{string representation, expression}. */
+  [[nodiscard]] Expression Substitute(const SubstitutionMap& s) const;
+  /** @getter{string representation, expression} */
   [[nodiscard]] std::string ToString() const;
 
-  Expression& Add(const Variable& var, const mpq_class& val);
-  Expression& Subtract(const Variable& var, const mpq_class& val);
+  /**
+   * Add a linear monomial @f$ c \cdot x @$,
+   * where @f$ c @f$ is a constant and @f$ x @f$ is a Variable, to the current expression.
+   * @param var variable of the linear monomial
+   * @param coeff coefficient of the linear monomial
+   * @return reference to this object
+   */
+  Expression& Add(const Variable& var, const mpq_class& coeff);
+  /**
+   * Subtract a linear monomial @f$ c \cdot x @f$,
+   * where @f$ c @f$ is a constant and @f$ x @f$ is a Variable, to the current expression.
+   * @param var variable of the linear monomial
+   * @param coeff coefficient of the linear monomial
+   * @return reference to this object
+   */
+  Expression& Subtract(const Variable& var, const mpq_class& coeff);
 
   Expression& operator*=(const mpq_class& o);
   Expression& operator/=(const mpq_class& o);
@@ -146,15 +129,30 @@ class Expression {
   Expression operator+(const Expression& o) const;
   Expression operator-(const Expression& o) const;
 
-  Addends addends_;
+  /**
+   * Print a string representation of this class to the provided @p os.
+   *
+   * It is an alternative to the more standard operator<<.
+   * @param os output stream
+   * @return reference to the output stream
+   */
+  std::ostream& Print(std::ostream& os) const;
+
+ private:
+  intrusive_ptr<ExpressionCell> ptr_;  ///< Internal pointer to the ExpressionCell
 };
 
-Expression operator*(const mpq_class& o, const Expression& e);
+Expression operator-(const Variable& var);
 
-Expression operator+(const Variable& o, const Expression& e);
-Expression operator-(const Variable& o, const Expression& e);
-Expression operator+(const LinearMonomial& o, const Expression& e);
-Expression operator-(const LinearMonomial& o, const Expression& e);
+Expression operator*(const mpq_class& lhs, const Expression& rhs);
+Expression operator*(const mpq_class& lhs, const Variable& rhs);
+Expression operator*(const Variable& lhs, const mpq_class& rhs);
+Expression operator/(const Variable& lhs, const mpq_class& rhs);
+
+Expression operator+(const Variable& lhs, const Expression& rhs);
+Expression operator-(const Variable& lhs, const Expression& rhs);
+Expression operator+(const LinearMonomial& lhs, const Expression& rhs);
+Expression operator-(const LinearMonomial& lhs, const Expression& rhs);
 
 std::ostream& operator<<(std::ostream& os, const Expression& e);
 
@@ -163,18 +161,19 @@ std::ostream& operator<<(std::ostream& os, const Expression& e);
 /* Provides std::hash<smats::Expression>. */
 template <>
 struct std::hash<delpi::Expression> {
-  size_t operator()(const delpi::Expression& val) const noexcept { return val.hash(); }
+  size_t operator()(const delpi::Expression& e) const noexcept { return e.hash(); }
 };
 
 /* Provides std::less<smats::Expression>. */
 template <>
 struct std::less<delpi::Expression> {
-  bool operator()(const delpi::Expression& lhs, const delpi::Expression& rhs) const { return lhs.less(rhs); }
+  bool operator()(const delpi::Expression& lhs, const delpi::Expression& rhs) const noexcept { return lhs.less(rhs); }
 };
 
 /* Provides std::equal_to<smats::Expression>. */
-template <class T>
+template <>
 struct std::equal_to<delpi::Expression> {
-  bool operator()(const delpi::Expression& lhs, const delpi::Expression& rhs) const { return lhs.equal_to(rhs); }
+  bool operator()(const delpi::Expression& lhs, const delpi::Expression& rhs) const noexcept {
+    return lhs.equal_to(rhs);
+  }
 };
-

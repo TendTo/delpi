@@ -7,6 +7,7 @@ delpi_srcs(
     name = "srcs",
     deps = [
         "//delpi/libs:all_srcs",
+        "//delpi/symbolic:all_srcs",
         "//delpi/util:all_srcs",
     ],
 )

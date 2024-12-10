@@ -7,8 +7,6 @@
  */
 #pragma once
 
-#include "delpi/util/concepts.h"
-
 namespace delpi {
 
 /**

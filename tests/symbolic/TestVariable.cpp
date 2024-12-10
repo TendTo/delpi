@@ -86,13 +86,22 @@ TEST_F(TestVariable, Less) {
 }
 
 TEST_F(TestVariable, Ostream) {
-  EXPECT_EQ(std::stringstream{} << d_, "dummy");
-  EXPECT_EQ(std::stringstream{} << x_, "x");
-  EXPECT_EQ(std::stringstream{} << y_, "y");
-  EXPECT_EQ(std::stringstream{} << z_, "z");
+  EXPECT_EQ((std::stringstream{} << d_).str(), "dummy");
+  EXPECT_EQ((std::stringstream{} << x_).str(), "x");
+  EXPECT_EQ((std::stringstream{} << y_).str(), "y");
+  EXPECT_EQ((std::stringstream{} << z_).str(), "z");
 }
 
 TEST_F(TestVariable, NoThrowMoveSintax) {
   static_assert(std::is_nothrow_move_constructible_v<Variable>, "Variable should be nothrow_move_constructible.");
   static_assert(std::is_nothrow_move_assignable_v<Variable>, "Variable should be nothrow_move_assignable.");
+}
+
+TEST_F(TestVariable, NoThrowComparators) {
+  static_assert(std::is_nothrow_invocable_r_v<bool, decltype(&Variable::equal_to), const Variable&, const Variable&>,
+                "Method equal_to should be is_nothrow_invocable.");
+  static_assert(std::is_nothrow_invocable_r_v<bool, decltype(&Variable::less), const Variable&, const Variable&>,
+                "Method less should be is_nothrow_invocable.");
+  static_assert(std::is_nothrow_invocable_r_v<bool, decltype(&Variable::hash), const Variable&>,
+                "Method hash should be is_nothrow_invocable");
 }

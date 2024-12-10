@@ -3,7 +3,7 @@ load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
 
 package(default_visibility = [
     "//delpi:__subpackages__",
-    "//test:__subpackages__",
+    "//tests:__subpackages__",
 ])
 
 delpi_srcs(name = "srcs")
@@ -14,6 +14,16 @@ delpi_hdrs_tar(
 )
 
 delpi_cc_library(
+    name = "symbolic",
+    hdrs = ["symbolic.h"],
+    deps = [
+        ":expression",
+        ":linear_monomial",
+        ":variable",
+    ],
+)
+
+delpi_cc_library(
     name = "variable",
     srcs = ["Variable.cpp"],
     hdrs = ["Variable.h"],
@@ -21,11 +31,35 @@ delpi_cc_library(
 )
 
 delpi_cc_library(
+    name = "linear_monomial",
+    srcs = ["LinearMonomial.cpp"],
+    hdrs = ["LinearMonomial.h"],
+    deps = [
+        ":variable",
+        "//delpi/libs:gmp",
+    ],
+)
+
+delpi_cc_library(
     name = "expression",
-    srcs = ["Expression.cpp"],
-    hdrs = ["Expression.h"],
-    implementation_deps = ["//delpi/util:error"],
-    deps = [":variable"],
+    srcs = [
+        "Expression.cpp",
+        "ExpressionCell.cpp",
+    ],
+    hdrs = [
+        "Expression.h",
+        "ExpressionCell.h",
+    ],
+    implementation_deps = [
+        "//delpi/util:error",
+        "//delpi/util:hash",
+    ],
+    deps = [
+        ":linear_monomial",
+        ":variable",
+        "//delpi/util:intrusive_ptr",
+        "//delpi/util:self_reference_counting_object",
+    ],
 )
 
 cpplint()

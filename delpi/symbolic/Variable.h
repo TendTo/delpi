@@ -48,11 +48,11 @@ class Variable {
   [[nodiscard]] const std::string &name() const { return names_[id_ + 1]; }
 
   /** @equal_to{variable, Two variables are the same if their @ref id_ is the same, regardless of their name.} */
-  [[nodiscard]] bool equal_to(const Variable &o) const { return id_ == o.id_; }
+  [[nodiscard]] bool equal_to(const Variable &o) const noexcept { return id_ == o.id_; }
   /** @less{variable, The ordering is based on the ID of the variable.} */
-  [[nodiscard]] bool less(const Variable &o) const { return id_ < o.id_; }
+  [[nodiscard]] bool less(const Variable &o) const noexcept { return id_ < o.id_; }
   /** @hash{variable, The hash is based on the ID of the variable.} */
-  [[nodiscard]] size_t hash() const { return std::hash<Id>{}(id_); }
+  [[nodiscard]] size_t hash() const noexcept { return std::hash<Id>{}(id_); }
 
  private:
   static std::vector<std::string> names_;  ///< Names of all existing variables.
@@ -70,3 +70,18 @@ std::ostream &operator<<(std::ostream &os, const Variable &var);
 using VariableSet = std::set<Variable>;
 
 }  // namespace delpi
+
+template <>
+struct std::hash<delpi::Variable> {
+  size_t operator()(const delpi::Variable &v) const noexcept { return v.hash(); }
+};
+
+template <>
+struct std::less<delpi::Variable> {
+  bool operator()(const delpi::Variable &lhs, const delpi::Variable &rhs) const noexcept { return lhs.less(rhs); }
+};
+
+template <>
+struct std::equal_to<delpi::Variable> {
+  bool operator()(const delpi::Variable &lhs, const delpi::Variable &rhs) const noexcept { return lhs.equal_to(rhs); }
+};
