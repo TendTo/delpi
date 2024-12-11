@@ -4,9 +4,9 @@
  * @licence BSD 3-Clause License
  */
 
-#include <iostream>
-
 #include "qsopt_ex.h"
+
+#include <iostream>
 
 namespace delpi::qsopt_ex {
 
@@ -76,8 +76,18 @@ std::ostream &operator<<(std::ostream &os, const MpqArray &array) {
   return os;
 }
 
-void QSXStart() { QSexactStart(); }
+namespace {
+bool is_qsopt_initialized = false;
+}
 
-void QSXFinish() { QSexactClear(); }
+void QSXStart() {
+  if (!is_qsopt_initialized) QSexactStart();
+  is_qsopt_initialized = true;
+}
+
+void QSXFinish() {
+  if (is_qsopt_initialized) QSexactClear();
+  is_qsopt_initialized = false;
+}
 
 }  // namespace delpi::qsopt_ex
