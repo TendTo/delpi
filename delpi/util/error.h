@@ -52,10 +52,10 @@
     }                                                                                                              \
   } while (false)
 
-#define DELPI_UNREACHABLE()                                                   \
-  do {                                                                        \
-    DELPI_CRITICAL_FMT("{}:{} Should not be reachable.", __FILE__, __LINE__); \
-    throw ::delpi::DelpiUnreachableException();                               \
+#define DELPI_UNREACHABLE()                                                                                      \
+  do {                                                                                                           \
+    DELPI_CRITICAL_FMT("{}:{} Should not be reachable.", __FILE__, __LINE__);                                    \
+    throw ::delpi::DelpiUnreachableException(fmt::format("{}:{} Should not be reachable.", __FILE__, __LINE__)); \
   } while (false)
 
 #define DELPI_RUNTIME_ERROR(msg)        \

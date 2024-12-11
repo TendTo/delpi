@@ -12,11 +12,12 @@
  */
 #pragma once
 
-#ifndef NLOG
-
-#include <fmt/core.h>     // IWYU pragma: export
+#include <fmt/core.h>  // IWYU pragma: export
 #include <fmt/ostream.h>  // IWYU pragma: export
 #include <fmt/ranges.h>   // IWYU pragma: export
+
+#ifndef NLOG
+
 #include <spdlog/logger.h>
 
 #include <memory>
