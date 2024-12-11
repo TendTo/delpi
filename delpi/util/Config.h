@@ -38,7 +38,7 @@ namespace delpi {
 class Config {
  public:
   /** Underlying LP solver used by the theory solver. */
-  enum class LPSolver {
+  enum class LpSolver {
     SOPLEX,   ///< Soplex Solver. Default option
     QSOPTEX,  ///< Qsoptex Solver
   };
@@ -48,7 +48,7 @@ class Config {
     MPS,   ///< MPS format
   };
   /** LP mode used by the LP solver. */
-  enum class LPMode {
+  enum class LpMode {
     AUTO = 0,                       ///< Let the LP solver choose the mode. Default option
     PURE_PRECISION_BOOSTING = 1,    ///< Use the precision boosting mode, if available
     PURE_ITERATIVE_REFINEMENT = 2,  ///< Use the iterative refinement mode, if available
@@ -87,7 +87,7 @@ class Config {
    * @getter{actual `lp_mode` parameter, configuration,
      If the lp_mode is LPMode::AUTO\, it will return the appropriate mode based on the lp_solver}
    */
-  [[nodiscard]] LPMode actual_lp_mode() const;
+  [[nodiscard]] LpMode actual_lp_mode() const;
   /**
    * @getter{actual `format` parameter, configuration,
      If the format is Format::AUTO\, it will return the appropriate format based on the filename extension}
@@ -104,10 +104,10 @@ class Config {
   DELPI_PARAMETER(format, Format, delpi::Config::Format::AUTO,
                   "Input file format\n"
                   "\t\tOne of: auto (1), mps (2)")
-  DELPI_PARAMETER(lp_mode, LPMode, delpi::Config::LPMode::AUTO,
+  DELPI_PARAMETER(lp_mode, LpMode, delpi::Config::LpMode::AUTO,
                   "LP mode used by the LP solver.\n"
                   "\t\tOne of: auto (1), pure-precision-boosting (2), pure-iterative-refinement (3), hybrid (4)")
-  DELPI_PARAMETER(lp_solver, LPSolver, delpi::Config::LPSolver::SOPLEX,
+  DELPI_PARAMETER(lp_solver, LpSolver, delpi::Config::LpSolver::SOPLEX,
                   "Underlying LP solver used by the theory solver.\n"
                   "\t\tOne of: soplex (1), qsoptex (2)")
   DELPI_PARAMETER(number_of_jobs, unsigned int, 1u, "Number of jobs")
@@ -134,9 +134,9 @@ class Config {
 };
 
 std::ostream &operator<<(std::ostream &os, const Config &config);
-std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
+std::ostream &operator<<(std::ostream &os, const Config::LpSolver &lp_solver);
 std::ostream &operator<<(std::ostream &os, const Config::Format &format);
-std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
+std::ostream &operator<<(std::ostream &os, const Config::LpMode &mode);
 
 }  // namespace delpi
 
@@ -145,8 +145,8 @@ std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
 #include "delpi/util/logging.h"
 
 OSTREAM_FORMATTER(delpi::Config);
-OSTREAM_FORMATTER(delpi::Config::LPSolver);
+OSTREAM_FORMATTER(delpi::Config::LpSolver);
 OSTREAM_FORMATTER(delpi::Config::Format);
-OSTREAM_FORMATTER(delpi::Config::LPMode);
+OSTREAM_FORMATTER(delpi::Config::LpMode);
 
 #endif

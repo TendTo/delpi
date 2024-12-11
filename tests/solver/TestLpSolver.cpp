@@ -16,7 +16,7 @@ using delpi::LpResult;
 using delpi::LpSolver;
 using delpi::Variable;
 
-class TestLpSolver : public ::testing::TestWithParam<Config::LPSolver> {
+class TestLpSolver : public ::testing::TestWithParam<Config::LpSolver> {
  protected:
   Config config_;
   Variable x_{"x"}, y_{"y"}, z_{"z"};
@@ -105,7 +105,7 @@ TEST_P(TestLpSolver, Optimise) {
   solver_->AddColumn(y_, 1);
   solver_->AddRow(x_ + y_, FormulaKind::Geq, 10);
   mpq_class precision{0};
-  const LpResult result = solver_->Optimise(precision);
+  const LpResult result = solver_->Solve(precision);
   EXPECT_EQ(result, delpi::LpResult::OPTIMAL);
   EXPECT_EQ(solver_->solution(x_), 0);
   EXPECT_EQ(solver_->solution(y_), 10);

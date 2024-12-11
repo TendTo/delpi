@@ -9,7 +9,7 @@
 
 #include "delpi/solver/solver.h"
 
-#include <pybind11/operators.h>
+#include <pybind11/stl.h>
 
 #include "pydelpi.h"
 
@@ -17,6 +17,23 @@ namespace py = pybind11;
 using namespace delpi;
 
 void init_solver(py::module_ &m) {
+  py::class_<Column>(m, "Column")  //
+      .def(py::init<>())
+      .def_readwrite("var", &Column::var)
+      .def_readwrite("lb", &Column::lb)
+      .def_readwrite("ub", &Column::ub)
+      .def_readwrite("obj", &Column::obj)
+      .def("__str__", STR_LAMBDA(Column))
+      .def("__repr__", REPR_LAMBDA(Column));
+
+  py::class_<Row>(m, "Row")  //
+      .def(py::init<>())
+      .def_readwrite("addends", &Row::addends)
+      .def_readwrite("lb", &Row::lb)
+      .def_readwrite("ub", &Row::ub)
+      .def("__str__", STR_LAMBDA(Row))
+      .def("__repr__", REPR_LAMBDA(Row));
+
   py::enum_<LpResult>(m, "LpResult")
       .value("OPTIMAL", LpResult::OPTIMAL)
       .value("DELTA_OPTIMAL", LpResult::DELTA_OPTIMAL)
@@ -24,4 +41,25 @@ void init_solver(py::module_ &m) {
       .value("INFEASIBLE", LpResult::INFEASIBLE)
       .value("ERROR", LpResult::ERROR)
       .value("UNSOLVED", LpResult::UNSOLVED);
+
+  py::class_<LpSolver>(m, "LpSolver")
+      .def_static("get_instance", &LpSolver::GetInstance, py::arg("config"))
+      .def("add_column", py::overload_cast<const Variable &>(&LpSolver::AddColumn), py::arg("column"))
+      .def("add_column", py::overload_cast<const Variable &, const mpq_class &>(&LpSolver::AddColumn),
+           py::arg("column"), py::arg("obj"))
+      .def("add_column",
+           py::overload_cast<const Variable &, const mpq_class &, const mpq_class &>(&LpSolver::AddColumn),
+           py::arg("column"), py::arg("lb"), py::arg("ub"))
+      .def("add_column",
+           py::overload_cast<const Variable &, const mpq_class &, const mpq_class &, const mpq_class &>(
+               &LpSolver::AddColumn),
+           py::arg("column"), py::arg("obj"), py::arg("lb"), py::arg("ub"))
+      .def("add_row", py::overload_cast<const Formula &>(&LpSolver::AddRow), py::arg("formula"))
+      .def("add_row", py::overload_cast<const Expression &, FormulaKind, const mpq_class &>(&LpSolver::AddRow),
+           py::arg("formula"), py::arg("kind"), py::arg("rhs"))
+      .def("solve", &LpSolver::Solve, py::arg("precision"), py::arg("store_solution") = true)
+      .def("solution", [](const LpSolver &self) { return self.solution(); })
+      .def("solution", [](const LpSolver &self, const Variable &var) { return self.solution(var); })
+      .def("row", &LpSolver::row, py::arg("row_idx"))
+      .def("column", &LpSolver::column, py::arg("column_idx"));
 }

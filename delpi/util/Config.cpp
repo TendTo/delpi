@@ -18,10 +18,10 @@ Config::Config(const Format format) : format_{format} {}
 
 std::string Config::filename_extension() const { return GetExtension(filename_.get()); }
 
-Config::LPMode Config::actual_lp_mode() const {
+Config::LpMode Config::actual_lp_mode() const {
   switch (lp_mode_.get()) {
-    case LPMode::AUTO:
-      return lp_solver_.get() == LPSolver::QSOPTEX ? LPMode::PURE_PRECISION_BOOSTING : LPMode::HYBRID;
+    case LpMode::AUTO:
+      return lp_solver_.get() == LpSolver::QSOPTEX ? LpMode::PURE_PRECISION_BOOSTING : LpMode::HYBRID;
     default:
       return lp_mode_.get();
   }
@@ -38,11 +38,11 @@ Config::Format Config::actual_format() const {
   }
 }
 
-std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver) {
+std::ostream &operator<<(std::ostream &os, const Config::LpSolver &lp_solver) {
   switch (lp_solver) {
-    case Config::LPSolver::QSOPTEX:
+    case Config::LpSolver::QSOPTEX:
       return os << "qsoptex";
-    case Config::LPSolver::SOPLEX:
+    case Config::LpSolver::SOPLEX:
       return os << "soplex";
     default:
       DELPI_UNREACHABLE();
@@ -60,15 +60,15 @@ std::ostream &operator<<(std::ostream &os, const Config::Format &format) {
   }
 }
 
-std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode) {
+std::ostream &operator<<(std::ostream &os, const Config::LpMode &mode) {
   switch (mode) {
-    case Config::LPMode::AUTO:
+    case Config::LpMode::AUTO:
       return os << "A";
-    case Config::LPMode::PURE_PRECISION_BOOSTING:
+    case Config::LpMode::PURE_PRECISION_BOOSTING:
       return os << "P";
-    case Config::LPMode::PURE_ITERATIVE_REFINEMENT:
+    case Config::LpMode::PURE_ITERATIVE_REFINEMENT:
       return os << "I";
-    case Config::LPMode::HYBRID:
+    case Config::LpMode::HYBRID:
       return os << "H";
     default:
       DELPI_UNREACHABLE();

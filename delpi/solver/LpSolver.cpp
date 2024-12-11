@@ -30,9 +30,9 @@ LpSolver::LpSolver(const Config& config, mpq_class ninfinity, mpq_class infinity
 
 std::unique_ptr<LpSolver> LpSolver::GetInstance(const Config& config) {
   switch (config.lp_solver()) {
-    case Config::LPSolver::SOPLEX:
+    case Config::LpSolver::SOPLEX:
       return std::make_unique<SoplexLpSolver>(config);
-    case Config::LPSolver::QSOPTEX:
+    case Config::LpSolver::QSOPTEX:
       return std::make_unique<QsoptexLpSolver>(config);
     default:
       DELPI_UNREACHABLE();
@@ -66,8 +66,10 @@ LpSolver::RowIndex LpSolver::AddRow(const Expression& lhs, const FormulaKind sen
   return AddRow(lhs.addends(), sense, rhs);
 }
 
-void LpSolver::ReserveColumns(const int size) { DELPI_ASSERT(size >= 0, "Invalid number of columns."); }
-void LpSolver::ReserveRows(const int size) { DELPI_ASSERT(size >= 0, "Invalid number of rows."); }
+void LpSolver::ReserveColumns([[maybe_unused]] const int size) {
+  DELPI_ASSERT(size >= 0, "Invalid number of columns.");
+}
+void LpSolver::ReserveRows([[maybe_unused]] const int size) { DELPI_ASSERT(size >= 0, "Invalid number of rows."); }
 
 void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective) {
   for (const auto& [column, value] : objective) SetObjective(column, value);
@@ -75,14 +77,14 @@ void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective)
 void LpSolver::SetObjective(const std::vector<mpq_class>& objective) {
   for (int i = 0; i < static_cast<int>(objective.size()); ++i) SetObjective(i, objective.at(i));
 }
-LpResult LpSolver::Optimise(mpq_class& precision, const bool store_solution) {
+LpResult LpSolver::Solve(mpq_class& precision, const bool store_solution) {
   DELPI_ASSERT(num_rows() > 0, "Cannot optimise without rows.");
   DELPI_ASSERT(num_columns() > 0, "Cannot optimise without columns.");
   const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
   solution_.clear();
   dual_solution_.clear();
-  return OptimiseCore(precision, store_solution);
+  return SolveCore(precision, store_solution);
 }
 void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetObjective(var_to_col_.at(var), value); }
 

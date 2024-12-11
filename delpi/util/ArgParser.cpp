@@ -132,16 +132,16 @@ void ArgParser::AddOptions() {
   DELPI_PARSE_PARAM_ENUM(
       parser_, lp_mode, "--lp-mode",
       "[ auto | pure-precision-boosting | pure-iterative-refinement | hybrid ] or [ 1 | 2 | 3 | 4 ]",
-      if (value == "auto" || value == "1") return Config::LPMode::AUTO;
-      if (value == "pure-precision-boosting" || value == "2") return Config::LPMode::PURE_PRECISION_BOOSTING;
-      if (value == "pure-iterative-refinement" || value == "3") return Config::LPMode::PURE_ITERATIVE_REFINEMENT;
-      if (value == "hybrid" || value == "4") return Config::LPMode::HYBRID;);
+      if (value == "auto" || value == "1") return Config::LpMode::AUTO;
+      if (value == "pure-precision-boosting" || value == "2") return Config::LpMode::PURE_PRECISION_BOOSTING;
+      if (value == "pure-iterative-refinement" || value == "3") return Config::LpMode::PURE_ITERATIVE_REFINEMENT;
+      if (value == "hybrid" || value == "4") return Config::LpMode::HYBRID;);
   DELPI_PARSE_PARAM_ENUM(parser_, format, "--format", "[ auto | mps ] or [ 1 | 2 ]",
                          if (value == "auto" || value == "1") return Config::Format::AUTO;
                          if (value == "mps" || value == "2") return Config::Format::MPS;);
   DELPI_PARSE_PARAM_ENUM(parser_, lp_solver, "--lp-solver", "[ soplex | qsoptex ] or [ 1 | 2 ]",
-                         if (value == "soplex" || value == "1") return Config::LPSolver::SOPLEX;
-                         if (value == "qsoptex" || value == "2") return Config::LPSolver::QSOPTEX;);
+                         if (value == "soplex" || value == "1") return Config::LpSolver::SOPLEX;
+                         if (value == "qsoptex" || value == "2") return Config::LpSolver::QSOPTEX;);
   DELPI_TRACE("ArgParser::ArgParser: added all arguments");
 }
 
@@ -155,8 +155,8 @@ Config ArgParser::ToConfig() const {
   DELPI_PARAM_TO_CONFIG("debug-scanning", debug_scanning, bool);
   config.m_filename().SetFromCommandLine(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
   DELPI_PARAM_TO_CONFIG("format", format, Config::Format);
-  DELPI_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LPMode);
-  DELPI_PARAM_TO_CONFIG("lp-solver", lp_solver, Config::LPSolver);
+  DELPI_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LpMode);
+  DELPI_PARAM_TO_CONFIG("lp-solver", lp_solver, Config::LpSolver);
   // DELPI_PARAM_TO_CONFIG("jobs", number_of_jobs, unsigned int);
   DELPI_PARAM_TO_CONFIG("optimize", optimize, bool);
   DELPI_PARAM_TO_CONFIG("precision", precision, double);
@@ -197,9 +197,9 @@ void ArgParser::ValidateOptions() {
     DELPI_INVALID_ARGUMENT("--verbose", "verbosity is forcefully set to 0 if --silent is provided");
   if (parser_.is_used("quiet") && parser_.is_used("silent"))
     DELPI_INVALID_ARGUMENT("--quiet", "verbosity is already set to 0 if --silent is provided");
-  if (parser_.get<Config::LPSolver>("lp-solver") == Config::LPSolver::QSOPTEX)
-    if (parser_.get<Config::LPMode>("lp-mode") != Config::LPMode::AUTO &&
-        parser_.get<Config::LPMode>("lp-mode") != Config::LPMode::PURE_PRECISION_BOOSTING)
+  if (parser_.get<Config::LpSolver>("lp-solver") == Config::LpSolver::QSOPTEX)
+    if (parser_.get<Config::LpMode>("lp-mode") != Config::LpMode::AUTO &&
+        parser_.get<Config::LpMode>("lp-mode") != Config::LpMode::PURE_PRECISION_BOOSTING)
       DELPI_INVALID_ARGUMENT("--lp-solver", "QSopt_ex only supports 'auto' and 'pure-precision-boosting' modes");
 }
 

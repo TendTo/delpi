@@ -43,7 +43,7 @@ TEST_F(TestArgParser, DefaultValues) {
   EXPECT_FALSE(parser_.get<bool>("debug-scanning"));
   EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::AUTO);
   EXPECT_FALSE(parser_.get<bool>("in"));
-  EXPECT_EQ(parser_.get<Config::LPSolver>("lp-solver"), Config::LPSolver::SOPLEX);
+  EXPECT_EQ(parser_.get<Config::LpSolver>("lp-solver"), Config::LpSolver::SOPLEX);
   EXPECT_FALSE(parser_.get<bool>("timings"));
   EXPECT_EQ(parser_.get<int>("verbose-simplex"), 0);
   EXPECT_FALSE(parser_.get<bool>("silent"));

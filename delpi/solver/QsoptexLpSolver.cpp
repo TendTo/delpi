@@ -168,7 +168,7 @@ void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
   DELPI_ASSERT(!status, "Invalid status");
 }
 
-LpResult QsoptexLpSolver::OptimiseCore(mpq_class& precision, const bool store_solution) {
+LpResult QsoptexLpSolver::SolveCore(mpq_class& precision, const bool store_solution) {
   const std::size_t rowcount = num_rows();
   const std::size_t colcount = num_columns();
   // x: must be allocated/deallocated using QSopt_ex.

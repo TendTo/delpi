@@ -17,18 +17,6 @@
 namespace py = pybind11;
 using namespace delpi;
 
-namespace {
-
-Expression::Addends to_mpq_map(const std::map<Variable, double> &addends) {
-  Expression::Addends mpq_addends;
-  for (const auto &[var, coeff] : addends) {
-    mpq_addends.emplace(var, coeff);
-  }
-  return mpq_addends;
-}
-
-}  // namespace
-
 void init_symbolic(py::module_ &m) {
   auto VariableClass = py::class_<Variable>(m, "Variable");
   auto ExpressionClass = py::class_<Expression>(m, "Expression");
@@ -78,19 +66,11 @@ void init_symbolic(py::module_ &m) {
 
   ExpressionClass.def(py::init<>())
       .def(py::init<const Variable &>(), py::arg("var"))
-      .def(py::init<>([](const std::map<Variable, double> &addends) {
-             return std::make_unique<Expression>(to_mpq_map(addends));
-           }),
-           py::arg("addends"))
+      .def(py::init<const std::map<Variable, mpq_class>>(), py::arg("addends"))
       .def_property_readonly("variables", &Expression::variables)
       .def("add", &Expression::Add, py::arg("var"), py::arg("coeff"))
       .def("subtract", &Expression::Subtract, py::arg("var"), py::arg("coeff"))
-      .def(
-          "evaluate",
-          [](const Expression &self, const std::map<Variable, double> &env) {
-            return self.Evaluate(to_mpq_map(env)).get_d();
-          },
-          py::arg("env"))
+      .def("evaluate", &Expression::Evaluate, py::arg("env"))
       .def("substitute", &Expression::Substitute, py::arg("expr_subst"))
       .def("equal_to", &Expression::equal_to, py::arg("o"))
       .def("less", &Expression::less, py::arg("o"))
@@ -160,10 +140,7 @@ void init_symbolic(py::module_ &m) {
       .def_property_readonly("variables", &Formula::variables)
       .def("equal_to", &Formula::equal_to, py::arg("o"))
       .def("less", &Formula::less, py::arg("o"))
-      .def(
-          "evaluate",
-          [](const Formula &self, const std::map<Variable, double> &env) { return self.Evaluate(to_mpq_map(env)); },
-          py::arg("env"))
+      .def("evaluate", &Formula::Evaluate, py::arg("env"))
       .def("substitute", &Formula::Substitute, py::arg("expr_subst"))
       .def("__str__", STR_LAMBDA(Formula))
       .def("__repr__", REPR_LAMBDA(Formula))

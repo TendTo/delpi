@@ -12,7 +12,7 @@
 
 const auto enabled_test_solvers = ::testing::Values(
 #ifdef DELPI_ENABLED_QSOPTEX
-    delpi::Config::LPSolver::QSOPTEX
+    delpi::Config::LpSolver::QSOPTEX
 #endif
 #ifdef DELPI_ENABLED_SOPLEX
 #ifdef DELPI_ENABLED_QSOPTEX
@@ -20,6 +20,6 @@ const auto enabled_test_solvers = ::testing::Values(
 #endif
 #endif
 #ifdef DELPI_ENABLED_SOPLEX
-    delpi::Config::LPSolver::SOPLEX
+    delpi::Config::LpSolver::SOPLEX
 #endif
 );

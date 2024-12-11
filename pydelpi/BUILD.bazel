@@ -13,7 +13,6 @@ delpi_pyblind_library(
 delpi_pybind_extension(
     name = "_pydelpi",
     srcs = [
-        "lib.cpp",
         "pydelpi.cpp",
         "pydelpi.h",
         "solver.cpp",

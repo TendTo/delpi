@@ -33,12 +33,12 @@ SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_na
   // Default is maximize.
   spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MINIMIZE);
   // Enable precision boosting
-  bool enable_precision_boosting = config_.lp_mode() != Config::LPMode::PURE_ITERATIVE_REFINEMENT;
+  bool enable_precision_boosting = config_.lp_mode() != Config::LpMode::PURE_ITERATIVE_REFINEMENT;
   spx_.setBoolParam(soplex::SoPlex::ADAPT_TOLS_TO_MULTIPRECISION, enable_precision_boosting);
   spx_.setBoolParam(soplex::SoPlex::PRECISION_BOOSTING, enable_precision_boosting);
   spx_.setIntParam(soplex::SoPlex::RATFAC_MINSTALLS, enable_precision_boosting ? 0 : 2);
   // Enable iterative refinement
-  bool enable_iterative_refinement = config_.lp_mode() != Config::LPMode::PURE_PRECISION_BOOSTING;
+  bool enable_iterative_refinement = config_.lp_mode() != Config::LpMode::PURE_PRECISION_BOOSTING;
   spx_.setBoolParam(soplex::SoPlex::ITERATIVE_REFINEMENT, enable_iterative_refinement);
   DELPI_DEBUG_FMT(
       "SoplexTheorySolver::SoplexTheorySolver: precision = {}, precision_boosting = {}, iterative_refinement = {}",
@@ -76,7 +76,6 @@ Row SoplexLpSolver::row(const RowIndex row_idx) const {
     const Variable& var = col_to_var_.at(addends.index(i));
     row.addends.emplace_back(var, std::move(gmp::ToMpqClass(coeff.backend().data())));
   }
-  std::cout << "row: " << row_idx << " " << row;
   return row;
 }
 
@@ -152,7 +151,7 @@ void SoplexLpSolver::SetObjective(const int column, const mpq_class& value) {
     spx_cols_.maxObj_w(column) = value.get_mpq_t();
 }
 
-LpResult SoplexLpSolver::OptimiseCore(mpq_class& precision, const bool store_solution) {
+LpResult SoplexLpSolver::SolveCore(mpq_class& precision, const bool store_solution) {
   if (!consolidated_) {
     spx_.addColsRational(spx_cols_);
     spx_.addRowsRational(spx_rows_);

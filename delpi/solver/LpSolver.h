@@ -251,7 +251,7 @@ class LpSolver {
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred
    */
-  LpResult Optimise(mpq_class& precision, bool store_solution = true);
+  LpResult Solve(mpq_class& precision, bool store_solution = true);
 
 #ifndef NDEBUG
   virtual void Dump() = 0;
@@ -268,7 +268,7 @@ class LpSolver {
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred
    */
-  virtual LpResult OptimiseCore(mpq_class& precision, bool store_solution) = 0;
+  virtual LpResult SolveCore(mpq_class& precision, bool store_solution) = 0;
 
   const Config& config_;  ///< Configuration to use
   IterationStats stats_;  ///< Statistics of the solver
