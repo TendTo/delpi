@@ -6,4 +6,7 @@
  */
 #pragma once
 
+#include "delpi/solver/Column.h"
 #include "delpi/solver/LpResult.h"
+#include "delpi/solver/LpSolver.h"
+#include "delpi/solver/Row.h"

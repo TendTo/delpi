@@ -4,14 +4,14 @@ load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
 package(default_visibility = [
     "//delpi:__subpackages__",
     "//pydelpi:__subpackages__",
-    "//test:__subpackages__",
+    "//tests:__subpackages__",
 ])
 
 delpi_srcs(name = "srcs")
 
 delpi_hdrs_tar(
     name = "hdrs_tar",
-    subfolder = "symbolic",
+    subfolder = "solver",
 )
 
 delpi_cc_library(
@@ -31,42 +31,76 @@ delpi_cc_library(
 )
 
 delpi_cc_library(
-    name = "lp_solver",
-    srcs = ["LpSolver.cpp"] + select({
-        "//tools:enabled_soplex": ["SoplexLpSolver.cpp"],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_qsoptex": ["QsoptexLpSolver.cpp"],
-        "//conditions:default": [],
-    }),
-    hdrs = ["LpSolver.h"] + select({
-        "//tools:enabled_soplex": ["SoplexLpSolver.h"],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_qsoptex": ["QsoptexLpSolver.h"],
-        "//conditions:default": [],
-    }),
+    name = "row",
+    srcs = ["Row.cpp"],
+    hdrs = ["Row.h"],
     implementation_deps = ["//delpi/util:error"],
     deps = [
-        ":lp_result",
-        ":lp_row_sense",
         "//delpi/libs:gmp",
-        "//delpi/util:config",
+        "//delpi/symbolic:variable",
         "//delpi/util:logging",
-        "//delpi/util:stats",
-    ] + select({
+    ],
+)
+
+delpi_cc_library(
+    name = "column",
+    srcs = ["Column.cpp"],
+    hdrs = ["Column.h"],
+    implementation_deps = ["//delpi/util:error"],
+    deps = [
+        "//delpi/libs:gmp",
+        "//delpi/symbolic:variable",
+        "//delpi/util:logging",
+    ],
+)
+
+delpi_cc_library(
+    name = "lp_solver",
+    srcs = ["LpSolver.cpp"] + select({
+        "//tools:enabled_soplex": [
+            "SoplexLpSolver.cpp",
+            "SoplexLpSolver.h",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_qsoptex": [
+            "QsoptexLpSolver.cpp",
+            "QsoptexLpSolver.h",
+        ],
+        "//conditions:default": [],
+    }),
+    hdrs = ["LpSolver.h"],
+    implementation_deps = ["//delpi/util:error"] + select({
         "//tools:enabled_soplex": ["//delpi/libs:soplex"],
         "//conditions:default": [],
     }) + select({
         "//tools:enabled_qsoptex": ["//delpi/libs:qsopt_ex"],
         "//conditions:default": [],
     }),
+    deps = [
+        ":column",
+        ":lp_result",
+        ":lp_row_sense",
+        ":row",
+        "//delpi/libs:gmp",
+        "//delpi/symbolic:expression",
+        "//delpi/symbolic:formula",
+        "//delpi/symbolic:variable",
+        "//delpi/util:config",
+        "//delpi/util:logging",
+        "//delpi/util:stats",
+    ],
 )
 
 delpi_cc_library(
     name = "solver",
     hdrs = ["solver.h"],
-    deps = [":lp_result"],
+    deps = [
+        ":column",
+        ":lp_result",
+        ":lp_solver",
+        ":row",
+    ],
 )
 
 cpplint()

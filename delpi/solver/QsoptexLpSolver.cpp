@@ -5,22 +5,25 @@
  */
 #include "QsoptexLpSolver.h"
 
+#include <iostream>
+#include <span>
+#include <unordered_set>
+
 #include "delpi/util/error.h"
 #include "delpi/util/logging.h"
 
 namespace delpi {
 
-extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const* /*prob*/, mpq_t* const /*x*/, const mpq_t infeas,
-                                               const mpq_t /*delta*/, void* data) {
-  DELPI_DEBUG_FMT("QsoptexTheorySolver::QsoptexCheckSatPartialSolution called with infeasibility {}",
-                    mpq_class(infeas));
-  auto* lp_solver = static_cast<QsoptexLpSolver*>(data);
+extern "C" void QsoptexPartialSolutionCb(mpq_QSdata const* /*prob*/, const mpq_t* /*x*/, const mpq_t* const /* y */,
+                                         const mpq_t obj_lb, const mpq_t obj_up, const mpq_t /*diff*/,
+                                         const mpq_t /*delta*/, void* data) {
+  DELPI_DEBUG_FMT("QsoptexLpSolver::QsoptexPartialSolutionCb called with objective value in [{}, {}]",
+                  mpq_class{obj_lb}, mpq_class{obj_up});
+  const QsoptexLpSolver* const lp_solver = static_cast<QsoptexLpSolver*>(data);
   // mpq_get_d() rounds towards 0.  This code guarantees infeas_gt > infeas.
-  double infeas_gt = nextafter(mpq_get_d(infeas), std::numeric_limits<double>::infinity());
-  std::cout << "PARTIAL: delta-sat with delta = " << infeas_gt << " ( > " << mpq_class{infeas} << ")";
-  if (lp_solver->config().with_timings()) {
-    std::cout << " after " << lp_solver->stats().timer().seconds() << " seconds";
-  }
+  const double infeas_gt = nextafter(mpq_get_d(obj_lb), std::numeric_limits<double>::infinity());
+  std::cout << "PARTIAL: delta-sat with delta = " << infeas_gt << " ( > " << obj_lb << ")";
+  if (lp_solver->config().with_timings()) std::cout << " after " << lp_solver->stats().timer().seconds() << " seconds";
   std::cout << std::endl;
 }
 
@@ -30,7 +33,7 @@ QsoptexLpSolver::QsoptexLpSolver(const Config& config, const std::string& class_
   ninfinity_ = mpq_class{mpq_NINFTY};
   infinity_ = mpq_class{mpq_INFTY};
 
-  qsx_ = mpq_QScreate_prob(nullptr, QS_MAX);
+  qsx_ = mpq_QScreate_prob(nullptr, QS_MIN);
   DELPI_ASSERT(qsx_ != nullptr, "Failed to create QSopt_ex problem");
   if (config_.verbose_simplex() > 3) {
     DELPI_RUNTIME_ERROR("With --lp-solver qsoptex, maximum value for --verbose-simplex is 3");
@@ -48,88 +51,120 @@ QsoptexLpSolver::~QsoptexLpSolver() {
 int QsoptexLpSolver::num_columns() const { return mpq_QSget_colcount(qsx_); }
 int QsoptexLpSolver::num_rows() const { return mpq_QSget_rowcount(qsx_); }
 
-void QsoptexLpSolver::AddColumn() {
-  DELPI_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
-  // Add the column to the LP
-  [[maybe_unused]] const int status = mpq_QSnew_col(qsx_, mpq_zeroLpNum, mpq_NINFTY, mpq_INFTY, nullptr);
+Column QsoptexLpSolver::column(ColumnIndex column_idx) const {
+  DELPI_ASSERT(column_idx < num_columns(), "Column index out of bounds");
+  mpq_t *obj = nullptr, *lb = nullptr, *ub = nullptr;
+
+  [[maybe_unused]] const int status =
+      mpq_QSget_columns_list(qsx_, 1, &column_idx, nullptr, nullptr, nullptr, nullptr, &obj, &lb, &ub, nullptr);
   DELPI_ASSERT(!status, "Invalid status");
+
+  Column column{};
+  column.var = col_to_var_.at(column_idx);
+  // If there is a value, move it to the optional field, otherwise free the memory
+  if (!mpq_equal(lb[0], mpq_NINFTY)) column.lb = std::move(gmp::ToMpqClass(lb[0]));
+  if (!mpq_equal(ub[0], mpq_INFTY)) column.ub = std::move(gmp::ToMpqClass(ub[0]));
+  if (gmp::ToMpqClass(obj[0]) != 0) column.obj = std::move(gmp::ToMpqClass(obj[0]));
+
+  return column;
 }
-void QsoptexLpSolver::AddColumn(const mpq_class& lb, const mpq_class& ub) {
-  DELPI_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
-  // Add the column to the LP
-  [[maybe_unused]] const int status = mpq_QSnew_col(qsx_, mpq_zeroLpNum, lb.get_mpq_t(), ub.get_mpq_t(), nullptr);
+Row QsoptexLpSolver::row(RowIndex row_idx) const {
+  DELPI_ASSERT(row_idx < num_rows(), "Row index out of bounds");
+  mpq_t *row_val = nullptr, *rhs = nullptr;
+  int *row_cnt = nullptr, *row_ind = nullptr;
+  char* sense = nullptr;
+
+  [[maybe_unused]] const int status =
+      mpq_QSget_rows_list(qsx_, 1, &row_idx, &row_cnt, nullptr, &row_ind, &row_val, &rhs, &sense, nullptr);
   DELPI_ASSERT(!status, "Invalid status");
-}
-void QsoptexLpSolver::AddColumn(const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) {
-  DELPI_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
-  // Add the column to the LP
-  [[maybe_unused]] const int status = mpq_QSnew_col(qsx_, obj.get_mpq_t(), lb.get_mpq_t(), ub.get_mpq_t(), nullptr);
-  DELPI_ASSERT(!status, "Invalid status");
-}
-void QsoptexLpSolver::AddRow(const Formula& formula, LpRowSense sense) {
-  [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, mpq_NINFTY, 'G', nullptr);
-  DELPI_ASSERT(!status, "Invalid status");
-  senses_.emplace_back(sense);
-  SetRowCoeff(num_rows() - 1, formula);
-}
-void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
-  DELPI_ASSERT_FMT(column < num_columns(), "Column index out of bounds: {} >= {}", column, num_columns());
-  [[maybe_unused]] const int status = mpq_QSchange_objcoef(qsx_, column, mpq_class{value}.get_mpq_t());
-  DELPI_ASSERT(!status, "Invalid status");
-}
-void QsoptexLpSolver::EnableRow(const int row, const LpRowSense sense, const mpq_class& rhs) {
-  DELPI_ASSERT_FMT(row < num_rows(), "Row index out of bounds: {} >= {}", row, num_rows());
-  DELPI_ASSERT_FMT(ninfinity_ <= rhs && rhs <= infinity_, "LP RHS value too large: {} <= {} <= {}", ninfinity_, rhs,
-                     infinity_);
-  DELPI_ASSERT_FMT(
-      sense == LpRowSense::EQ || sense == LpRowSense::LE || sense == LpRowSense::GE || sense == LpRowSense::NQ,
-      "Unsupported sense {}", sense);
-  if (sense == LpRowSense::NQ) {
-    DisableRow(row);
-    return;
+
+  Row row{};
+  const int non_zero_coefficient_count = row_cnt[0];
+  for (int i = 0; i < non_zero_coefficient_count; i++) {
+    row.addends.emplace_back(col_to_var_.at(row_ind[i]), std::move(gmp::ToMpqClass(row_val[i])));
+    DELPI_DEBUG_FMT("QsoptexTheorySolver::row: row[{}]({}) = {} * {}", row_idx, i, row.addends.back().second,
+                    row.addends.back().first);
   }
 
-  const char qsx_sense = toChar(sense);
-  mpq_QSchange_sense(qsx_, row, qsx_sense);
-  [[maybe_unused]] const int status = mpq_QSchange_rhscoef(qsx_, row, mpq_class{rhs}.get_mpq_t());
-  DELPI_ASSERT(!status, "Invalid status");
-}
-void QsoptexLpSolver::EnableBound(const int column, const LpColBound bound, const mpq_class& value) {
-  [[maybe_unused]] int status = 0;
-  switch (bound) {
-    case LpColBound::B:
-      status = mpq_QSchange_bound(qsx_, column, 'L', value.get_mpq_t());
-      status = mpq_QSchange_bound(qsx_, column, 'U', value.get_mpq_t());
+  switch (sense[0]) {
+    case 'G':
+      row.lb = std::move(gmp::ToMpqClass(rhs[0]));
       break;
-    case LpColBound::L:
-      status = mpq_QSchange_bound(qsx_, column, 'L', value.get_mpq_t());
-      status = mpq_QSchange_bound(qsx_, column, 'U', infinity_.get_mpq_t());
+    case 'L':
+      row.ub = std::move(gmp::ToMpqClass(rhs[0]));
       break;
-    case LpColBound::U:
-      status = mpq_QSchange_bound(qsx_, column, 'L', ninfinity_.get_mpq_t());
-      status = mpq_QSchange_bound(qsx_, column, 'U', value.get_mpq_t());
-      break;
-    case LpColBound::F:
-    case LpColBound::D:
-      DisableBound(column);
+    case 'E':
+      row.lb = gmp::ToMpqClass(rhs[0]);
+      row.ub = std::move(gmp::ToMpqClass(rhs[0]));
       break;
     default:
       DELPI_UNREACHABLE();
   }
-  DELPI_ASSERT(!status, "Invalid status");
+
+  mpq_QSfree(row_cnt);
+  mpq_QSfree(row_ind);
+  mpq_QSfree(sense);
+
+  return row;
 }
-void QsoptexLpSolver::EnableBound(const int column, const mpq_class& lb, const mpq_class& ub) {
-  [[maybe_unused]] int status = mpq_QSchange_bound(qsx_, column, 'L', lb.get_mpq_t());
+
+LpSolver::ColumnIndex QsoptexLpSolver::AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb,
+                                                 const mpq_class& ub) {
+  DELPI_ASSERT(!var_to_col_.contains(var), "Variable already exists in the LP.");
+  const int column_idx = num_columns();
+  var_to_col_.emplace(var, column_idx);
+  col_to_var_.emplace_back(var);
+  [[maybe_unused]] const int status = mpq_QSnew_col(qsx_, obj.get_mpq_t(), lb.get_mpq_t(), ub.get_mpq_t(), nullptr);
   DELPI_ASSERT(!status, "Invalid status");
-  status = mpq_QSchange_bound(qsx_, column, 'U', ub.get_mpq_t());
-  DELPI_ASSERT(!status, "Invalid status");
-  DELPI_TRACE_FMT("EnableQsxVarBound: {} = [{}, {}]", col_to_var_.at(column), lb, ub);
+  return column_idx;
 }
-void QsoptexLpSolver::DisableBound(const int column) { EnableBound(column, ninfinity_, infinity_); }
-void QsoptexLpSolver::DisableRow(const int row) {
-  [[maybe_unused]] int status = mpq_QSchange_sense(qsx_, row, 'G');
+LpSolver::RowIndex QsoptexLpSolver::AddRow(const Row& row) {
+  // Add the row to the LP. If the row is bounded both ways with an equality, we can add it in one go.
+  if (row.lb.has_value() && row.ub.has_value() && *row.lb == *row.ub) {
+    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, row.lb->get_mpq_t(), 'B', nullptr);
+    DELPI_ASSERT(!status, "Invalid status");
+    SetRowCoeff(num_rows() - 1, row.addends);
+    return num_rows() - 1;
+  }
+  // Else, add the two bounds separately. Note that this introduces 2 new rows.
+  if (row.lb.has_value()) {
+    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, row.lb->get_mpq_t(), 'G', nullptr);
+    DELPI_ASSERT(!status, "Invalid status");
+    SetRowCoeff(num_rows() - 1, row.addends);
+  }
+  if (row.ub.has_value()) {
+    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, row.ub->get_mpq_t(), 'L', nullptr);
+    DELPI_ASSERT(!status, "Invalid status");
+    SetRowCoeff(num_rows() - 1, row.addends);
+  }
+  return num_rows() - 1;
+}
+LpSolver::RowIndex QsoptexLpSolver::AddRow(const Expression::Addends& lhs, const FormulaKind sense,
+                                           const mpq_class& rhs) {
+  char qsoptex_sense;
+  switch (sense) {
+    case FormulaKind::Leq:
+      qsoptex_sense = 'L';
+      break;
+    case FormulaKind::Eq:
+      qsoptex_sense = 'E';
+      break;
+    case FormulaKind::Geq:
+      qsoptex_sense = 'G';
+      break;
+    default:
+      DELPI_UNREACHABLE();
+  }
+  [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, rhs.get_mpq_t(), qsoptex_sense, nullptr);
   DELPI_ASSERT(!status, "Invalid status");
-  status = mpq_QSchange_rhscoef(qsx_, row, mpq_NINFTY);
+  const int row_idx = num_rows() - 1;
+  SetRowCoeff(row_idx, lhs);
+  return row_idx;
+}
+
+void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
+  DELPI_ASSERT_FMT(column < num_columns(), "Column index out of bounds: {} >= {}", column, num_columns());
+  [[maybe_unused]] const int status = mpq_QSchange_objcoef(qsx_, column, mpq_class{value}.get_mpq_t());
   DELPI_ASSERT(!status, "Invalid status");
 }
 
@@ -140,19 +175,14 @@ LpResult QsoptexLpSolver::OptimiseCore(mpq_class& precision, const bool store_so
   // Should have room for the (rowcount) "logical" variables, which come after the (colcount) "structural" variables.
   x_.Resize(colcount + rowcount);
   ray_.Resize(rowcount);
+  mpq_class lb, ub;
 
   int lp_status = -1;
   int status = -1;
 
-  if (1 == config_.simplex_sat_phase()) {
-    status = QSdelta_solver(qsx_, precision.get_mpq_t(), static_cast<mpq_t*>(x_), static_cast<mpq_t*>(ray_), nullptr,
-                            PRIMAL_SIMPLEX, &lp_status,
-                            config_.continuous_output() ? QsoptexCheckSatPartialSolution : nullptr, this);
-  } else {
-    status = QSexact_delta_solver(qsx_, static_cast<mpq_t*>(x_), static_cast<mpq_t*>(ray_), nullptr, PRIMAL_SIMPLEX,
-                                  &lp_status, precision.get_mpq_t(),
-                                  config_.continuous_output() ? QsoptexCheckSatPartialSolution : nullptr, this);
-  }
+  status = QSdelta_full_solver(qsx_, precision.get_mpq_t(), static_cast<mpq_t*>(x_), static_cast<mpq_t*>(ray_),
+                               lb.get_mpq_t(), ub.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status,
+                               config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
 
   if (status) {
     DELPI_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
@@ -162,15 +192,17 @@ LpResult QsoptexLpSolver::OptimiseCore(mpq_class& precision, const bool store_so
   DELPI_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex has returned with precision = {}", precision);
 
   switch (lp_status) {
-    case QS_LP_FEASIBLE:
-    case QS_LP_DELTA_FEASIBLE:
+    case QS_LP_OPTIMAL:
+    case QS_LP_DELTA_OPTIMAL:
       if (store_solution) UpdateFeasible();
-      return lp_status == QS_LP_FEASIBLE ? LpResult::OPTIMAL : LpResult::DELTA_OPTIMAL;
+      return lp_status == QS_LP_OPTIMAL ? LpResult::OPTIMAL : LpResult::DELTA_OPTIMAL;
     case QS_LP_UNBOUNDED:
       if (store_solution) UpdateFeasible();
       return LpResult::UNBOUNDED;
     case QS_LP_INFEASIBLE:
-      UpdateInfeasible();
+#if 0
+      if (store_solution) UpdateInfeasible();
+#endif
       return LpResult::INFEASIBLE;
     case QS_LP_UNSOLVED:
       DELPI_WARN("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex failed to return a result");
@@ -194,6 +226,7 @@ void QsoptexLpSolver::UpdateFeasible() {
   DELPI_DEV_FMT("solution {}", solution_);
   DELPI_DEV_FMT("dual {}", dual_solution_);
 }
+#if 0
 void QsoptexLpSolver::UpdateInfeasible() {
   DELPI_ASSERT(infeasible_rows_.empty(), "Infeasible rows must be empty");
   DELPI_ASSERT(infeasible_bounds_.empty(), "Infeasible bounds must be empty");
@@ -224,44 +257,15 @@ void QsoptexLpSolver::UpdateInfeasible() {
   }
   mpq_clear(row_coeff);
 }
+#endif
 
-void QsoptexLpSolver::SetRowCoeff(const int row, const Formula& formula) {
-  DELPI_ASSERT_FMT(formula.IsFlattened(), "The formula {} must be flattened", formula);
-
-  const Expression& lhs = get_lhs_expression(formula);
-  const Expression& rhs = get_rhs_expression(formula);
-  DELPI_ASSERT(is_variable(lhs) || is_multiplication(lhs) || is_addition(lhs), "Unsupported expression");
-  DELPI_ASSERT(is_constant(rhs), "Unsupported expression");
-
-  rhs_.emplace_back(get_constant_value(rhs));
-
-  if (is_variable(lhs)) {
-    SetVarCoeff(row, get_variable(lhs), 1);
-  } else if (is_addition(lhs)) {
-    DELPI_ASSERT(get_constant_in_addition(lhs) == 0, "The addition constant must be 0");
-    const std::map<Expression, mpq_class>& map = get_expr_to_coeff_map_in_addition(lhs);
-    for (const auto& [var, coeff] : map) {
-      DELPI_ASSERT_FMT(is_variable(var), "Only variables are supported in the addition, got {}", var);
-      SetVarCoeff(row, get_variable(var), coeff);
-    }
-  } else if (is_multiplication(lhs)) {
-    DELPI_ASSERT(get_base_to_exponent_map_in_multiplication(lhs).size() == 1, "Only one variable is supported");
-    DELPI_ASSERT(is_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
-                   "Base must be a variable");
-    DELPI_ASSERT(is_constant(get_base_to_exponent_map_in_multiplication(lhs).begin()->second) &&
-                       get_constant_value(get_base_to_exponent_map_in_multiplication(lhs).begin()->second) == 1,
-                   "Only exp == 1 is supported");
-    SetVarCoeff(row, get_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
-                get_constant_in_multiplication(lhs));
-  } else {
-    DELPI_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
-  }
-  if (rhs_.back() <= ninfinity_ || rhs_.back() >= infinity_) {
-    DELPI_RUNTIME_ERROR_FMT("LP RHS value too large: {}", rhs_.back());
-  }
+template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+void QsoptexLpSolver::SetRowCoeff(int row, const T& literal_monomials) {
+  for (const auto& [var, coeff] : literal_monomials) SetVarCoeff(row, var, coeff);
 }
 
 void QsoptexLpSolver::SetVarCoeff(const int row, const Variable& var, const mpq_class& value) const {
+  DELPI_ASSERT_FMT(var_to_col_.contains(var), "Variable {} not found in the LP. Did you add it before?", var);
   const int column = var_to_col_.at(var);
   // Variable has the coefficients too large
   if (value <= ninfinity_ || value >= infinity_) DELPI_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
@@ -275,7 +279,11 @@ void QsoptexLpSolver::SetVarCoeff(const int row, const Variable& var, const mpq_
 }
 
 #ifndef NDEBUG
-void QsoptexLpSolver::Dump() { mpq_QSdump_prob(qsx_); }
+void QsoptexLpSolver::Dump() {
+  mpq_QSdump_prob(qsx_);
+  mpq_QSdump_basis(qsx_);
+  mpq_QSdump_bfeas(qsx_);
+}
 #endif
 
 void QsoptexLpSolver::SetCoefficient(const int row, const int column, const mpq_class& value) {
@@ -286,5 +294,12 @@ void QsoptexLpSolver::SetCoefficient(const int row, const int column, const mpq_
   [[maybe_unused]] const int status = mpq_QSchange_coef(qsx_, row, column, mpq_class{value}.get_mpq_t());
   DELPI_ASSERT(!status, "Invalid status");
 }
+
+template void QsoptexLpSolver::SetRowCoeff(int, const std::vector<std::pair<const Variable, mpq_class>>&);
+template void QsoptexLpSolver::SetRowCoeff(int, const std::set<std::pair<const Variable, mpq_class>>&);
+template void QsoptexLpSolver::SetRowCoeff(int, const std::unordered_set<std::pair<const Variable, mpq_class>>&);
+template void QsoptexLpSolver::SetRowCoeff(int, const std::span<std::pair<const Variable, mpq_class>>&);
+template void QsoptexLpSolver::SetRowCoeff(int, const std::map<Variable, mpq_class>&);
+template void QsoptexLpSolver::SetRowCoeff(int, const std::unordered_map<Variable, mpq_class>&);
 
 }  // namespace delpi

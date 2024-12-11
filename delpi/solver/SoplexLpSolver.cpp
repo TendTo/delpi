@@ -5,6 +5,9 @@
  */
 #include "SoplexLpSolver.h"
 
+#include <span>
+#include <unordered_set>
+
 #include "delpi/util/error.h"
 #include "delpi/util/logging.h"
 
@@ -14,6 +17,7 @@ using SoplexStatus = soplex::SPxSolver::Status;
 
 SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_name)
     : LpSolver{config, -soplex::infinity, soplex::infinity, class_name},
+      consolidated_{false},
       spx_{},
       rninfinity_{-soplex::infinity},
       rinfinity_{soplex::infinity} {
@@ -27,7 +31,7 @@ SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_na
   spx_.setIntParam(soplex::SoPlex::SIMPLIFIER, soplex::SoPlex::SIMPLIFIER_INTERNAL);
   spx_.setIntParam(soplex::SoPlex::VERBOSITY, config_.verbose_simplex());
   // Default is maximize.
-  spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MAXIMIZE);
+  spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MINIMIZE);
   // Enable precision boosting
   bool enable_precision_boosting = config_.lp_mode() != Config::LPMode::PURE_ITERATIVE_REFINEMENT;
   spx_.setBoolParam(soplex::SoPlex::ADAPT_TOLS_TO_MULTIPRECISION, enable_precision_boosting);
@@ -44,6 +48,38 @@ SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_na
 int SoplexLpSolver::num_columns() const { return consolidated_ ? spx_.numColsRational() : spx_cols_.num(); }
 int SoplexLpSolver::num_rows() const { return consolidated_ ? spx_.numRowsRational() : spx_rows_.num(); }
 
+Column SoplexLpSolver::column(const ColumnIndex column_idx) const {
+  DELPI_ASSERT(column_idx < num_columns(), "Column index out of bounds");
+  const soplex::Rational& lower = consolidated_ ? spx_.lowerRational(column_idx) : spx_cols_.lower(column_idx);
+  const soplex::Rational& upper = consolidated_ ? spx_.upperRational(column_idx) : spx_cols_.upper(column_idx);
+  const soplex::Rational& obj = consolidated_ ? spx_.objRational(column_idx) : spx_cols_.maxObj(column_idx);
+  Column column{};
+  column.var = col_to_var_.at(column_idx);
+  if (lower > -soplex::infinity) column.lb = std::move(gmp::ToMpqClass(lower.backend().data()));
+  if (upper < soplex::infinity) column.ub = std::move(gmp::ToMpqClass(upper.backend().data()));
+  if (!obj.is_zero()) column.obj = std::move(gmp::ToMpqClass(obj.backend().data()));
+
+  return column;
+}
+Row SoplexLpSolver::row(const RowIndex row_idx) const {
+  DELPI_ASSERT(row_idx < num_rows(), "Row index out of bounds");
+  const soplex::Rational lhs = consolidated_ ? spx_.lhsRational(row_idx) : spx_rows_.lhs(row_idx);
+  const soplex::Rational rhs = consolidated_ ? spx_.rhsRational(row_idx) : spx_rows_.rhs(row_idx);
+  Row row{};
+  if (lhs > -soplex::infinity) row.lb = std::move(gmp::ToMpqClass(lhs.backend().data()));
+  if (rhs < soplex::infinity) row.ub = std::move(gmp::ToMpqClass(rhs.backend().data()));
+
+  const soplex::SVectorRational addends =
+      consolidated_ ? spx_.rowVectorRational(row_idx) : spx_rows_.rowVector(row_idx);
+  for (int i = 0; i < addends.size(); ++i) {
+    const soplex::Rational& coeff = addends.value(i);
+    const Variable& var = col_to_var_.at(addends.index(i));
+    row.addends.emplace_back(var, std::move(gmp::ToMpqClass(coeff.backend().data())));
+  }
+  std::cout << "row: " << row_idx << " " << row;
+  return row;
+}
+
 void SoplexLpSolver::ReserveColumns(const int num_columns) {
   LpSolver::ReserveColumns(num_columns);
   spx_cols_ = soplex::LPColSetRational(num_columns, num_columns);
@@ -53,35 +89,42 @@ void SoplexLpSolver::ReserveRows(const int num_rows) {
   spx_rows_ = soplex::LPRowSetRational(num_rows, num_rows);
 }
 
-void SoplexLpSolver::AddColumn() {
-  DELPI_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
+LpSolver::ColumnIndex SoplexLpSolver::AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb,
+                                                const mpq_class& ub) {
+  DELPI_ASSERT_FMT(!var_to_col_.contains(var), "Variable '{}' already exists in the LP.", var);
+  const ColumnIndex column_idx = num_columns();
+  var_to_col_.emplace(var, column_idx);
+  col_to_var_.emplace_back(var);
+  const soplex::LPColRational col_rational(obj.get_mpq_t(), soplex::DSVectorRational(), ub.get_mpq_t(), lb.get_mpq_t());
   // Add the column to the LP
-  spx_cols_.add(soplex::LPColRational(0, soplex::DSVectorRational(), rinfinity_, rninfinity_));
+  if (consolidated_)
+    spx_.addColRational(col_rational);
+  else
+    spx_cols_.add(col_rational);
+  return column_idx;
 }
-void SoplexLpSolver::AddColumn(const mpq_class& lb, const mpq_class& ub) {
-  DELPI_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
-  // Add the column to the LP
-  spx_cols_.add(soplex::LPColRational(0, soplex::DSVectorRational(), ub.get_mpq_t(), lb.get_mpq_t()));
-}
-void SoplexLpSolver::AddColumn(const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) {
-  DELPI_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
-  // Add the column to the LP
-  spx_cols_.add(soplex::LPColRational(obj.get_mpq_t(), soplex::DSVectorRational(), ub.get_mpq_t(), lb.get_mpq_t()));
+LpSolver::RowIndex SoplexLpSolver::AddRow(const Row& row) {
+  const soplex::LPRowRational row_rational(soplex::Rational(row.lb.value_or(ninfinity_).get_mpq_t()),
+                                           ParseRowCoeff(row.addends),
+                                           soplex::Rational(row.ub.value_or(infinity_).get_mpq_t()));
+  if (consolidated_)
+    spx_.addRowRational(row_rational);
+  else
+    spx_rows_.add(row_rational);
+  return num_rows() - 1;
 }
 
-void SoplexLpSolver::AddRow(const Formula& formula, LpRowSense sense) {
-  DELPI_ASSERT(!consolidated_, "Cannot add rows after consolidation.");
-  senses_.emplace_back(sense);
-  spx_rows_.add(soplex::LPRowRational(rninfinity_, ParseRowCoeff(formula), rinfinity_));
-}
-void SoplexLpSolver::SetObjective(int column, const mpq_class& value) {
-  DELPI_ASSERT(column < num_columns(), "Column index out of bounds");
-  DELPI_ASSERT(ninfinity_ <= value && value <= infinity_, "LP objective value too large");
-  if (consolidated_) {
-    spx_.changeObjRational(column, value.get_mpq_t());
-  } else {
-    spx_cols_.maxObj_w(column) = value.get_mpq_t();
-  }
+LpSolver::RowIndex SoplexLpSolver::AddRow(const Expression::Addends& lhs, const FormulaKind sense,
+                                          const mpq_class& rhs) {
+  DELPI_ASSERT(sense == FormulaKind::Leq || sense == FormulaKind::Eq || sense == FormulaKind::Geq, "Invalid row sense");
+  const soplex::LPRowRational row_rational((sense == FormulaKind::Leq ? ninfinity_.get_mpq_t() : rhs.get_mpq_t()),
+                                           ParseRowCoeff(lhs),
+                                           (sense == FormulaKind::Geq ? infinity_.get_mpq_t() : rhs.get_mpq_t()));
+  if (consolidated_)
+    spx_.addRowRational(row_rational);
+  else
+    spx_rows_.add(row_rational);
+  return num_rows() - 1;
 }
 void SoplexLpSolver::SetCoefficient(int row, int column, const mpq_class& value) {
   DELPI_ASSERT(row < num_rows(), "Row index out of bounds");
@@ -101,64 +144,22 @@ void SoplexLpSolver::SetCoefficient(int row, int column, const mpq_class& value)
       DELPI_TRACE_FMT("SoplexLpSolver::SetCoefficient: row {}: {}", row, spx_rows_.rowVector(row));
   }
 }
-
-void SoplexLpSolver::EnableRow(const int row, const LpRowSense sense, const mpq_class& rhs) {
-  DELPI_ASSERT(consolidated_, "Cannot enable rows before consolidation.");
-  DELPI_ASSERT(row < num_rows(), "Row index out of bounds");
-  DELPI_ASSERT(ninfinity_ <= rhs && rhs <= infinity_, "LP RHS value too large");
-  DELPI_ASSERT_FMT(
-      sense == LpRowSense::EQ || sense == LpRowSense::LE || sense == LpRowSense::GE || sense == LpRowSense::NQ,
-      "Unsupported sense {}", sense);
-
-  spx_.changeRangeRational(row, sense == LpRowSense::GE || sense == LpRowSense::EQ ? rhs.get_mpq_t() : rninfinity_,
-                           sense == LpRowSense::LE || sense == LpRowSense::EQ ? rhs.get_mpq_t() : rinfinity_);
-}
-void SoplexLpSolver::EnableBound(const int column, const LpColBound bound, const mpq_class& value) {
-  switch (bound) {
-    case LpColBound::B:
-      spx_.changeBoundsRational(column, value.get_mpq_t(), value.get_mpq_t());
-      break;
-    case LpColBound::L:
-      spx_.changeBoundsRational(column, value.get_mpq_t(), rinfinity_);
-      break;
-    case LpColBound::U:
-      spx_.changeBoundsRational(column, rninfinity_, value.get_mpq_t());
-      break;
-    case LpColBound::F:
-    case LpColBound::D:
-      DisableBound(column);
-      break;
-    default:
-      DELPI_UNREACHABLE();
-  }
-}
-void SoplexLpSolver::EnableBound(const int column, const mpq_class& lb, const mpq_class& ub) {
-  DELPI_ASSERT(consolidated_, "Cannot enable bounds before consolidation.");
-  DELPI_ASSERT(ninfinity_ <= lb && lb <= infinity_, "LP lower bound value too large");
-  DELPI_ASSERT(ninfinity_ <= ub && ub <= infinity_, "LP upper bound value too large");
-  spx_.changeBoundsRational(column, lb.get_mpq_t(), ub.get_mpq_t());
-}
-void SoplexLpSolver::DisableBound(const int column) {
-  DELPI_ASSERT(consolidated_, "Cannot disable bounds before consolidation.");
-  spx_.changeBoundsRational(column, rninfinity_, rinfinity_);
-}
-void SoplexLpSolver::DisableRow(const int row) {
-  DELPI_ASSERT(consolidated_, "Cannot disable rows before consolidation.");
-  spx_.changeRangeRational(row, rninfinity_, rinfinity_);
+void SoplexLpSolver::SetObjective(const int column, const mpq_class& value) {
+  DELPI_ASSERT(column < num_columns(), "Column index out of bounds");
+  if (consolidated_)
+    spx_.changeObjRational(column, value.get_mpq_t());
+  else
+    spx_cols_.maxObj_w(column) = value.get_mpq_t();
 }
 
-void SoplexLpSolver::Consolidate() {
-  LpSolver::Consolidate();
-  spx_.addColsRational(spx_cols_);
-  spx_.addRowsRational(spx_rows_);
-}
-void SoplexLpSolver::Backtrack() {
-  LpSolver::Backtrack();
-  // Omitting to do this seems to cause problems in soplex
-  // https://github.com/scipopt/soplex/issues/38
-  spx_.clearBasis();
-}
 LpResult SoplexLpSolver::OptimiseCore(mpq_class& precision, const bool store_solution) {
+  if (!consolidated_) {
+    spx_.addColsRational(spx_cols_);
+    spx_.addRowsRational(spx_rows_);
+    consolidated_ = true;
+    spx_cols_.clear();
+    spx_rows_.clear();
+  }
   const SoplexStatus status = spx_.optimize();
   soplex::Rational max_violation, sum_violation;
 
@@ -181,7 +182,7 @@ LpResult SoplexLpSolver::OptimiseCore(mpq_class& precision, const bool store_sol
       if (store_solution) UpdateFeasible();
       return LpResult::UNBOUNDED;
     case SoplexStatus::INFEASIBLE:
-      UpdateInfeasible();
+      // if (store_solution) UpdateInFeasible();
       return LpResult::INFEASIBLE;
     default:
       DELPI_UNREACHABLE();
@@ -210,6 +211,7 @@ void SoplexLpSolver::UpdateFeasible() {
   DELPI_DEV_FMT("dual: {}", dual_solution_);
 }
 
+#if 0
 void SoplexLpSolver::UpdateInfeasible() {
   DELPI_ASSERT(infeasible_rows_.empty(), "infeasible_rows_ must be empty");
   DELPI_ASSERT(infeasible_bounds_.empty(), "infeasible_bounds_ must be empty");
@@ -243,43 +245,12 @@ void SoplexLpSolver::UpdateInfeasible() {
     infeasible_bounds_.emplace_back(i, col_violation < 0);
   }
 }
+#endif
 
-soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(const Formula& formula) {
-  DELPI_ASSERT_FMT(formula.IsFlattened(), "The formula {} must be flattened", formula);
-
-  const Expression& lhs = get_lhs_expression(formula);
-  const Expression& rhs = get_rhs_expression(formula);
-  DELPI_ASSERT(is_variable(lhs) || is_multiplication(lhs) || is_addition(lhs), "Unsupported expression");
-  DELPI_ASSERT(is_constant(rhs), "Unsupported expression");
-
+template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(const T& literal_monomials) {
   soplex::DSVectorRational coeffs;
-  rhs_.emplace_back(get_constant_value(rhs));
-
-  if (is_variable(lhs)) {
-    SetVarCoeff(coeffs, get_variable(lhs), 1);
-  } else if (is_addition(lhs)) {
-    DELPI_ASSERT(get_constant_in_addition(lhs) == 0, "The addition constant must be 0");
-    const std::map<Expression, mpq_class>& map = get_expr_to_coeff_map_in_addition(lhs);
-    coeffs.setMax(static_cast<int>(map.size()));
-    for (const auto& [var, coeff] : map) {
-      if (!is_variable(var)) DELPI_RUNTIME_ERROR_FMT("Expression {} not supported", lhs);
-      SetVarCoeff(coeffs, get_variable(var), coeff);
-    }
-  } else if (is_multiplication(lhs)) {
-    DELPI_ASSERT(get_base_to_exponent_map_in_multiplication(lhs).size() == 1, "Only one variable is supported");
-    DELPI_ASSERT(is_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
-                   "Base must be a variable");
-    DELPI_ASSERT(is_constant(get_base_to_exponent_map_in_multiplication(lhs).begin()->second) &&
-                       get_constant_value(get_base_to_exponent_map_in_multiplication(lhs).begin()->second) == 1,
-                   "Only exp == 1 is supported");
-    SetVarCoeff(coeffs, get_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
-                get_constant_in_multiplication(lhs));
-  } else {
-    DELPI_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
-  }
-  if (rhs_.back() <= ninfinity_ || rhs_.back() >= infinity_) {
-    DELPI_RUNTIME_ERROR_FMT("LP RHS value too large: {}", rhs_.back());
-  }
+  for (const auto& [var, coeff] : literal_monomials) SetVarCoeff(coeffs, var, coeff);
   return coeffs;
 }
 
@@ -295,5 +266,17 @@ void SoplexLpSolver::SetVarCoeff(soplex::DSVectorRational& coeffs, const Variabl
 #ifndef NDEBUG
 void SoplexLpSolver::Dump() { spx_.writeFileRational("~/delpi.temp.dump.soplex.lp"); }
 #endif
+
+template soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(
+    const std::vector<std::pair<const Variable, mpq_class>>& literal_monomials);
+template soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(
+    const std::set<std::pair<const Variable, mpq_class>>& literal_monomials);
+template soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(
+    const std::unordered_set<std::pair<const Variable, mpq_class>>& literal_monomials);
+template soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(
+    const std::span<std::pair<const Variable, mpq_class>>& literal_monomials);
+template soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(const std::map<Variable, mpq_class>& literal_monomials);
+template soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(
+    const std::unordered_map<Variable, mpq_class>& literal_monomials);
 
 }  // namespace delpi

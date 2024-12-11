@@ -10,56 +10,48 @@
 #error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
-#include "delpi/libs/libsoplex.h"
-#include "delpi/solver/theory_solver/qf_lra/LpSolver.h"
-#include "delpi/symbolic/literal.h"
-#include "delpi/symbolic/symbolic.h"
+#include "delpi/libs/gmp.h"
+#include "delpi/libs/soplex.h"
+#include "delpi/solver/LpSolver.h"
+#include "delpi/symbolic/Expression.h"
+#include "delpi/symbolic/Variable.h"
+#include "delpi/util/concepts.h"
 
 namespace delpi {
 
 /**
  * Linear programming solver using [SoPlex](https://soplex.zib.de/).
  */
-class SoplexLpSolver : public LpSolver {
+class SoplexLpSolver final : public LpSolver {
  public:
   explicit SoplexLpSolver(const Config& config, const std::string& class_name = "SoplexLpSolver");
 
-  [[nodiscard]] int num_columns() const final;
-  [[nodiscard]] int num_rows() const final;
+  [[nodiscard]] int num_columns() const override;
+  [[nodiscard]] int num_rows() const override;
 
-  void ReserveColumns(int num_columns) final;
-  void ReserveRows(int num_rows) final;
-  void AddColumn() final;
-  void AddColumn(const mpq_class& lb, const mpq_class& ub) final;
-  void AddColumn(const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) final;
-  void AddRow(const Formula& formula, LpRowSense sense) final;
-  void SetObjective(int column, const mpq_class& value) final;
-  void SetCoefficient(int row, int column, const mpq_class& value) final;
-
-  void EnableRow(int row, LpRowSense sense, const mpq_class& rhs) final;
-  void DisableRow(int row) final;
-
-  void EnableBound(int column, LpColBound bound, const mpq_class& value) final;
-  void EnableBound(int column, const mpq_class& lb, const mpq_class& ub) final;
-  void DisableBound(int column) final;
-
-  void Consolidate() final;
-  void Backtrack() final;
+  [[nodiscard]] Column column(ColumnIndex column_idx) const override;
+  [[nodiscard]] Row row(RowIndex row_idx) const override;
+  void ReserveColumns(int num_columns) override;
+  void ReserveRows(int num_rows) override;
+  ColumnIndex AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) override;
+  RowIndex AddRow(const Row& row) override;
+  RowIndex AddRow(const Expression::Addends& lhs, FormulaKind sense, const mpq_class& rhs) override;
+  void SetCoefficient(RowIndex row, ColumnIndex column, const mpq_class& value) override;
+  void SetObjective(int column, const mpq_class& value) override;
 
 #ifndef NDEBUG
-  void Dump() final;
+  void Dump() override;
 #endif
 
  private:
-  LpResult OptimiseCore(mpq_class& precision, bool store_solution) final;
+  LpResult OptimiseCore(mpq_class& precision, bool store_solution) override;
   /**
-   * Parse a `formula` and return the vector of coefficients to apply to the decisional variables.
-   *
-   * It will store the rhs term in @ref rhs_ and create a vector of coefficients for the row.
-   * @param formula symbolic formula representing the row
-   * @return vector of coefficients to apply to the decisional variables in the row
+   * Parse a sequence of `literal_monomials` and set the coefficient for each decisional variable appearing in it.
+   * @tparam TypedIterable generic iterable containing pairs (Variable, coeff) (i.e. std::vector, std::set, std::span)
+   * @param literal_monomials symbolic formula representing the row
    */
-  soplex::DSVectorRational ParseRowCoeff(const Formula& formula);
+  template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+  soplex::DSVectorRational ParseRowCoeff(const T& literal_monomials);
   /**
    * Set the coefficients to apply to `var` on a specific row.
    *
@@ -78,6 +70,7 @@ class SoplexLpSolver : public LpSolver {
    * On the other hand, both @ref infeasible_rows_ and @ref infeasible_bounds_ will be cleared.
    */
   void UpdateFeasible();
+#if 0
   /**
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.
    *
@@ -91,6 +84,10 @@ class SoplexLpSolver : public LpSolver {
    * its value is still greater than @f$ y^T b @f$.
    */
   void UpdateInfeasible();
+#endif
+
+ private:
+  bool consolidated_;  ///< Whether the LP problem has been consolidated
 
   soplex::SoPlex spx_;  ///< SoPlex LP solver
 

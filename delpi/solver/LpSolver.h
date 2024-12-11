@@ -10,10 +10,11 @@
 #include <memory>
 #include <unordered_map>
 
-#include "Column.h"
 #include "delpi/libs/gmp.h"
+#include "delpi/solver/Column.h"
 #include "delpi/solver/LpResult.h"
 #include "delpi/solver/LpRowSense.h"
+#include "delpi/solver/Row.h"
 #include "delpi/symbolic/Expression.h"
 #include "delpi/symbolic/Formula.h"
 #include "delpi/symbolic/Variable.h"
@@ -92,11 +93,30 @@ class LpSolver {
   /** @getter{vector of all the variables, lp solver} */
   [[nodiscard]] std::vector<Variable> variables() const;
   /**
+   * Get the value of `var` in the solution vector.
+   * @param var variable to get the value for
+   * @return solution value of the variable
+   */
+  [[nodiscard]] const mpq_class& solution(const Variable var) const { return solution_.at(var_to_col_.at(var)); }
+
+  /**
    * Shorthand notation to get the real variable linked with column `column`.
    * @param column index of the column the real variable is linked to
    * @return corresponding real variable
    */
   [[nodiscard]] const Variable& var(const int column) const { return col_to_var_.at(column); }
+  /**
+   * Get the column at the given `column_idx` index.
+   * @param column_idx index of the column to get
+   * @return column structure
+   */
+  [[nodiscard]] virtual Column column(int column_idx) const = 0;
+  /**
+   * Get the row at the given `row_idx` index.
+   * @param row_idx index of the row to get
+   * @return row structure
+   */
+  [[nodiscard]] virtual Row row(int row_idx) const = 0;
   /**
    * Reserve space for the given number of columns and rows.
    *
@@ -113,46 +133,51 @@ class LpSolver {
   virtual void ReserveRows(int size);
 
   /**
-   * Add a new unbounded column to the LP problem.
-   * @pre The column must be added before the LP problem is consolidated.
+   * Add a new `column` to the LP problem.
+   * @param column column to add to the LP problem
    */
-  ColumnIndex AddVariable(const Column& column);
+  ColumnIndex AddColumn(const Column& column);
   /**
-   * Add a new unbounded column to the LP problem.
-   * @pre The column must be added before the LP problem is consolidated.
+   * Add a new unbounded column corresponding to the variable `var` to the LP problem.
+   * @param var variable to add to the LP problem
    */
-  ColumnIndex AddVariable(const Variable& var);
+  ColumnIndex AddColumn(const Variable& var);
   /**
-   * Add a new column to the LP problem setting the objective coefficient to the given `obj`.
-   * @pre The column must be added before the LP problem is consolidated.
+   * Add a new column to the LP problem setting the objective coefficient of `var` to the given `obj`.
+   * @param var variable to add to the LP problem
    * @param obj coefficient of the variable in the objective function
    */
-  ColumnIndex AddVariable(const Variable& var, const mpq_class& obj);
+  ColumnIndex AddColumn(const Variable& var, const mpq_class& obj);
   /**
-   * Add a new bounded column to the LP problem.
-   * @pre The column must be added before the LP problem is consolidated.
+   * Add a new bounded column to the LP problem, ensuring that the variable `var` is in the range @f$ [lb, ub] @f$.
+   * @param var variable to add to the LP problem
    * @param lb lower bound of the column
    * @param ub upper bound of the column
    */
-  ColumnIndex AddVariable(const Variable& var, const mpq_class& lb, const mpq_class& ub);
+  ColumnIndex AddColumn(const Variable& var, const mpq_class& lb, const mpq_class& ub);
   /**
-   * Add a new bounded column to the LP problem with a given `obj` coefficient.
-   * @pre The column must be added before the LP problem is consolidated.
+   * Add a new bounded column to the LP problem, ensuring that the variable `var` is in the range @f$ [lb, ub] @f$ and
+   * has the objective coefficient `obj`.
+   * @param var variable to add to the LP problem
    * @param obj objective coefficient of the column
    * @param lb lower bound of the column
    * @param ub upper bound of the column
    */
-  virtual ColumnIndex AddVariable(const Variable& var, const mpq_class& obj, const mpq_class& lb,
-                                  const mpq_class& ub) = 0;
+  virtual ColumnIndex AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb,
+                                const mpq_class& ub) = 0;
 
   /**
+   * Add a new row to the LP problem with the given `row`.
+   * @param row structure of the row to add
+   */
+  virtual RowIndex AddRow(const Row& row) = 0;
+  /**
    * Add a new row to the LP problem with the given `formula`.
-   * @pre All other rows already in the LP problem have been linked as well.
-   * @param formula symbolic formula representing the row
+   * @param formula symbolic formula representing a constraint to add as a row
    */
   RowIndex AddRow(const Formula& formula);
   /**
-   * Add a new row to the LP problem with the given `lhs` expression, `sense` and `rhs`.
+   * Add a new row to the LP problem with the given `lhs` linear expression, `sense` and `rhs`.
    *
    * The resulting row will be in the shape
    * @f[
@@ -160,13 +185,13 @@ class LpSolver {
    * @f]
    * where @f$ lhs @f$ is a linear expression, @f$ \text{ sense } \in \\{ \le, =, \ge \\} @f$
    * and @f$ rhs @f$ is a constant.
-   * @param lhs expression on the left-hand side of the row
-   * @param sense sense of the row (i.e. <=, =, >=)
-   * @param rhs right-hand side of the row
+   * @param lhs linear expression on the left-hand side of the row
+   * @param sense sense of the row (i.e. @f$ \le, =, \ge @f$)
+   * @param rhs constant on the right-hand side of the row
    */
   RowIndex AddRow(const Expression& lhs, FormulaKind sense, const mpq_class& rhs);
   /**
-   * Add a new row to the LP problem with the given `lhs` expression, `sense` and `rhs`.
+   * Add a new row to the LP problem with the given `lhs` linear summation, `sense` and `rhs`.
    *
    * The resulting row will be in the shape
    * @f[
@@ -174,7 +199,7 @@ class LpSolver {
    * @f]
    * where @f$ lhs @f$ is a linear expression, @f$ \text{ sense } \in \\{ \le, =, \ge \\} @f$
    * and @f$ rhs @f$ is a constant.
-   * @param lhs expression on the left-hand side of the row
+   * @param lhs linear summation on the left-hand side of the row
    * @param sense sense of the row (i.e. <=, =, >=)
    * @param rhs right-hand side of the row
    */
@@ -228,18 +253,11 @@ class LpSolver {
    */
   LpResult Optimise(mpq_class& precision, bool store_solution = true);
 
-  virtual void PrintRow(std::ostream& os, int row) const = 0;
-  virtual void PrintColumn(std::ostream& os, int column) const = 0;
-
 #ifndef NDEBUG
   virtual void Dump() = 0;
 #endif
 
  protected:
-  virtual ColumnIndex AddVariableCore(const Variable& var, const mpq_class& lower_bound, const mpq_class& upper_bound,
-                                      const mpq_class& obj) = 0;
-  virtual RowIndex AddRowCore(const Expression& row, LpRowSense sense, const mpq_class& rhs) = 0;
-
   /**
    * Internal method that optimises the LP problem with the given `precision`.
    * @param precision desired precision for the optimisation

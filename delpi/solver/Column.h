@@ -24,3 +24,11 @@ struct Column {
 std::ostream& operator<<(std::ostream& os, const Column& column);
 
 }  // namespace delpi
+
+#ifndef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::Column)
+
+#endif

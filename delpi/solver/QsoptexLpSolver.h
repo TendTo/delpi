@@ -10,17 +10,19 @@
 #error QSopt_ex is not enabled. Please enable it by adding "--//tools:enable_qsoptex" to the bazel command.
 #endif
 
-#include "delpi/libs/libqsopt_ex.h"
-#include "delpi/solver/theory_solver/qf_lra/LpSolver.h"
-#include "delpi/symbolic/literal.h"
-#include "delpi/symbolic/symbolic.h"
+#include "delpi/libs/gmp.h"
+#include "delpi/libs/qsopt_ex.h"
+#include "delpi/solver/LpSolver.h"
+#include "delpi/symbolic/Expression.h"
+#include "delpi/symbolic/Variable.h"
+#include "delpi/util/concepts.h"
 
 namespace delpi {
 
 /**
  * Linear programming solver using [QSopt_ex](https://www.math.uwaterloo.ca/~bico/qsopt/ex/).
  */
-class QsoptexLpSolver : public LpSolver {
+class QsoptexLpSolver final : public LpSolver {
  public:
   explicit QsoptexLpSolver(const Config& config, const std::string& class_name = "QsoptexLpSolver");
   ~QsoptexLpSolver() override;
@@ -28,34 +30,29 @@ class QsoptexLpSolver : public LpSolver {
   [[nodiscard]] int num_columns() const override;
   [[nodiscard]] int num_rows() const override;
 
-  void AddColumn() final;
-  void AddColumn(const mpq_class& lb, const mpq_class& ub) final;
-  void AddColumn(const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) final;
-  void AddRow(const Formula& formula, LpRowSense sense) final;
-  void SetObjective(int column, const mpq_class& value) final;
-  void SetCoefficient(int row, int column, const mpq_class& value) final;
-
-  void EnableRow(int row, LpRowSense sense, const mpq_class& rhs) final;
-  void DisableRow(int row) final;
-
-  void EnableBound(int column, LpColBound bound, const mpq_class& value) final;
-  void EnableBound(int column, const mpq_class& lb, const mpq_class& ub) final;
-  void DisableBound(int column) final;
+  [[nodiscard]] Column column(int column_idx) const override;
+  [[nodiscard]] Row row(int row_idx) const override;
+  ColumnIndex AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) override;
+  RowIndex AddRow(const Row& row) override;
+  RowIndex AddRow(const Expression::Addends& lhs, FormulaKind sense, const mpq_class& rhs) override;
+  void SetCoefficient(RowIndex row, ColumnIndex column, const mpq_class& value) override;
+  void SetObjective(int column, const mpq_class& value) override;
 
 #ifndef NDEBUG
   void Dump() final;
 #endif
 
  private:
-  LpResult OptimiseCore(mpq_class& precision, bool store_solution) final;
+  LpResult OptimiseCore(mpq_class& precision, bool store_solution) override;
 
   /**
-   * Parse a `formula` and set the coefficient for each decisional variable appearing in it,
-   * while also storing the rhs term in @ref rhs_.
+   * Parse a sequence of `literal_monomials` and set the coefficient for each decisional variable appearing in it.
+   * @tparam TypedIterable generic iterable containing pairs (Variable, coeff) (i.e. std::vector, std::set, std::span)
    * @param row row to set the coefficients for
-   * @param formula symbolic formula representing the row
+   * @param literal_monomials symbolic formula representing the row
    */
-  void SetRowCoeff(int row, const Formula& formula);
+  template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+  void SetRowCoeff(int row, const T& literal_monomials);
   /**
    * Set the coefficients to apply to `var` on a specific `row`.
    * @param row row to set the coefficients for
@@ -72,6 +69,7 @@ class QsoptexLpSolver : public LpSolver {
    * On the other hand, both @ref infeasible_rows_ and @ref infeasible_bounds_ will be cleared.
    */
   void UpdateFeasible();
+#if 0
   /**
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.
    *
@@ -85,7 +83,9 @@ class QsoptexLpSolver : public LpSolver {
    * its value is still greater than @f$ y^T b @f$.
    */
   void UpdateInfeasible();
+#endif
 
+ private:
   mpq_QSprob qsx_;  ///< QSopt_ex LP solver
 
   qsopt_ex::MpqArray ray_;  ///< Ray of the last infeasible solution
