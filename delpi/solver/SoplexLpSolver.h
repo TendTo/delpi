@@ -24,7 +24,7 @@ namespace delpi {
  */
 class SoplexLpSolver final : public LpSolver {
  public:
-  explicit SoplexLpSolver(const Config& config, const std::string& class_name = "SoplexLpSolver");
+  explicit SoplexLpSolver(Config config = {}, const std::string& class_name = "SoplexLpSolver");
 
   [[nodiscard]] int num_columns() const override;
   [[nodiscard]] int num_rows() const override;

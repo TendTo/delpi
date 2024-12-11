@@ -62,12 +62,12 @@ class LpSolver {
 
   /**
    * Construct a new LpSolver object with the given `config`.
-   * @param config configuration to use
    * @param ninfinity negative infinity threshold value
    * @param infinity infinity threshold value
+   * @param config configuration to use
    * @param class_name name of the class
    */
-  LpSolver(const Config& config, mpq_class ninfinity, mpq_class infinity, const std::string& class_name = "LpSolver");
+  LpSolver(mpq_class ninfinity, mpq_class infinity, Config config = {}, const std::string& class_name = "LpSolver");
   virtual ~LpSolver() = default;
 
   /** @getter{number of columns, lp solver} */
@@ -133,7 +133,31 @@ class LpSolver {
   virtual void ReserveRows(int size);
 
   /**
+   * Retrieve the information stored under the given `key`.
+   * @param key key of the information to get
+   * @return information stored under the given `key`
+   */
+  const std::string& GetInfo(const std::string& key) const;
+  /**
+   * Set the information stored under the given `key` to the given `value`.
+   * @param key key of the information to set
+   * @param value value to set the information to set
+   */
+  void SetInfo(const std::string& key, const std::string& value);
+  /**
+   * Set the option identified by the given `key` to the given `value`.
+   *
+   * The options will modify the Config of the LP solver.
+   * Boolean parameters will be set to true if the value is "yes", "true", "1", or "on" (case-insensitive)
+   * and false otherwise.
+   * @param key key of the option to set
+   * @param value value of the option
+   */
+  void SetOption(const std::string& key, const std::string& value);
+
+  /**
    * Add a new `column` to the LP problem.
+   * @warning The objective coefficient is set with respect to a minimisation problem.
    * @param column column to add to the LP problem
    */
   ColumnIndex AddColumn(const Column& column);
@@ -144,8 +168,9 @@ class LpSolver {
   ColumnIndex AddColumn(const Variable& var);
   /**
    * Add a new column to the LP problem setting the objective coefficient of `var` to the given `obj`.
+   * @warning The objective coefficient is set with respect to a minimisation problem.
    * @param var variable to add to the LP problem
-   * @param obj coefficient of the variable in the objective function
+   * @param obj coefficient of the variable in the objective function for minimisation
    */
   ColumnIndex AddColumn(const Variable& var, const mpq_class& obj);
   /**
@@ -158,6 +183,7 @@ class LpSolver {
   /**
    * Add a new bounded column to the LP problem, ensuring that the variable `var` is in the range @f$ [lb, ub] @f$ and
    * has the objective coefficient `obj`.
+   * @warning The objective coefficient is set with respect to a minimisation problem.
    * @param var variable to add to the LP problem
    * @param obj objective coefficient of the column
    * @param lb lower bound of the column
@@ -253,6 +279,23 @@ class LpSolver {
    */
   LpResult Solve(mpq_class& precision, bool store_solution = true);
 
+  /**
+   * Set the `objective_function` to maximise while being subject to all the constraints.
+   *
+   * The objective function coefficients will overwrite the current ones, if any.
+   * @warning The objective coefficient of variables not appearing in the `objective_function` is not altered.
+   * @param objective_function expression to maximise}
+   */
+  void Maximise(const Expression& objective_function);
+  /**
+   * Set the `objective_function` to minimise while being subject to all the constraints.
+   *
+   * The objective function coefficients will overwrite the current ones, if any.
+   * @warning The objective coefficient of variables not appearing in the `objective_function` is not altered.
+   * @param objective_function expression to minimise
+   */
+  void Minimise(const Expression& objective_function);
+
 #ifndef NDEBUG
   virtual void Dump() = 0;
 #endif
@@ -270,8 +313,9 @@ class LpSolver {
    */
   virtual LpResult SolveCore(mpq_class& precision, bool store_solution) = 0;
 
-  const Config& config_;  ///< Configuration to use
-  IterationStats stats_;  ///< Statistics of the solver
+  Config config_;                                      ///< Configuration to use
+  IterationStats stats_;                               ///< Statistics of the solver
+  std::unordered_map<std::string, std::string> info_;  ///< Generic information map. Generally collected from the file
 
   std::unordered_map<Variable, int> var_to_col_;  ///< Theory column ⇔ Variable.
                                                   ///< The column is the one used by the lp solver.

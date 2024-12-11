@@ -24,7 +24,7 @@ namespace delpi {
  */
 class QsoptexLpSolver final : public LpSolver {
  public:
-  explicit QsoptexLpSolver(const Config& config, const std::string& class_name = "QsoptexLpSolver");
+  explicit QsoptexLpSolver(Config config = {}, const std::string& class_name = "QsoptexLpSolver");
   ~QsoptexLpSolver() override;
 
   [[nodiscard]] int num_columns() const override;

@@ -15,8 +15,8 @@ namespace delpi {
 
 using SoplexStatus = soplex::SPxSolver::Status;
 
-SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_name)
-    : LpSolver{config, -soplex::infinity, soplex::infinity, class_name},
+SoplexLpSolver::SoplexLpSolver(Config config, const std::string& class_name)
+    : LpSolver{-soplex::infinity, soplex::infinity, std::move(config), class_name},
       consolidated_{false},
       spx_{},
       rninfinity_{-soplex::infinity},
@@ -30,7 +30,7 @@ SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_na
   spx_.setIntParam(soplex::SoPlex::SYNCMODE, soplex::SoPlex::SYNCMODE_AUTO);
   spx_.setIntParam(soplex::SoPlex::SIMPLIFIER, soplex::SoPlex::SIMPLIFIER_INTERNAL);
   spx_.setIntParam(soplex::SoPlex::VERBOSITY, config_.verbose_simplex());
-  // Default is maximize.
+  // Default is maximise.
   spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MINIMIZE);
   // Enable precision boosting
   bool enable_precision_boosting = config_.lp_mode() != Config::LpMode::PURE_ITERATIVE_REFINEMENT;

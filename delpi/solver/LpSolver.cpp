@@ -18,8 +18,15 @@
 
 namespace delpi {
 
-LpSolver::LpSolver(const Config& config, mpq_class ninfinity, mpq_class infinity, const std::string& class_name)
-    : config_{config},
+namespace {
+bool IsYes(std::string value) {
+  std::ranges::transform(value, value.begin(), [](const unsigned char c) { return std::tolower(c); });
+  return value == "yes" || value == "true" || value == "1" || value == "on";
+}
+}  // namespace
+
+LpSolver::LpSolver(mpq_class ninfinity, mpq_class infinity, Config config, const std::string& class_name)
+    : config_{std::move(config)},
       stats_{config.with_timings(), class_name, "Total time spent in Optimise", "Total # of Optimise"},
       var_to_col_{},
       col_to_var_{},
@@ -71,6 +78,28 @@ void LpSolver::ReserveColumns([[maybe_unused]] const int size) {
 }
 void LpSolver::ReserveRows([[maybe_unused]] const int size) { DELPI_ASSERT(size >= 0, "Invalid number of rows."); }
 
+const std::string& LpSolver::GetInfo(const std::string& key) const { return info_.at(key); }
+void LpSolver::SetInfo(const std::string& key, const std::string& value) { info_.emplace(key, value); }
+void LpSolver::SetOption(const std::string& key, const std::string& value) {
+  if (key == "csv") {
+    config_.m_csv().SetFromFile(IsYes(value));
+  } else if (key == "silent") {
+    config_.m_silent().SetFromFile(IsYes(value));
+  } else if (key == "with_timings") {
+    config_.m_with_timings().SetFromFile(IsYes(value));
+  } else if (key == "precision") {
+    config_.m_precision().SetFromFile(std::stod(value));
+  } else if (key == "continuous_output") {
+    config_.m_continuous_output().SetFromFile(IsYes(value));
+  } else if (key == "verbosity") {
+    config_.m_verbose_delpi().SetFromFile(std::stoi(value));
+  } else if (key == "simplex_verbosity") {
+    config_.m_verbose_simplex().SetFromFile(std::stoi(value));
+  } else {
+    DELPI_ERROR_FMT("Unknown option: {} = {}. Ignored", key, value);
+  }
+}
+
 void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective) {
   for (const auto& [column, value] : objective) SetObjective(column, value);
 }
@@ -87,6 +116,13 @@ LpResult LpSolver::Solve(mpq_class& precision, const bool store_solution) {
   return SolveCore(precision, store_solution);
 }
 void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetObjective(var_to_col_.at(var), value); }
+
+void LpSolver::Maximise(const Expression& objective_function) {
+  for (const auto& [var, coeff] : objective_function.addends()) SetObjective(var, -coeff);
+}
+void LpSolver::Minimise(const Expression& objective_function) {
+  for (const auto& [var, coeff] : objective_function.addends()) SetObjective(var, coeff);
+}
 
 std::ostream& operator<<(std::ostream& os, const LpSolver& solver) {
   os << solver.stats().class_name() << " {";

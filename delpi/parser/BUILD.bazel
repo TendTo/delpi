@@ -1,0 +1,34 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_srcs")
+
+package(default_visibility = [
+    "//delpi:__subpackages__",
+    "//pydelpi:__subpackages__",
+    "//test:__subpackages__",
+])
+
+delpi_srcs(
+    name = "srcs",
+    subfolder = "parser",
+    deps = [
+        "//delpi/parser/mps",
+    ],
+)
+
+delpi_cc_library(
+    name = "driver",
+    srcs = ["Driver.cpp"],
+    hdrs = ["Driver.h"],
+    implementation_deps = [
+        "//delpi/libs:gmp",
+        "//delpi/util:config",
+        "//delpi/util:error",
+    ],
+    deps = [
+        "//delpi/symbolic",
+        "//delpi/util:stats",
+        "//delpi/util:timer",
+    ],
+)
+
+cpplint()

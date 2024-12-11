@@ -6,7 +6,7 @@ While its knowledge is not necessary to use the solver, it can be useful to unde
 ## Linear Programming
 
 A **LP** problem is an optimization problem where the objective function and the constraints are linear equalities or inequalities.
-The objective function is what we want to maximize or minimize, while the constraints are the conditions the solution must satisfy.
+The objective function is what we want to maximise or minimise, while the constraints are the conditions the solution must satisfy.
 The standard form of a **LP** problem is the following:
 
 $$

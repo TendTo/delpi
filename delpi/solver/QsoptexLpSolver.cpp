@@ -27,8 +27,8 @@ extern "C" void QsoptexPartialSolutionCb(mpq_QSdata const* /*prob*/, const mpq_t
   std::cout << std::endl;
 }
 
-QsoptexLpSolver::QsoptexLpSolver(const Config& config, const std::string& class_name)
-    : LpSolver{config, 0, 0, class_name}, qsx_{nullptr}, ray_{0}, x_{0} {
+QsoptexLpSolver::QsoptexLpSolver(Config config, const std::string& class_name)
+    : LpSolver{0, 0, std::move(config), class_name}, qsx_{nullptr}, ray_{0}, x_{0} {
   qsopt_ex::QSXStart();
   ninfinity_ = mpq_class{mpq_NINFTY};
   infinity_ = mpq_class{mpq_INFTY};
