@@ -7,7 +7,7 @@
 #pragma once
 
 /**
- * Add the declaration of the operator @p op for the type @p lhs_type with parameter type @p rhs_type .
+ * Add the declaration of the operator `op` for the type `lhs_type` with parameter type `rhs_type`.
  * @code
  * GENERIC_ARITHMETIC_OPERATOR_DECLARATION(ClassA, + ClassB&)
  * // Becomes
@@ -19,7 +19,7 @@
  */
 #define GENERIC_ARITHMETIC_OPERATOR_DECLARATION(lhs_type, op, rhs_type) lhs_type operator op(const rhs_type o);
 /**
- * Add the declaration of the operator @p op for the type @p type with itself as the parameter type.
+ * Add the declaration of the operator `op` for the type `type` with itself as the parameter type.
  * @code
  * ARITHMETIC_OPERATOR_DECLARATION(ClassA&, -)
  * // Becomes
@@ -30,7 +30,7 @@
  */
 #define ARITHMETIC_OPERATOR_DECLARATION(type, op) GENERIC_ARITHMETIC_OPERATOR_DECLARATION(type, op, type)
 /**
- * Add the declaration for the operators +=, -=, *=, /= for the type @p lhs_type with parameter type @p rhs_type .
+ * Add the declaration for the operators +=, -=, *=, /= for the type `lhs_type` with parameter type `rhs_type`.
  * @code
  * GENERIC_ARITHMETIC_OPERATORS_DECLARATION(ClassA&, ClassB&)
  * // Becomes
@@ -48,7 +48,7 @@
   GENERIC_ARITHMETIC_OPERATOR_DECLARATION(lhs_type, *=, rhs_type)    \
   GENERIC_ARITHMETIC_OPERATOR_DECLARATION(lhs_type, /=, rhs_type)
 /**
- * Add the declaration for the operators +=, -=, *=, /= for the type @p type with itself as the parameter type.
+ * Add the declaration for the operators +=, -=, *=, /= for the type `type` with itself as the parameter type.
  * @code
  * GENERIC_ARITHMETIC_OPERATORS_DECLARATION(ClassA&)
  * // Becomes
@@ -61,7 +61,7 @@
  */
 #define ARITHMETIC_OPERATORS_DECLARATION(type) GENERIC_ARITHMETIC_OPERATORS_DECLARATION(type, type)
 /**
- * Add the definition of the operator @p op for the type @p lhs_type with parameter type @p rhs_type .
+ * Add the definition of the operator `op` for the type `lhs_type` with parameter type `rhs_type`.
  * @code
  * GENERIC_ARITHMETIC_OPERATOR_DEFINITION(ClassA, +, ClassB&)
  * // Becomes
@@ -82,7 +82,7 @@
     return temp;                                                       \
   }
 /**
- * Add the definition of the operator @p op for the type @p type with itself as the parameter type.
+ * Add the definition of the operator `op` for the type `type` with itself as the parameter type.
  * @code
  * ARITHMETIC_OPERATOR_DEFINITION(ClassA, -)
  * // Becomes
@@ -97,7 +97,7 @@
  */
 #define ARITHMETIC_OPERATOR_DEFINITION(type, op) GENERIC_ARITHMETIC_OPERATOR_DEFINITION(type, op, type &)
 /**
- * Add the definition for the operators +, -, *, / for the type @p lhs_type with parameter type @p rhs_type .
+ * Add the definition for the operators +, -, *, / for the type `lhs_type` with parameter type `rhs_type`.
  * @code
  * GENERIC_ARITHMETIC_OPERATORS_DEFINITION(ClassA, ClassB&)
  * // Becomes
@@ -116,7 +116,7 @@
   GENERIC_ARITHMETIC_OPERATOR_DEFINITION(lhs_type, *, rhs_type)     \
   GENERIC_ARITHMETIC_OPERATOR_DEFINITION(lhs_type, /, rhs_type)
 /**
- * Add the definition for the operators +, -, *, / for the type @p type with itself as the parameter type.
+ * Add the definition for the operators +, -, *, / for the type `type` with itself as the parameter type.
  * @code
  * ARITHMETIC_OPERATORS_DEFINITION(ClassA)
  * // Becomes
@@ -131,7 +131,7 @@
 #define ARITHMETIC_OPERATORS_DEFINITION(type) GENERIC_ARITHMETIC_OPERATORS_DEFINITION(type, type &)
 /**
  * Add the declaration for the operators +=, -=, *=, /=
- * and definition for the operators +, -, *, / for the type @p type with parameter type @p rhs_type
+ * and definition for the operators +, -, *, / for the type `type` with parameter type `rhs_type`
  * @code
  * GENERIC_ARITHMETIC_OPERATORS(ClassA, ClassB&)
  * // Becomes
@@ -147,7 +147,7 @@
   GENERIC_ARITHMETIC_OPERATORS_DEFINITION(lhs_type, rhs_type)
 /**
  * Add the declaration for the operators +=, -=, *=, /=
- * and definition for the operators +, -, *, / for the type @p type with itself as the parameter type
+ * and definition for the operators +, -, *, / for the type `type` with itself as the parameter type
  * @code
  * ARITHMETIC_OPERATORS(ClassA)
  * // Becomes

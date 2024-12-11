@@ -53,7 +53,7 @@ class SoplexLpSolver : public LpSolver {
  private:
   LpResult OptimiseCore(mpq_class& precision, bool store_solution) final;
   /**
-   * Parse a @p formula and return the vector of coefficients to apply to the decisional variables.
+   * Parse a `formula` and return the vector of coefficients to apply to the decisional variables.
    *
    * It will store the rhs term in @ref rhs_ and create a vector of coefficients for the row.
    * @param formula symbolic formula representing the row
@@ -61,9 +61,9 @@ class SoplexLpSolver : public LpSolver {
    */
   soplex::DSVectorRational ParseRowCoeff(const Formula& formula);
   /**
-   * Set the coefficients to apply to @p var on a specific row.
+   * Set the coefficients to apply to `var` on a specific row.
    *
-   * The coefficient is set in @p coeff.
+   * The coefficient is set in `coeff`.
    * @param coeffs[out] vector of coefficients to apply to the decisional variables
    * @param var variable to set the coefficients for
    * @param value value to set the coefficients to

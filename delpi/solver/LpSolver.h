@@ -10,6 +10,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "Column.h"
 #include "delpi/libs/gmp.h"
 #include "delpi/solver/LpResult.h"
 #include "delpi/solver/LpRowSense.h"
@@ -59,7 +60,7 @@ class LpSolver {
   static std::unique_ptr<LpSolver> GetInstance(const Config& config);
 
   /**
-   * Construct a new LpSolver object with the given @p config .
+   * Construct a new LpSolver object with the given `config`.
    * @param config configuration to use
    * @param ninfinity negative infinity threshold value
    * @param infinity infinity threshold value
@@ -91,7 +92,7 @@ class LpSolver {
   /** @getter{vector of all the variables, lp solver} */
   [[nodiscard]] std::vector<Variable> variables() const;
   /**
-   * Shorthand notation to get the real variable linked with column @p column.
+   * Shorthand notation to get the real variable linked with column `column`.
    * @param column index of the column the real variable is linked to
    * @return corresponding real variable
    */
@@ -115,9 +116,14 @@ class LpSolver {
    * Add a new unbounded column to the LP problem.
    * @pre The column must be added before the LP problem is consolidated.
    */
+  ColumnIndex AddVariable(const Column& column);
+  /**
+   * Add a new unbounded column to the LP problem.
+   * @pre The column must be added before the LP problem is consolidated.
+   */
   ColumnIndex AddVariable(const Variable& var);
   /**
-   * Add a new bounded column to the LP problem.
+   * Add a new column to the LP problem setting the objective coefficient to the given `obj`.
    * @pre The column must be added before the LP problem is consolidated.
    * @param obj coefficient of the variable in the objective function
    */
@@ -130,7 +136,7 @@ class LpSolver {
    */
   ColumnIndex AddVariable(const Variable& var, const mpq_class& lb, const mpq_class& ub);
   /**
-   * Add a new bounded column to the LP problem with a given @p obj coefficient.
+   * Add a new bounded column to the LP problem with a given `obj` coefficient.
    * @pre The column must be added before the LP problem is consolidated.
    * @param obj objective coefficient of the column
    * @param lb lower bound of the column
@@ -140,13 +146,13 @@ class LpSolver {
                                   const mpq_class& ub) = 0;
 
   /**
-   * Add a new row to the LP problem with the given @p formula .
+   * Add a new row to the LP problem with the given `formula`.
    * @pre All other rows already in the LP problem have been linked as well.
    * @param formula symbolic formula representing the row
    */
   RowIndex AddRow(const Formula& formula);
   /**
-   * Add a new row to the LP problem with the given @p lhs expression, @p sense and @p rhs .
+   * Add a new row to the LP problem with the given `lhs` expression, `sense` and `rhs`.
    *
    * The resulting row will be in the shape
    * @f[
@@ -160,7 +166,7 @@ class LpSolver {
    */
   RowIndex AddRow(const Expression& lhs, FormulaKind sense, const mpq_class& rhs);
   /**
-   * Add a new row to the LP problem with the given @p lhs expression, @p sense and @p rhs .
+   * Add a new row to the LP problem with the given `lhs` expression, `sense` and `rhs`.
    *
    * The resulting row will be in the shape
    * @f[
@@ -175,7 +181,7 @@ class LpSolver {
   virtual RowIndex AddRow(const Expression::Addends& lhs, FormulaKind sense, const mpq_class& rhs) = 0;
 
   /**
-   * Set the coefficient of the @p row constraint to apply at the @p column decisional variable.
+   * Set the coefficient of the `row` constraint to apply at the `column` decisional variable.
    * @param row row of the constraint
    * @param column column containing the decisional variable to set the coefficient for
    * @param value new value of the coefficient
@@ -183,39 +189,39 @@ class LpSolver {
   virtual void SetCoefficient(RowIndex row, ColumnIndex column, const mpq_class& value) = 0;
 
   /**
-   * Set the objective coefficients of the LP problem to the given @p objective .
+   * Set the objective coefficients of the LP problem to the given `objective`.
    * @param objective map from column index to objective coefficient
    */
   void SetObjective(const std::unordered_map<int, mpq_class>& objective);
   /**
-   * Set the objective coefficients of the LP problem to the given @p objective .
+   * Set the objective coefficients of the LP problem to the given `objective`.
    * @param objective
    */
   void SetObjective(const std::vector<mpq_class>& objective);
   /**
-   * The the objective coefficient of the column corresponding to the give @p var to the given @p value .
+   * The the objective coefficient of the column corresponding to the give `var` to the given `value`.
    * @param var variable to set the objective for
    * @param value new objective coefficient for the column
    */
   void SetObjective(const Variable& var, const mpq_class& value);
   /**
-   * The the objective coefficient of the given @p column to the given @p value .
+   * The the objective coefficient of the given `column` to the given `value`.
    * @param column column to set the objective for
    * @param value new objective coefficient for the column
    */
   virtual void SetObjective(int column, const mpq_class& value) = 0;
 
   /**
-   * Optimise the LP problem with the given @p precision .
+   * Optimise the LP problem with the given `precision`.
    *
    * The result of the computation will be stored in @ref solution_ and @ref dual_solution_ if the problem is feasible,
    * and in @ref infeasible_rows_ and @ref infeasible_bounds_ otherwise.
-   * If @p store_solution is false, the solution will not be stored, but the LpResult will still be returned.
-   * The actual precision will be returned in the @p precision parameter.
+   * If `store_solution` is false, the solution will not be stored, but the LpResult will still be returned.
+   * The actual precision will be returned in the `precision` parameter.
    * @param[in,out] precision desired precision for the optimisation that becomes the actual precision achieved
    * @param store_solution whether the solution and dual solution should be stored
-   * @return OPTIMAL if an optimal solution has been found and the return value of @p precision is @f$ = 0 @f$
-   * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of @p precision @f$\ge 0 @f$
+   * @return OPTIMAL if an optimal solution has been found and the return value of `precision` is @f$ = 0 @f$
+   * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of `precision` @f$\ge 0 @f$
    * @return UNBOUNDED if the problem is unbounded
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred
@@ -235,11 +241,11 @@ class LpSolver {
   virtual RowIndex AddRowCore(const Expression& row, LpRowSense sense, const mpq_class& rhs) = 0;
 
   /**
-   * Internal method that optimises the LP problem with the given @p precision .
+   * Internal method that optimises the LP problem with the given `precision`.
    * @param precision desired precision for the optimisation
    * @param store_solution whether the solution and dual solution should be stored
-   * @return OPTIMAL if an optimal solution has been found and the return value of @p precision is @f$ = 0 @f$
-   * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of @p precision @f$\ge 0 @f$
+   * @return OPTIMAL if an optimal solution has been found and the return value of `precision` is @f$ = 0 @f$
+   * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of `precision` @f$\ge 0 @f$
    * @return UNBOUNDED if the problem is unbounded
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred

@@ -33,7 +33,7 @@ class Variable {
   Variable() : id_{std::numeric_limits<Id>::max()} {}
 
   /**
-   * Construct a new real variable object, assigning it a @p name.
+   * Construct a new real variable object, assigning it a `name`.
    *
    * It will be given a unique incremental ID.
    * @param name name of the variable

@@ -46,7 +46,7 @@ class OptionValue {
   };
 
   /**
-   * Constructs an option value with @p value.
+   * Constructs an option value with `value`.
    * @param value value to be held.
    */
   explicit OptionValue(T value) : value_{std::move(value)}, type_{Type::DEFAULT} {}
@@ -85,7 +85,7 @@ class OptionValue {
   const T &operator*() const { return value_; }
 
   /**
-   * Sets the value to @p value which is given by a command-line argument.
+   * Sets the value to `value` which is given by a command-line argument.
    *
    * It sets the type to @ref Type::FROM_COMMAND_LINE.
    * It does nothing if the current type is @ref Type::FROM_CODE.
@@ -99,7 +99,7 @@ class OptionValue {
   }
 
   /**
-   * Sets the value to @p value which is provided from a file.
+   * Sets the value to `value` which is provided from a file.
    * It sets the type to @ref Type::FROM_FILE.
    * It does nothing if the current type is @ref Type::FROM_COMMAND_LINE or @ref Type::FROM_CODE.
    * @param value new value, provided from a file.

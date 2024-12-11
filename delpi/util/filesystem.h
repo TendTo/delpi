@@ -16,9 +16,9 @@ namespace delpi {
 /**
  * Get the extension of the file.
  *
- * Extracts the extension from @p name, meaning the part of the file name
+ * Extracts the extension from `name`, meaning the part of the file name
  * after the last dot.
- * @note It returns an empty string if there is no extension in @p name.
+ * @note It returns an empty string if there is no extension in `name`.
  * @param name name of the file
  * @return extension of the file
  */

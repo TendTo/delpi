@@ -50,13 +50,13 @@ class ExpressionCell : public SelfReferenceCountingObject {
    */
   ExpressionCell& Add(const Variable& var, const mpq_class& coeff);
   /**
-   * Multiply all terms of the summation by a @p coeff.
+   * Multiply all terms of the summation by a `coeff`.
    * @param coeff coefficient all the terms will be mutiplied by
    * @return reference to this object
    */
   ExpressionCell& Multiply(const mpq_class& coeff);
   /**
-   * Divide all terms of the summation by a @p coeff.
+   * Divide all terms of the summation by a `coeff`.
    * @param coeff coefficient all the terms will be divided by
    * @return reference to this object
    * @throws delpi::DelpiException division by 0 detected
@@ -65,13 +65,13 @@ class ExpressionCell : public SelfReferenceCountingObject {
 
   /**
    * Evaluates using a given environment (by default, an empty environment).
-   * @throws std::exception if there exists a variable in this expression whose assignment is not provided by @p env
+   * @throws std::exception if there exists a variable in this expression whose assignment is not provided by `env`
    */
   [[nodiscard]] mpq_class Evaluate(const Environment& env = {}) const;
 
   /**
-   * Returns a copy of this expression,
-   * replacing all occurrences of the variables in @p s with corresponding expressions in @p s.
+   * Create a copy of this expression,
+   * replacing all occurrences of the variables in `s` with corresponding expressions in `s`.
    *
    * Note that the substitutions occur simultaneously.
    * @code

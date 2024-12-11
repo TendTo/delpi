@@ -16,7 +16,7 @@
 /** @namespace hash Namespace containing all the hash functions and utilities */
 namespace delpi::hash {
 
-/** Combines a given hash value @p seed and a hash of parameter @p v. */
+/** Combines a given hash value `seed` and a hash of parameter `v`. */
 template <class T>
 size_t hash_combine(size_t seed, const T &v);
 
@@ -35,31 +35,31 @@ size_t hash_range(It first, It last) {
   return seed;
 }
 
-/** Computes the hash value of @p v using std::hash. */
+/** Computes the hash value of `v` using std::hash. */
 template <class T>
 struct hash_value {
   size_t operator()(const T &v) const { return std::hash<T>{}(v); }
 };
 
-/** Computes the hash value of a pair @p p. */
+/** Computes the hash value of a pair `p`. */
 template <class T1, class T2>
 struct hash_value<std::pair<T1, T2>> {
   size_t operator()(const std::pair<T1, T2> &p) const { return hash_combine(0, p.first, p.second); }
 };
 
-/** Computes the hash value of a vector @p vec. */
+/** Computes the hash value of a vector `vec`. */
 template <class T>
 struct hash_value<std::vector<T>> {
   size_t operator()(const std::vector<T> &vec) const { return hash_range(vec.begin(), vec.end()); }
 };
 
-/** Computes the hash value of a set @p s. */
+/** Computes the hash value of a set `s`. */
 template <class T>
 struct hash_value<std::set<T>> {
   size_t operator()(const std::set<T> &s) const { return hash_range(s.begin(), s.end()); }
 };
 
-/** Computes the hash value of a map @p map. */
+/** Computes the hash value of a `map`. */
 template <class T1, class T2>
 struct hash_value<std::map<T1, T2>> {
   size_t operator()(const std::map<T1, T2> &map) const { return hash_range(map.begin(), map.end()); }

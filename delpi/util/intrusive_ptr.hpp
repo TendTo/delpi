@@ -26,9 +26,9 @@ class intrusive_ptr {
   intrusive_ptr() : ptr_{nullptr} {}
 
   /**
-   * Construct a new intrusive_ptr object wrapping the given pointer @p p.
+   * Construct a new intrusive_ptr object wrapping the given pointer `p`.
    *
-   * If @p add_ref is true, the reference count of the object is incremented immediately.
+   * If `add_ref` is true, the reference count of the object is incremented immediately.
    * @code
    * intrusive_ptr<MyObject> str(new MyObject());
    * @endcode
@@ -67,7 +67,7 @@ class intrusive_ptr {
    * Copy assignment operator.
    *
    * `AddRef` is immediately run on the object.
-   * The source @p ip maintains its reference to the pointer.
+   * The source `ip` maintains its reference to the pointer.
    * If this pointer was already in use, the old object is released at the end.
    * @param ip intrusive_ptr object to copy
    * @return reference to this intrusive_ptr object
@@ -124,7 +124,7 @@ class intrusive_ptr {
   }
 
   /**
-   * Sets the owned pointer to the given pointer @p pObject without incrementing the reference count.
+   * Sets the owned pointer to the given pointer `ptr` without incrementing the reference count.
    *
    * The intrusive_ptr eventually only does a `Release()` on the object.
    * Useful for assuming a reference that someone else has handed you and making sure it is always released.

@@ -69,13 +69,13 @@ class Expression {
    * Evaluates using a given environment (by default, an empty environment).
    * @param env map between each variable and its value
    * @return value of the expression in the given environment
-   * @throws std::exception if there exists variable in this expression whose assignment is not provided by @p env
+   * @throws std::exception if there exists variable in this expression whose assignment is not provided by `env`
    */
   [[nodiscard]] mpq_class Evaluate(const Environment& env = {}) const;
 
   /**
-   * Returns a copy of this expression,
-   * replacing all occurrences of the variables in @p s with corresponding expressions in @p s.
+   * Create a copy of this expression,
+   * replacing all occurrences of the variables in `s` with corresponding expressions in `s`.
    *
    * Note that the substitutions occur simultaneously.
    * @code
@@ -129,7 +129,7 @@ class Expression {
   Expression operator-(const Expression& o) const;
 
   /**
-   * Print a string representation of this class to the provided @p os.
+   * Print a string representation of this class to the provided `os`.
    *
    * It is an alternative to the more standard operator<<.
    * @param os output stream

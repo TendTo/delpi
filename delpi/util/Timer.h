@@ -137,8 +137,8 @@ class TimerGuard {
   /**
    * Construct a new TimeGuard object.
    *
-   * If @p enabled is false or @p timer is a nullptr, this class does not do anything.
-   * If @p start_timer is true, starts the @p timer in the constructor.
+   * If `enabled` is false or `timer` is a nullptr, this class does not do anything.
+   * If `start_timer` is true, starts the `timer` in the constructor.
    * Otherwise, it does not start it and a user has to call `Resume()` to start it.
    * @param timer a pointer to the timer object to be guarded
    * @param enabled whether the timer is enabled and should run

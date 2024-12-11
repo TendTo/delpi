@@ -14,8 +14,8 @@ class Formula {
   Formula& operator=(Formula&& o) noexcept = default;
 
   /**
-   * Returns a copy of this formula with the expression having
-   * all occurrences of the variables in @p s replaced with the corresponding variable in @p s.
+   * Create a copy of this formula with the expression having
+   * all occurrences of the variables in `s` replaced with the corresponding variable in `s`.
    *
    * Note that the substitutions occur simultaneously.
    * @code
@@ -32,7 +32,7 @@ class Formula {
    * @param env map between each variable and its value
    * @return true if the formula is satisfied within the given environment
    * @return false if the formula is not satisfied within the given environment
-   * @throws std::exception if there exists variable in this expression whose assignment is not provided by @p env
+   * @throws std::exception if there exists variable in this expression whose assignment is not provided by `env`
    */
   [[nodiscard]] bool Evaluate(const Expression::Environment& env) const;
 

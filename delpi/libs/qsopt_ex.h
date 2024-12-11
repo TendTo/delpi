@@ -67,7 +67,7 @@ mpq_class CStringToMpq(const char str[]);
 class MpqArray {
  public:
   /**
-   * Construct a new MpqArray object, allocating the array with @p n_elements elements.
+   * Construct a new MpqArray object, allocating the array with `n_elements` elements.
    * @param n_elements The number of elements in the array.
    */
   explicit MpqArray(size_t n_elements);
@@ -97,7 +97,7 @@ class MpqArray {
   [[nodiscard]] size_t size() const { return array_ ? reinterpret_cast<size_t *>(array_)[-1] : 0; }
 
   /**
-   * Resize the array to have @p nElements elements.
+   * Resize the array to have `nElements` elements.
    *
    * All the previous elements are lost.
    * @param nElements new  number of elements in the array
@@ -108,10 +108,10 @@ class MpqArray {
   mpq_t *array_;  ///< array of mpq_t. It is allocated by AllocateMpqArray() and freed by FreeMpqArray().
 
   /**
-   * Allocate the array with @p n_elements elements.
+   * Allocate the array with `n_elements` elements.
    *
    * The array has a peculiar structure, where the element at index -1 is the size of the array.
-   * All the other @p n_elements elements are mpq_t.
+   * All the other `n_elements` elements are mpq_t.
    * @param n_elements The number of elements in the array.
    */
   void AllocateMpqArray(size_t n_elements);

@@ -50,14 +50,14 @@ class QsoptexLpSolver : public LpSolver {
   LpResult OptimiseCore(mpq_class& precision, bool store_solution) final;
 
   /**
-   * Parse a @p formula and set the coefficient for each decisional variable appearing in it,
+   * Parse a `formula` and set the coefficient for each decisional variable appearing in it,
    * while also storing the rhs term in @ref rhs_.
    * @param row row to set the coefficients for
    * @param formula symbolic formula representing the row
    */
   void SetRowCoeff(int row, const Formula& formula);
   /**
-   * Set the coefficients to apply to @p var on a specific @p row.
+   * Set the coefficients to apply to `var` on a specific `row`.
    * @param row row to set the coefficients for
    * @param var variable to set the coefficients for
    * @param value value to set the coefficients to
