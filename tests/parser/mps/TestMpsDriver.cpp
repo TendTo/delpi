@@ -1,47 +1,52 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
- * @copyright 2024 dlinear
+ * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "dlinear/parser/mps/Driver.h"
-#include "test/symbolic/TestSymbolicUtils.h"
+#include "delpi/parser/mps/Driver.h"
 
-using dlinear::Config;
-using dlinear::Context;
-using dlinear::Variable;
-using dlinear::mps::MpsDriver;
+using delpi::Config;
+using delpi::Formula;
+using delpi::LpSolver;
+using delpi::Variable;
+using delpi::mps::MpsDriver;
 
 class TestMpsDriver : public ::testing::Test {
  protected:
   Config config_{Config::Format::MPS};
-  Context context_{config_};
+  std::unique_ptr<LpSolver> lp_solver_;
+
+  TestMpsDriver() {
+    config_.m_lp_solver() = Config::LpSolver::SOPLEX;
+    lp_solver_ = LpSolver::GetInstance(config_);
+  }
 };
 
 TEST_F(TestMpsDriver, SetConfigOptions1) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("* @set-option :precision 1\n"
                          "* @set-option :produce-models true\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().config().precision(), 1);
-  EXPECT_TRUE(driver.context().config().produce_models());
+  EXPECT_EQ(driver.config().precision(), 1);
+  EXPECT_TRUE(driver.config().produce_models());
 }
 
 TEST_F(TestMpsDriver, SetConfigOptions2) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("* @set-option :precision 0.505\n"
                          "* @set-option :produce-models false\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().config().precision(), 0.505);
-  EXPECT_FALSE(driver.context().config().produce_models());
+  EXPECT_EQ(driver.config().precision(), 0.505);
+  EXPECT_FALSE(driver.config().produce_models());
 }
 
 TEST_F(TestMpsDriver, Name) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("NAME best name ever\n"
                          "ENDATA"));
@@ -49,7 +54,7 @@ TEST_F(TestMpsDriver, Name) {
 }
 
 TEST_F(TestMpsDriver, Rows) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
                          " L  R1\n"
@@ -65,16 +70,16 @@ TEST_F(TestMpsDriver, Rows) {
                          "BOUNDS\n"
                          " FR BND X1\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().box().size(), 1);
-  const Variable& x = driver.context().box().variable(0);
-  EXPECT_EQ(driver.context().assertions().size(), 3u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x <= 0));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(2 * x >= 0));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(3 * x == 0));
+  ASSERT_EQ(lp_solver_->variables().size(), 1u);
+  const Variable& x = lp_solver_->variables().front();
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(1 * x <= 0,  //
+                                                           2 * x >= 0,  //
+                                                           3 * x == 0));
 }
 
 TEST_F(TestMpsDriver, Columns) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
                          " L  R1\n"
@@ -91,18 +96,19 @@ TEST_F(TestMpsDriver, Columns) {
                          " FR BND X2\n"
                          " FR BND X3\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().box().size(), 3);
-  const Variable& x1 = driver.context().box().variable(0);
-  const Variable& x2 = driver.context().box().variable(1);
-  const Variable& x3 = driver.context().box().variable(2);
-  EXPECT_EQ(driver.context().assertions().size(), 3u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(11 * x1 + 31 * x3 <= 0));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(12 * x1 + 21 * x2 + 32 * x3 >= 0));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(33 * x3 == 0));
+  ASSERT_EQ(lp_solver_->variables().size(), 3u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints,
+              ::testing::UnorderedElementsAre(11 * x1 + 31 * x3 <= 0,            //
+                                              12 * x1 + 21 * x2 + 32 * x3 >= 0,  //
+                                              33 * x3 == 0));
 }
 
 TEST_F(TestMpsDriver, Rhs) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
                          " L  R1\n"
@@ -122,18 +128,19 @@ TEST_F(TestMpsDriver, Rhs) {
                          " FR BND X2\n"
                          " FR BND X3\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().box().size(), 3);
-  const Variable& x1 = driver.context().box().variable(0);
-  const Variable& x2 = driver.context().box().variable(1);
-  const Variable& x3 = driver.context().box().variable(2);
-  EXPECT_EQ(driver.context().assertions().size(), 3u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(11 * x1 + 31 * x3 <= 1));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(12 * x1 + 21 * x2 + 32 * x3 >= 2));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(33 * x3 == 3));
+  ASSERT_EQ(lp_solver_->variables().size(), 3u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints,
+              ::testing::UnorderedElementsAre(11 * x1 + 31 * x3 <= 1,            //
+                                              12 * x1 + 21 * x2 + 32 * x3 >= 2,  //
+                                              33 * x3 == 3));
 }
 
 TEST_F(TestMpsDriver, RangePositive) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
                          " L  R1\n"
@@ -156,21 +163,22 @@ TEST_F(TestMpsDriver, RangePositive) {
                          " FR BND X2\n"
                          " FR BND X3\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().box().size(), 3);
-  const Variable& x1 = driver.context().box().variable(0);
-  const Variable& x2 = driver.context().box().variable(1);
-  const Variable& x3 = driver.context().box().variable(2);
-  EXPECT_EQ(driver.context().assertions().size(), 6u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(11 * x1 + 31 * x3 >= 1 - 51));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(11 * x1 + 31 * x3 <= 1));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(12 * x1 + 21 * x2 + 32 * x3 >= 2));
-  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52));
-  EXPECT_TRUE(driver.context().assertions()[4].EqualTo(33 * x3 >= 3));
-  EXPECT_TRUE(driver.context().assertions()[5].EqualTo(33 * x3 <= 3 + 53));
+  ASSERT_EQ(lp_solver_->variables().size(), 3u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints,
+              ::testing::UnorderedElementsAre(11 * x1 + 31 * x3 >= 1 - 51,            //
+                                              11 * x1 + 31 * x3 <= 1,                 //
+                                              12 * x1 + 21 * x2 + 32 * x3 >= 2,       //
+                                              12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52,  //
+                                              33 * x3 >= 3,                           //
+                                              33 * x3 <= 3 + 53));
 }
 
 TEST_F(TestMpsDriver, RangeNegative) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
                          " L  R1\n"
@@ -193,21 +201,22 @@ TEST_F(TestMpsDriver, RangeNegative) {
                          " FR BND X2\n"
                          " FR BND X3\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().box().size(), 3);
-  const Variable& x1 = driver.context().box().variable(0);
-  const Variable& x2 = driver.context().box().variable(1);
-  const Variable& x3 = driver.context().box().variable(2);
-  EXPECT_EQ(driver.context().assertions().size(), 6u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(11 * x1 + 31 * x3 >= 1 - 51));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(11 * x1 + 31 * x3 <= 1));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(12 * x1 + 21 * x2 + 32 * x3 >= 2));
-  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52));
-  EXPECT_TRUE(driver.context().assertions()[4].EqualTo(33 * x3 >= 3 - 53));
-  EXPECT_TRUE(driver.context().assertions()[5].EqualTo(33 * x3 <= 3));
+  ASSERT_EQ(lp_solver_->variables().size(), 3u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints,
+              ::testing::UnorderedElementsAre(11 * x1 + 31 * x3 >= 1 - 51,            //
+                                              11 * x1 + 31 * x3 <= 1,                 //
+                                              12 * x1 + 21 * x2 + 32 * x3 >= 2,       //
+                                              12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52,  //
+                                              33 * x3 >= 3 - 53,                      //
+                                              33 * x3 <= 3));
 }
 
 TEST_F(TestMpsDriver, BoundsPositive) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
                          " E  R1\n"
@@ -226,23 +235,23 @@ TEST_F(TestMpsDriver, BoundsPositive) {
                          " MI BND X5 65\n"
                          " PL BND X5 66\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().box().size(), 5);
-  const Variable& x1 = driver.context().box().variable(0);
-  const Variable& x2 = driver.context().box().variable(1);
-  const Variable& x3 = driver.context().box().variable(2);
-  const Variable& x4 = driver.context().box().variable(3);
-  const Variable& x5 = driver.context().box().variable(4);
-  EXPECT_EQ(driver.context().assertions().size(), 6u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x1 >= 61));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(x2 >= 0));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(x2 <= 62));
-  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(x3 >= 63));
-  EXPECT_TRUE(driver.context().assertions()[4].EqualTo(x3 <= 63));
-  EXPECT_TRUE(driver.context().assertions()[5].EqualTo(x1 + x2 + x3 + x4 + x5 == 0));
+  ASSERT_EQ(lp_solver_->variables().size(), 5u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const Variable& x4 = lp_solver_->variables().at(3);
+  const Variable& x5 = lp_solver_->variables().at(4);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints,
+              ::testing::UnorderedElementsAre(x1 >= 61,  //
+                                              x2 >= 0,   //
+                                              x2 <= 62,  //
+                                              x3 == 63,  //
+                                              x1 + x2 + x3 + x4 + x5 == 0));
 }
 
 TEST_F(TestMpsDriver, BoundsNegative) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
                          " E  R1\n"
@@ -261,22 +270,22 @@ TEST_F(TestMpsDriver, BoundsNegative) {
                          " MI BND X5 -65\n"
                          " PL BND X5 -66\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().box().size(), 5);
-  const Variable& x1 = driver.context().box().variable(0);
-  const Variable& x2 = driver.context().box().variable(1);
-  const Variable& x3 = driver.context().box().variable(2);
-  const Variable& x4 = driver.context().box().variable(3);
-  const Variable& x5 = driver.context().box().variable(4);
-  EXPECT_EQ(driver.context().assertions().size(), 5u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x1 >= -61));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(x2 <= -62));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(x3 >= -63));
-  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(x3 <= -63));
-  EXPECT_TRUE(driver.context().assertions()[4].EqualTo(x1 + x2 + x3 + x4 + x5 == 0));
+  ASSERT_EQ(lp_solver_->variables().size(), 5u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const Variable& x4 = lp_solver_->variables().at(3);
+  const Variable& x5 = lp_solver_->variables().at(4);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints,
+              ::testing::UnorderedElementsAre(x1 >= -61,  //
+                                              x2 <= -62,  //
+                                              x3 == -63,  //
+                                              x1 + x2 + x3 + x4 + x5 == 0));
 }
 
 TEST_F(TestMpsDriver, BoundsImplicit) {
-  MpsDriver driver{context_};
+  MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
                          " E  R1\n"
@@ -292,15 +301,15 @@ TEST_F(TestMpsDriver, BoundsImplicit) {
                          " MI BND X5\n"
                          " PL BND X5\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.context().box().size(), 5);
-  const Variable& x1 = driver.context().box().variable(0);
-  const Variable& x2 = driver.context().box().variable(1);
-  const Variable& x3 = driver.context().box().variable(2);
-  const Variable& x4 = driver.context().box().variable(3);
-  const Variable& x5 = driver.context().box().variable(4);
-  EXPECT_EQ(driver.context().assertions().size(), 4u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x1 >= 0));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(x2 >= 0));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(x3 >= 0));
-  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(x1 + x2 + x3 + x4 + x5 == 0));
+  ASSERT_EQ(lp_solver_->variables().size(), 5u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const Variable& x4 = lp_solver_->variables().at(3);
+  const Variable& x5 = lp_solver_->variables().at(4);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 >= 0,  //
+                                                           x2 >= 0,  //
+                                                           x3 >= 0,  //
+                                                           x1 + x2 + x3 + x4 + x5 == 0));
 }

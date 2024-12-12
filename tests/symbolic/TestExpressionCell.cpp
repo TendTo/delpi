@@ -12,7 +12,6 @@
 using delpi::Expression;
 using delpi::ExpressionCell;
 using delpi::intrusive_ptr;
-using delpi::LinearMonomial;
 using delpi::Variable;
 
 class TestExpressionCell : public ::testing::Test {
@@ -70,7 +69,7 @@ TEST_F(TestExpressionCell, Copy) {
 }
 
 TEST_F(TestExpressionCell, NewInstanceLinearMonomial) {
-  const intrusive_ptr<ExpressionCell> cell{ExpressionCell::New(LinearMonomial{x_, 2})};
+  const intrusive_ptr<ExpressionCell> cell{ExpressionCell::New(Expression::Addend{x_, 2})};
   EXPECT_EQ(cell->use_count(), 1u);
   ASSERT_EQ(cell->addends().size(), 1u);
   EXPECT_TRUE(cell->addends().cbegin()->first.equal_to(x_));
@@ -96,7 +95,7 @@ TEST_F(TestExpressionCell, NewInstanceAddends) {
 }
 
 TEST_F(TestExpressionCell, CopyReferenceCount) {
-  const intrusive_ptr<ExpressionCell> cell{ExpressionCell::New(LinearMonomial{x_, 2})};
+  const intrusive_ptr<ExpressionCell> cell{ExpressionCell::New(Expression::Addend{x_, 2})};
   EXPECT_EQ(cell->use_count(), 1u);
   {
     [[maybe_unused]] const intrusive_ptr<ExpressionCell> cell_constructor{cell};
@@ -108,7 +107,7 @@ TEST_F(TestExpressionCell, CopyReferenceCount) {
 }
 
 TEST_F(TestExpressionCell, MoveReferenceCount) {
-  intrusive_ptr<ExpressionCell> cell{ExpressionCell::New(LinearMonomial{x_, 2})};
+  intrusive_ptr<ExpressionCell> cell{ExpressionCell::New(Expression::Addend{x_, 2})};
   EXPECT_EQ(cell->use_count(), 1u);
   {
     intrusive_ptr<ExpressionCell> cell_constructor{std::move(cell)};

@@ -5,35 +5,35 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/parser/mps/Sense.h"
+#include "delpi/parser/mps/SenseType.h"
 
-using dlinear::mps::ParseSense;
-using dlinear::mps::Sense;
+using delpi::mps::ParseSense;
+using delpi::mps::SenseType;
 
 TEST(TestSense, ParseSense) {
-  EXPECT_EQ(ParseSense("L"), Sense::L);
-  EXPECT_EQ(ParseSense("E"), Sense::E);
-  EXPECT_EQ(ParseSense("G"), Sense::G);
-  EXPECT_EQ(ParseSense("N"), Sense::N);
+  EXPECT_EQ(ParseSense("L"), SenseType::L);
+  EXPECT_EQ(ParseSense("E"), SenseType::E);
+  EXPECT_EQ(ParseSense("G"), SenseType::G);
+  EXPECT_EQ(ParseSense("N"), SenseType::N);
 }
 
 TEST(TestSense, ParseSenseCaseInsensitive) {
-  EXPECT_EQ(ParseSense("l"), Sense::L);
-  EXPECT_EQ(ParseSense("e"), Sense::E);
-  EXPECT_EQ(ParseSense("g"), Sense::G);
-  EXPECT_EQ(ParseSense("n"), Sense::N);
+  EXPECT_EQ(ParseSense("l"), SenseType::L);
+  EXPECT_EQ(ParseSense("e"), SenseType::E);
+  EXPECT_EQ(ParseSense("g"), SenseType::G);
+  EXPECT_EQ(ParseSense("n"), SenseType::N);
 }
 
 TEST(TestSense, ParseSenseChar) {
-  EXPECT_EQ(ParseSense('L'), Sense::L);
-  EXPECT_EQ(ParseSense('E'), Sense::E);
-  EXPECT_EQ(ParseSense('G'), Sense::G);
-  EXPECT_EQ(ParseSense('N'), Sense::N);
+  EXPECT_EQ(ParseSense('L'), SenseType::L);
+  EXPECT_EQ(ParseSense('E'), SenseType::E);
+  EXPECT_EQ(ParseSense('G'), SenseType::G);
+  EXPECT_EQ(ParseSense('N'), SenseType::N);
 }
 
 TEST(TestSense, ParseSenseCharCaseInsensitive) {
-  EXPECT_EQ(ParseSense('l'), Sense::L);
-  EXPECT_EQ(ParseSense('e'), Sense::E);
-  EXPECT_EQ(ParseSense('g'), Sense::G);
-  EXPECT_EQ(ParseSense('n'), Sense::N);
+  EXPECT_EQ(ParseSense('l'), SenseType::L);
+  EXPECT_EQ(ParseSense('e'), SenseType::E);
+  EXPECT_EQ(ParseSense('g'), SenseType::G);
+  EXPECT_EQ(ParseSense('n'), SenseType::N);
 }

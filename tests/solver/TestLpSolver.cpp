@@ -35,7 +35,6 @@ INSTANTIATE_TEST_SUITE_P(TestLpSolver, TestLpSolver, enabled_test_solvers);
 TEST_P(TestLpSolver, Constructor) {
   EXPECT_LT(solver_->ninfinity(), 0);
   EXPECT_GT(solver_->infinity(), 0);
-  EXPECT_EQ(&solver_->config(), &config_);
 }
 
 TEST_P(TestLpSolver, AddColumn) {

@@ -8,7 +8,6 @@
 #include "delpi/symbolic/Expression.h"
 
 using delpi::Expression;
-using delpi::LinearMonomial;
 using delpi::Variable;
 
 class TestExpression : public ::testing::Test {
@@ -44,7 +43,7 @@ TEST_F(TestExpression, VarConstructor) {
 }
 
 TEST_F(TestExpression, LinearMonomialConstructor) {
-  const Expression e{LinearMonomial{x_, 2}};
+  const Expression e{Expression::Addend{x_, 2}};
   ASSERT_EQ(e.addends().size(), 1u);
   EXPECT_TRUE(e.addends().cbegin()->first.equal_to(x_));
   EXPECT_EQ(e.addends().cbegin()->second, mpq_class{2});
@@ -83,7 +82,7 @@ TEST_F(TestExpression, Copy) {
 }
 
 TEST_F(TestExpression, CopyReferenceCount) {
-  const Expression e{LinearMonomial{x_, 2}};
+  const Expression e{Expression::Addend{x_, 2}};
   EXPECT_EQ(e.use_count(), 1u);
   {
     const Expression e_constructor{e};
@@ -95,7 +94,7 @@ TEST_F(TestExpression, CopyReferenceCount) {
 }
 
 TEST_F(TestExpression, MoveReferenceCount) {
-  Expression e{LinearMonomial{x_, 2}};
+  Expression e{Expression::Addend{x_, 2}};
   EXPECT_EQ(e.use_count(), 1u);
   {
     Expression e_constructor{std::move(e)};

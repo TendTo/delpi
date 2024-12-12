@@ -5,10 +5,10 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/parser/mps/BoundType.h"
+#include "delpi/parser/mps/BoundType.h"
 
-using dlinear::mps::BoundType;
-using dlinear::mps::ParseBoundType;
+using delpi::mps::BoundType;
+using delpi::mps::ParseBoundType;
 
 TEST(TestBoundType, ParseBoundType) {
   EXPECT_EQ(ParseBoundType("LO"), BoundType::LO);
