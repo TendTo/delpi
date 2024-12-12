@@ -16,7 +16,6 @@ namespace delpi {
 
 /**
  * Utility class to be inherited from to obtain compatibility with the intrusive_ptr.
- *
  * It implements both @ref AddRef and @ref Release methods and supports both thread safe and unsafe reference counting.
  * This class (and its subclasses) are meant to be initialised and used through an intrusive_ptr.
  * @code

@@ -21,7 +21,6 @@ enum class LpResult {
 
 /**
  * Relax the `result` of the theory solver (i.e. transform OPTIMAL to DELTA_OPTIMAL).
- *
  * All other results are left unchanged.
  * @param result result to relax
  * @return relaxed result

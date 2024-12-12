@@ -27,7 +27,6 @@ class ExpressionCell;
 
 /**
  * Represents a symbolic form of an expression.
- *
  * Its syntax tree is as follows:
  * ```
  * E := Var | E + ... + E | Constant * E

@@ -17,7 +17,6 @@ namespace delpi {
 
 /**
  * Dataclass collecting statistics about some operation or process.
- *
  * At its more basic level, it collects the cumulative time spent in a given operation.
  */
 class Stats {
@@ -67,7 +66,6 @@ class Stats {
 
 /**
  * Dataclass collecting statistics about some operation or process.
- *
  * Not only does it collect the cumulative time spent in a given operation, but also the total number of iterations.
  */
 class IterationStats : public Stats {

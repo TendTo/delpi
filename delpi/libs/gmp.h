@@ -3,7 +3,6 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  * GMP wrapper.
- *
  * This header includes the GMP library and provides a various helpers.
  * Other files in the library should depend on this header instead of the GMP library directly.
  * Instead of including <gmpxx.h>, include "delpi/libs/gmp.h".
@@ -52,7 +51,6 @@ mpz_class ceil(const mpq_class &val);
 
 /**
  * Cast a mpq_class to a mpq_t.
- *
  * Important definitions from <gmpxx.h> and <gmp.h> (fair use):
  *
  *   mpq_srcptr mpq_class::get_mpq_t() const { return mp; }
@@ -75,7 +73,6 @@ mpz_class ceil(const mpq_class &val);
  *
  * We can then take a reference to the mpq_t.
  * The address of this reference also has the same value as the (mpq_t *).
- *
  * @param cla mpq_class to cast
  * @return mpq_t reference
  */
@@ -85,7 +82,6 @@ inline mpq_t &ToMpq(mpq_class &cla) { return *reinterpret_cast<mpq_t *>(cla.get_
 
 /**
  * Cast a mpq_t to a mpq_class.
- *
  * This works because the internal representation of a mpq_class is exactly
  * the same as that of a mpq_t (and, because we only take a reference, no constructor or destructor is ever called).
  * @param mpq mpq_t to cast
@@ -113,7 +109,6 @@ inline bool IsDigitOrSign(char c) { return std::isdigit(c) || c == '+' || c == '
 
 /**
  * Convert a string to a mpq_class.
- *
  * The number is converted exactly, without any rounding,
  * by interpreting the string as a base-10 rational number.
  * @code

@@ -14,7 +14,6 @@ namespace delpi {
 
 /**
  * Symbolic expression representing an addition between linear monomials.
- *
  * It can be used to encode expression of the kind
  * @f[
  *     \sum c_i \cdot x_i

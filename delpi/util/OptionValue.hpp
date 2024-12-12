@@ -3,7 +3,6 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  * OptionValue class.
- *
  * It is used to wrap a value that can be set from multiple sources.
  * The value is overwritten only if it is not set from a higher priority source.
  * The priority is defined as follows, where the higher the number, the higher the priority:
@@ -21,7 +20,6 @@ namespace delpi {
 
 /**
  * Represents an optional value in dLinear.
- *
  * There are four ways that an option can have its value -- by default, by a
  * command-line argument, by a set-info/set-option command from a .smt2 file,
  * and a manual update in a code. We define an order in these types and make

@@ -4,7 +4,6 @@
  * @licence BSD 3-Clause License
  * Utilities that verify assumptions made by the program and aborts
  * the program if those assumptions are not true.
- *
  * If NDEBUG is defined, most of the macro do nothing and give no explanation.
  * It makes the program faster, but less useful for debugging.
  */

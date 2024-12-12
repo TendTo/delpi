@@ -4,7 +4,6 @@
  * @licence BSD 3-Clause License
  * Logging macros.
  * Allows logging with different verbosity levels using spdlog.
- *
  * The verbosity level is set with the -V flag.
  * The verbosity level is an integer between 0 and 5 and it increases with each -V flag.
  * It can be reduced with the -q flag.

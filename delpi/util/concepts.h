@@ -3,7 +3,6 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  * Collection of concepts used in the delpi library.
- *
  * Concepts have been introduced in the c++20 standard and are used in the delpi library
  * in order to make the code more readable and to provide better error messages in templated code.
  */
@@ -15,7 +14,6 @@ namespace delpi {
 
 /**
  * Check if the type `T` is a self-reference counter type, i.e. it has both `AddRef` and `Release` methods.
- *
  * The `AddRef` method should increment the internal reference counter.
  * The `Release` method should decrement it, and if it reaches zero, the object should be deleted using its destructor.
  * @code

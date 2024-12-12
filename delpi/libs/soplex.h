@@ -3,7 +3,6 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  * Soplex wrapper.
- *
  * This header includes the Soplex library and provides a various helpers.
  * Other files in the library should depend on this header instead of the Soplex library directly.
  * Instead of including <soplex.h>, include "delpi/libs/soplex.h".

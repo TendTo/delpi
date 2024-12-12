@@ -10,7 +10,6 @@ namespace delpi {
 
 /**
  * Check if the python interpreter has any flags that should interrupt the C++ execution.
- *
  * Ctrl-C, along with other signals,
  * is received by the Python interpreter which holds it until the GIL is released.
  * To interrupt potentially long-running from inside your function,

@@ -3,7 +3,6 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  * Qsopt_ex wrapper.
- *
  * This header includes the Qsopt_ex library and provides a various helpers.
  * Other files in the library should depend on this header instead of the Qsopt_ex library directly.
  * Instead of including <qsopt_ex/Qsopt_ex.h>, include "delpi/libs/libqsopt_ex.h".
@@ -60,7 +59,6 @@ mpq_class CStringToMpq(const char str[]);
 
 /**
  * A wrapper around an array of mpq_t elements.
- *
  * It is used to pass around arrays of mpq_t, ensuring they are cleaned up after use.
  * The array is allocated by AllocateMpqArray() and freed by FreeMpqArray().
  */

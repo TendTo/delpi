@@ -10,7 +10,6 @@
 namespace {
 /**
  * Hash a gmp unsigned int.
- *
  * Credits to the [cvc5 implementation](https://github.com/cvc5/cvc5/blob/main/src/util/gmp_util.h).
  * @param val unsigned integer to hash
  * @return hash
@@ -28,7 +27,6 @@ size_t gmpz_hash(const mpz_t val) {
 
 /**
  * Hash a gmp rational.
- *
  * Credits to the [cvc5 implementation](https://github.com/cvc5/cvc5/blob/main/src/util/gmp_util.h).
  * @param val rational to hash
  * @return hash

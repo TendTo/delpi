@@ -19,7 +19,6 @@ struct user_clock;
 
 /**
  * Simple timer class to evaluate the performance of the software.
- *
  * The timer can be started, paused, and resumed.
  * The elapsed time is returned in seconds or as a duration.
  */
@@ -97,7 +96,6 @@ class Timer : public TimerBase<chosen_steady_clock> {};
 
 /**
  * Structure that will hold the user clock data.
- *
  * It implements the Clock interface of std::chrono.
  */
 struct user_clock {
@@ -115,7 +113,6 @@ class UserTimer : public TimerBase<user_clock> {};
 
 /**
  * The TimeGuard wraps a timer object and pauses it when the guard object is destructed.
- *
  * Useful for measuring the exact time spent in a block of code.
  * @code
  * // Example usage

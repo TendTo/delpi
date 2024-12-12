@@ -18,7 +18,6 @@ namespace delpi {
 
 /**
  * Used to parse command line arguments and produce a corresponding Config object to be used throughout the execution.
- *
  * The default values of each parameter are defined in the Config class.
  * Besides parsing, a validation step is performed to ensure the correctness of the parameters.
  * If an inconsistency is found, an explication of the error is printed to the console.

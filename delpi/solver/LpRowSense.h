@@ -12,7 +12,6 @@ namespace delpi {
 
 /**
  * Sense of a linear programming row describing a constraint.
- *
  * If the sense is strict, it means that the variable cannot assume the right-hand-side value.
  * When using delta complete solvers, strict senses can be relaxed to non-strict senses.
  * @warning The order of the enum is important and should not be changed.
@@ -42,7 +41,6 @@ LpRowSense parseLpSense(char sense);
 char toChar(LpRowSense sense);
 /**
  * Invert the sense with delta == 0.
- *
  * More specifically, !LE == GT, !GE == LT, !EQ == NQ, !NQ == EQ, !IN == IN, !GT == LE, !LT == GE.
  * @warning This is not the same as operator-()
  * @param sense sense to invert
@@ -52,7 +50,6 @@ char toChar(LpRowSense sense);
 LpRowSense operator!(LpRowSense sense);
 /**
  * Invert the sense with delta > 0.
- *
  * More specifically, -LE == GT, -GE == LE, -EQ == NQ, -NQ == EQ.
  * Any other sense generates an assertion error
  * @warning This is not the same as operator!()
@@ -63,7 +60,6 @@ LpRowSense operator!(LpRowSense sense);
 LpRowSense operator-(LpRowSense sense);
 /**
  * Relax the sense, assuming delta > 0.e
- *
  * More specifically, LT -> LE, GT -> GE.
  * The other senses remain unchanged.
  * @param sense sense to relax

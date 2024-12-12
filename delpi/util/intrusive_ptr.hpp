@@ -11,7 +11,6 @@ namespace delpi {
 
 /**
  * Pointer to a generic object that supports intrusive reference counting.
- *
  * Implementation based on the
  * [EASTL intrusive_ptr](https://github.com/electronicarts/EASTL/blob/master/include/EASTL/intrusive_ptr.h).
  * @tparam T class the intrusive_ptr is pointing to.
