@@ -34,12 +34,16 @@ delpi_cc_library(
 delpi_cc_library(
     name = "parser",
     srcs = ["Parser.cpp"],
-    hdrs = ["Parser.h"],
+    hdrs = [
+        "Parser.h",
+        "parser.h",
+    ],
     implementation_deps = [
         "//delpi/parser/mps",
         "//delpi/util:error",
     ],
     deps = [
+        ":driver",
         "//delpi/solver:lp_solver",
         "//delpi/util:stats",
     ],

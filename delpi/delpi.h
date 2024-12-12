@@ -9,6 +9,12 @@
  */
 #pragma once
 
+#include "delpi/parser/parser.h"
+#include "delpi/solver/solver.h"
+#include "delpi/symbolic/symbolic.h"
+#include "delpi/util/ArgParser.h"
+#include "delpi/util/Config.h"
+
 /**
  * @namespace delpi
  * Global namespace for the delpi library.

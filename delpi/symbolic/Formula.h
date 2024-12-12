@@ -1,5 +1,12 @@
+/**
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 delpi
+ * @licence BSD 3-Clause License
+ * Formula class.
+ */
 #pragma once
 
+#include "delpi/libs/gmp.h"
 #include "delpi/symbolic/Expression.h"
 #include "delpi/symbolic/FormulaKind.h"
 

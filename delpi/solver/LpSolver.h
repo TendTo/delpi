@@ -70,9 +70,38 @@ class LpSolver {
   LpSolver(mpq_class ninfinity, mpq_class infinity, Config config = {}, const std::string& class_name = "LpSolver");
   virtual ~LpSolver() = default;
 
+  /**
+   * Parse the input file or stdin based on the Config parameters.
+   * All variables, constraints, bounds and objective are added to the LP solver.
+   * @return true if the parsing was successful
+   * @return false if the parsing failed
+   */
+  bool Parse();
+  /**
+   * Parse the file with the given `filename`.
+   * All variables, constraints, bounds and objective are added to the LP solver.
+   * @param filename path to the file to parse
+   * @return true if the parsing was successful
+   * @return false if the parsing failed
+   */
   bool ParseFile(const std::string& filename);
+  /**
+   * Parse the given `string` as input.
+   * All variables, constraints, bounds and objective are added to the LP solver.
+   * @param string string to parse
+   * @return true if the parsing was successful
+   * @return false if the parsing failed
+   */
   bool ParseString(const std::string& string);
-  bool ParseStream(std::istream& stream);
+  /**
+   * Parse the given `stream` as input.
+   * All variables, constraints, bounds and objective are added to the LP solver.
+   * @param stream stream to parse
+   * @param stream_name name of the stream
+   * @return true if the parsing was successful
+   * @return false if the parsing failed
+   */
+  bool ParseStream(std::istream& stream, const std::string& stream_name = "(stdin)");
 
   /** @getter{number of columns, lp solver} */
   [[nodiscard]] virtual int num_columns() const = 0;
@@ -96,6 +125,10 @@ class LpSolver {
   [[nodiscard]] const std::vector<Variable>& variables() const { return col_to_var_; }
   /** @getter{maps from and to LP columns to SMT variables, lp solver} */
   [[nodiscard]] std::vector<Formula> constraints() const;
+  /** @getter{expected result collected from the file, lp problem} */
+  [[nodiscard]] LpResult expected() const;
+  /** @getter{mapping between each variable and its value, lp solution} */
+  [[nodiscard]] std::unordered_map<Variable, mpq_class> model() const;
 
   /**
    * Get the value of `var` in the solution vector.
@@ -354,6 +387,21 @@ class LpSolver {
    */
   template <TypedIterable<std::pair<const Variable, mpq_class>> T>
   void Minimise(const T& objective_function);
+
+  /**
+   * Check whether the result obtained by the solver is incompatible with the one collected from the file.
+   * @param result result obtained by the solver
+   * @return true if the result obtained by the solver is incompatible with the one collected from the file
+   * @return false if the result obtained by the solver is compatible with the one collected from the file
+   */
+  [[nodiscard]] bool ConflictingExpected(LpResult result) const;
+
+  /**
+   * Verify that the current @ref solution_ satisfies all the constraints in the LpSolver.
+   * @return true if the current @ref solution_ verifies all the constraints
+   * @return false if at least one constraint is violated by the current @ref solution_.
+   */
+  bool Verify();
 
 #ifndef NDEBUG
   virtual void Dump() = 0;

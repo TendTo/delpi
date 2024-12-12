@@ -67,6 +67,6 @@ class SelfReferenceCountingObject {
 #else
   std::size_t ref_count_{0};  ///< Reference counter
 #endif
-};
+};  // NOLINT(readability/braces) per C++ standard concept definition
 
 }  // namespace delpi

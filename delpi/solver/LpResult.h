@@ -20,6 +20,23 @@ enum class LpResult {
 };
 
 /**
+ * Check if the `result` obtained by the LpSolver implies that the problem is feasible.
+ * @param result result to check
+ * @return true if the result implies that the problem is feasible
+ * @return false if the result implies that the problem is infeasible
+ */
+bool IsFeasible(LpResult result);
+
+/**
+ * Convert the result in
+ * @param result result used to produce the exit code
+ * @return 0 if the problem is optimal, delta-optimal, unbounded or infeasible
+ * @return 1 if an error was detected
+ * @return 2 any other case
+ */
+int ExitCode(LpResult result);
+
+/**
  * Relax the `result` of the theory solver (i.e. transform OPTIMAL to DELTA_OPTIMAL).
  * All other results are left unchanged.
  * @param result result to relax

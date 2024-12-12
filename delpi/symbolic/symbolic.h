@@ -9,5 +9,4 @@
 #include "delpi/symbolic/Expression.h"
 #include "delpi/symbolic/Formula.h"
 #include "delpi/symbolic/FormulaKind.h"
-#include "delpi/symbolic/LinearMonomial.h"
 #include "delpi/symbolic/Variable.h"

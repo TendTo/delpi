@@ -49,6 +49,26 @@ std::unique_ptr<LpSolver> LpSolver::GetInstance(const Config& config) {
   }
 }
 
+LpResult LpSolver::expected() const {
+  if (!info_.contains(":status")) return LpResult::UNSOLVED;
+  const std::string& expected = info_.at(":status");
+  if (expected == "optimal") return LpResult::OPTIMAL;
+  if (expected == "delta-optimal") return LpResult::DELTA_OPTIMAL;
+  if (expected == "infeasible") return LpResult::INFEASIBLE;
+  if (expected == "unbounded") return LpResult::UNBOUNDED;
+  if (expected == "error") return LpResult::ERROR;
+  return LpResult::UNSOLVED;
+}
+
+std::unordered_map<Variable, mpq_class> LpSolver::model() const {
+  if (solution_.size() == 0) return {};
+  DELPI_ASSERT(col_to_var_.size() == solution_.size(), "All variables must appear in the solution");
+  std::unordered_map<Variable, mpq_class> model;
+  model.reserve(col_to_var_.size());
+  for (std::size_t i = 0; i < col_to_var_.size(); ++i) model.emplace(col_to_var_.at(i), solution_.at(i));
+  return model;
+}
+
 LpSolver::ColumnIndex LpSolver::AddColumn(const Column& column) {
   DELPI_ASSERT(!var_to_col_.contains(column.var), "Variable already exists in the LP.");
   return AddColumn(column.var, column.obj.value_or(ninfinity_), column.lb.value_or(infinity_), column.ub.value_or(0));
@@ -122,6 +142,7 @@ void LpSolver::ReserveRows([[maybe_unused]] const int size) { DELPI_ASSERT(size 
 const std::string& LpSolver::GetInfo(const std::string& key) const { return info_.at(key); }
 void LpSolver::SetInfo(const std::string& key, const std::string& value) { info_.emplace(key, value); }
 void LpSolver::SetOption(const std::string& key, const std::string& value) {
+  DELPI_TRACE_FMT("LpSolver::SetOption({}, {})", key, value);
   if (key == ":csv") {
     config_.m_csv().SetFromFile(IsYes(value));
   } else if (key == ":silent") {
@@ -154,6 +175,7 @@ void LpSolver::SetObjective(const std::vector<mpq_class>& objective) {
 LpResult LpSolver::Solve(mpq_class& precision, const bool store_solution) {
   DELPI_ASSERT(num_rows() > 0, "Cannot optimise without rows.");
   DELPI_ASSERT(num_columns() > 0, "Cannot optimise without columns.");
+  DELPI_DEBUG_FMT("LpSolver::Solve({}, {})", precision, store_solution);
   const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
   solution_.clear();
@@ -165,12 +187,33 @@ void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetOb
 void LpSolver::Maximise(const Expression& objective_function) { Maximise(objective_function.addends()); }
 template <TypedIterable<std::pair<const Variable, mpq_class>> T>
 void LpSolver::Maximise(const T& objective_function) {
+  DELPI_TRACE_FMT("LpSolver::Maximise({})", objective_function);
   for (const auto& [var, coeff] : objective_function) SetObjective(var, -coeff);
 }
 void LpSolver::Minimise(const Expression& objective_function) { Minimise(objective_function.addends()); }
 template <TypedIterable<std::pair<const Variable, mpq_class>> T>
 void LpSolver::Minimise(const T& objective_function) {
+  DELPI_TRACE_FMT("LpSolver::Minimise({})", objective_function);
   for (const auto& [var, coeff] : objective_function) SetObjective(var, coeff);
+}
+
+bool LpSolver::ConflictingExpected(const LpResult result) const {
+  DELPI_TRACE_FMT("LpSolver::ConflictingExpected({})", result);
+  switch (expected()) {
+    case LpResult::OPTIMAL:
+      return result == LpResult::OPTIMAL || result == LpResult::DELTA_OPTIMAL || result == LpResult::UNBOUNDED;
+    case LpResult::DELTA_OPTIMAL:
+      return result == LpResult::DELTA_OPTIMAL;
+    case LpResult::UNBOUNDED:
+      return result == LpResult::UNBOUNDED;
+    default:
+      return false;
+  }
+}
+
+bool LpSolver::Verify() {
+  DELPI_TRACE("LpSolver::Verify()");
+  return true;
 }
 
 std::ostream& operator<<(std::ostream& os, const LpSolver& solver) {

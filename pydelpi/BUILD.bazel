@@ -26,6 +26,7 @@ delpi_pybind_extension(
     deps = [
         "//delpi:version",
         "//delpi/libs:gmp",
+        "//delpi/parser",
         "//delpi/solver",
         "//delpi/symbolic",
         "//delpi/util:argparser",

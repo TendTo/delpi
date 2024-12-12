@@ -40,4 +40,28 @@ LpResult operator~(const LpResult result) {
   }
 }
 
+bool IsFeasible(const LpResult result) {
+  switch (result) {
+    case LpResult::OPTIMAL:
+    case LpResult::DELTA_OPTIMAL:
+    case LpResult::UNBOUNDED:
+      return true;
+    default:
+      return false;
+  }
+}
+int ExitCode(const LpResult result) {
+  switch (result) {
+    case LpResult::OPTIMAL:
+    case LpResult::DELTA_OPTIMAL:
+    case LpResult::UNBOUNDED:
+    case LpResult::INFEASIBLE:
+      return 0;
+    case LpResult::ERROR:
+      return 1;
+    default:
+      return 2;
+  }
+}
+
 }  // namespace delpi

@@ -24,8 +24,8 @@ namespace delpi {
  */
 template <class T>
 concept SelfReferenceCounter = requires(T t) {
-  { t.AddRef() };
-  { t.Release() };
+  { t.AddRef() };   // NOLINT(readability/braces) per C++ standard concept definition
+  { t.Release() };  // NOLINT(readability/braces) per C++ standard concept definition
 };  // NOLINT(readability/braces) per C++ standard concept definition
 
 /**

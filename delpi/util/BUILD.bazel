@@ -117,7 +117,6 @@ delpi_cc_library(
 delpi_cc_library(
     name = "intrusive_ptr",
     hdrs = ["intrusive_ptr.hpp"],
-    deps = [":concepts"],
 )
 
 delpi_cc_library(

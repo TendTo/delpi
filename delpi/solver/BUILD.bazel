@@ -34,11 +34,10 @@ delpi_cc_library(
     name = "row",
     srcs = ["Row.cpp"],
     hdrs = ["Row.h"],
-    implementation_deps = ["//delpi/util:error"],
     deps = [
         "//delpi/libs:gmp",
         "//delpi/symbolic:variable",
-        "//delpi/util:logging",
+        #        "//delpi/util:logging",
     ],
 )
 
@@ -46,11 +45,10 @@ delpi_cc_library(
     name = "column",
     srcs = ["Column.cpp"],
     hdrs = ["Column.h"],
-    implementation_deps = ["//delpi/util:error"],
     deps = [
         "//delpi/libs:gmp",
         "//delpi/symbolic:variable",
-        "//delpi/util:logging",
+        #        "//delpi/util:logging",
     ],
 )
 
@@ -86,6 +84,7 @@ delpi_cc_library(
         "//delpi/symbolic:expression",
         "//delpi/symbolic:formula",
         "//delpi/symbolic:variable",
+        "//delpi/util:concepts",
         "//delpi/util:config",
         "//delpi/util:logging",
         "//delpi/util:stats",

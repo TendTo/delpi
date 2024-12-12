@@ -37,13 +37,22 @@ delpi_cc_library(
     hdrs = [":generate_version_header"],
 )
 
+delpi_cc_library(
+    name = "delpi_hdr",
+    hdrs = ["delpi.h"],
+    deps = [
+        "//delpi/parser",
+        "//delpi/solver",
+        "//delpi/symbolic",
+        "//delpi/util:argparser",
+        "//delpi/util:config",
+    ],
+)
+
 delpi_cc_binary(
     name = "delpi",
     srcs = ["main.cpp"],
-    deps = [
-        ":version",
-        "@fmt",
-    ],
+    deps = [":delpi_hdr"],
 )
 
 cc_shared_library(

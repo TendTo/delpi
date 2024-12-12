@@ -82,6 +82,7 @@ class intrusive_ptr {
    * @return reference to this intrusive_ptr object
    */
   intrusive_ptr& operator=(intrusive_ptr&& ip) noexcept {
+    // NOLINTNEXTLINE(runtime/explicit) per C++ standard concept definition
     intrusive_ptr(static_cast<intrusive_ptr&&>(ip)).swap(*this);
     return *this;
   }

@@ -3,7 +3,6 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-
 #include "Parser.h"
 
 #include <fstream>
@@ -13,13 +12,12 @@
 
 namespace delpi {
 
-bool LpSolver::ParseFile(const std::string& filename) {
-  return Parser(*this).GetDriverInstance(*this)->ParseFile(filename);
+bool LpSolver::Parse() { return config_.read_from_stdin() ? ParseStream(std::cin) : ParseFile(config_.filename()); }
+bool LpSolver::ParseFile(const std::string& filename) { return Parser::GetDriverInstance(*this)->ParseFile(filename); }
+bool LpSolver::ParseStream(std::istream& stream, const std::string& stream_name) {
+  return Parser::GetDriverInstance(*this)->ParseStream(stream, stream_name);
 }
-bool LpSolver::ParseStream(std::istream& stream) { return Parser(*this).GetDriverInstance(*this)->ParseStream(stream); }
-bool LpSolver::ParseString(const std::string& string) {
-  return Parser(*this).GetDriverInstance(*this)->ParseString(string);
-}
+bool LpSolver::ParseString(const std::string& string) { return Parser::GetDriverInstance(*this)->ParseString(string); }
 
 Parser::Parser(LpSolver& lp_solver) : driver_(GetDriverInstance(lp_solver)) {}
 
