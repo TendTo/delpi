@@ -14,6 +14,9 @@
 #if DELPI_ENABLED_SOPLEX
 #include "delpi/solver/SoplexLpSolver.h"
 #endif
+#include <span>
+#include <unordered_set>
+
 #include "delpi/util/error.h"
 
 namespace delpi {
@@ -66,6 +69,9 @@ LpSolver::ColumnIndex LpSolver::AddColumn(const Variable& var, const mpq_class& 
   return AddColumn(var, 0, lb, ub);
 }
 
+LpSolver::RowIndex LpSolver::AddRow(const Row& row) {
+  return AddRow(row.addends, row.lb.value_or(ninfinity_), row.ub.value_or(infinity_));
+}
 LpSolver::RowIndex LpSolver::AddRow(const Formula& formula) {
   return AddRow(formula.expression(), formula.kind(), formula.rhs());
 }
@@ -73,6 +79,41 @@ LpSolver::RowIndex LpSolver::AddRow(const Expression& lhs, const FormulaKind sen
   return AddRow(lhs.addends(), sense, rhs);
 }
 
+std::vector<Formula> LpSolver::constraints() const {
+  std::vector<Formula> constraints;
+  constraints.reserve(num_rows() + num_columns());
+  for (int i = 0; i < num_rows(); ++i) {
+    const auto [addends, lb, ub] = row(i);
+    if (lb.has_value() && ub.has_value()) {
+      if (lb.value() == ub.value()) {
+        constraints.emplace_back(Expression{addends}, FormulaKind::Eq, ub.value());
+      } else {
+        constraints.emplace_back(Expression{addends}, FormulaKind::Leq, ub.value());
+        constraints.emplace_back(Expression{addends}, FormulaKind::Geq, lb.value());
+      }
+    } else if (lb.has_value()) {
+      constraints.emplace_back(Expression{addends}, FormulaKind::Geq, lb.value());
+    } else if (ub.has_value()) {
+      constraints.emplace_back(Expression{addends}, FormulaKind::Leq, ub.value());
+    }
+  }
+  for (int i = 0; i < num_columns(); ++i) {
+    const auto [var, lb, ub, obj] = column(i);
+    if (lb.has_value() && ub.has_value()) {
+      if (lb.value() == ub.value()) {
+        constraints.emplace_back(Expression{var}, FormulaKind::Eq, ub.value());
+      } else {
+        constraints.emplace_back(Expression{var}, FormulaKind::Leq, ub.value());
+        constraints.emplace_back(Expression{var}, FormulaKind::Geq, lb.value());
+      }
+    } else if (lb.has_value()) {
+      constraints.emplace_back(Expression{var}, FormulaKind::Geq, lb.value());
+    } else if (ub.has_value()) {
+      constraints.emplace_back(Expression{var}, FormulaKind::Leq, ub.value());
+    }
+  }
+  return constraints;
+}
 void LpSolver::ReserveColumns([[maybe_unused]] const int size) {
   DELPI_ASSERT(size >= 0, "Invalid number of columns.");
 }
@@ -81,20 +122,24 @@ void LpSolver::ReserveRows([[maybe_unused]] const int size) { DELPI_ASSERT(size 
 const std::string& LpSolver::GetInfo(const std::string& key) const { return info_.at(key); }
 void LpSolver::SetInfo(const std::string& key, const std::string& value) { info_.emplace(key, value); }
 void LpSolver::SetOption(const std::string& key, const std::string& value) {
-  if (key == "csv") {
+  if (key == ":csv") {
     config_.m_csv().SetFromFile(IsYes(value));
-  } else if (key == "silent") {
+  } else if (key == ":silent") {
     config_.m_silent().SetFromFile(IsYes(value));
-  } else if (key == "with_timings") {
+  } else if (key == ":with-timings") {
     config_.m_with_timings().SetFromFile(IsYes(value));
-  } else if (key == "precision") {
+  } else if (key == ":precision") {
     config_.m_precision().SetFromFile(std::stod(value));
-  } else if (key == "continuous_output") {
+  } else if (key == ":continuous-output") {
     config_.m_continuous_output().SetFromFile(IsYes(value));
-  } else if (key == "verbosity") {
+  } else if (key == ":verbosity") {
     config_.m_verbose_delpi().SetFromFile(std::stoi(value));
-  } else if (key == "simplex_verbosity") {
+  } else if (key == ":simplex-verbosity") {
     config_.m_verbose_simplex().SetFromFile(std::stoi(value));
+  } else if (key == ":produce-models") {
+    config_.m_produce_models().SetFromFile(IsYes(value));
+  } else if (key == ":timeout") {
+    config_.m_timeout().SetFromFile(std::stoi(value));
   } else {
     DELPI_ERROR_FMT("Unknown option: {} = {}. Ignored", key, value);
   }
@@ -117,11 +162,15 @@ LpResult LpSolver::Solve(mpq_class& precision, const bool store_solution) {
 }
 void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetObjective(var_to_col_.at(var), value); }
 
-void LpSolver::Maximise(const Expression& objective_function) {
-  for (const auto& [var, coeff] : objective_function.addends()) SetObjective(var, -coeff);
+void LpSolver::Maximise(const Expression& objective_function) { Maximise(objective_function.addends()); }
+template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+void LpSolver::Maximise(const T& objective_function) {
+  for (const auto& [var, coeff] : objective_function) SetObjective(var, -coeff);
 }
-void LpSolver::Minimise(const Expression& objective_function) {
-  for (const auto& [var, coeff] : objective_function.addends()) SetObjective(var, coeff);
+void LpSolver::Minimise(const Expression& objective_function) { Minimise(objective_function.addends()); }
+template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+void LpSolver::Minimise(const T& objective_function) {
+  for (const auto& [var, coeff] : objective_function) SetObjective(var, coeff);
 }
 
 std::ostream& operator<<(std::ostream& os, const LpSolver& solver) {
@@ -135,11 +184,24 @@ std::ostream& operator<<(std::ostream& os, const LpSolver& solver) {
   if (!solver.solution().empty()) {
     os << "solution: ";
     for (int i = 0; i < static_cast<int>(solver.solution().size()); ++i) {
-      os << solver.col_to_var().at(i) << " = " << solver.solution().at(i) << ", ";
+      os << solver.variables().at(i) << " = " << solver.solution().at(i) << ", ";
     }
   }
   os << "}";
   return os;
 }
+
+template void LpSolver::Maximise(const std::vector<std::pair<Variable, mpq_class>>&);
+template void LpSolver::Maximise(const std::set<std::pair<Variable, mpq_class>>&);
+template void LpSolver::Maximise(const std::unordered_set<std::pair<Variable, mpq_class>>&);
+template void LpSolver::Maximise(const std::span<std::pair<Variable, mpq_class>>&);
+template void LpSolver::Maximise(const std::map<Variable, mpq_class>&);
+template void LpSolver::Maximise(const std::unordered_map<Variable, mpq_class>&);
+
+template void LpSolver::Minimise(const std::vector<std::pair<Variable, mpq_class>>&);
+template void LpSolver::Minimise(const std::set<std::pair<Variable, mpq_class>>&);
+template void LpSolver::Minimise(const std::unordered_set<std::pair<Variable, mpq_class>>&);
+template void LpSolver::Minimise(const std::span<std::pair<Variable, mpq_class>>&);
+template void LpSolver::Minimise(const std::map<Variable, mpq_class>&);
 
 }  // namespace delpi

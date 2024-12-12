@@ -8,8 +8,8 @@
 #include <tuple>
 #include <utility>
 
-#include "delpi/libs/libgmp.h"
-#include "delpi/parser/mps/Sense.h"
+#include "delpi/libs/gmp.h"
+#include "delpi/parser/mps/SenseType.h"
 #include "delpi/parser/mps/BoundType.h"
 #include "delpi/util/error.h"
 
@@ -69,7 +69,7 @@ using delpi::gmp::StringToMpq;
 %token <std::string>   RATIONAL              "rational used in comments"
 %token <std::string>   SYMBOL                "symbol"
 %token <std::string>   QUOTED_SYMBOL         "symbol in quotes"
-%token <Sense>         SENSE                 "sense. Acceptable values are: E, L, G, N"
+%token <SenseType>         SENSE                 "sense. Acceptable values are: E, L, G, N"
 %token <BoundType>     BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX"
 %token <BoundType>     BOUND_TYPE_SINGLE     "type of bound. Can only be BV, MI, PL, FR"
 

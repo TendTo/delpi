@@ -1,18 +1,19 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_srcs")
+load("//tools:lexyacc.bzl", "gen_lex", "gen_yacc")
+load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
 
 package(default_visibility = [
     "//delpi:__subpackages__",
     "//pydelpi:__subpackages__",
-    "//test:__subpackages__",
+    "//tests:__subpackages__",
 ])
 
-delpi_srcs(
-    name = "srcs",
+delpi_srcs(name = "srcs")
+
+delpi_hdrs_tar(
+    name = "hdrs_tar",
     subfolder = "parser",
-    deps = [
-        "//delpi/parser/mps",
-    ],
+    deps = ["//delpi/parser/mps:hdrs_tar"],
 )
 
 delpi_cc_library(
@@ -25,9 +26,22 @@ delpi_cc_library(
         "//delpi/util:error",
     ],
     deps = [
-        "//delpi/symbolic",
+        "//delpi/solver:lp_solver",
         "//delpi/util:stats",
-        "//delpi/util:timer",
+    ],
+)
+
+delpi_cc_library(
+    name = "parser",
+    srcs = ["Parser.cpp"],
+    hdrs = ["Parser.h"],
+    implementation_deps = [
+        "//delpi/parser/mps",
+        "//delpi/util:error",
+    ],
+    deps = [
+        "//delpi/solver:lp_solver",
+        "//delpi/util:stats",
     ],
 )
 

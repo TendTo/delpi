@@ -24,6 +24,7 @@ namespace delpi {
  */
 class ExpressionCell : public SelfReferenceCountingObject {
  public:
+  using Addend = Expression::Addend;
   using Addends = Expression::Addends;
   using Environment = Expression::Environment;
   using SubstitutionMap = Expression::SubstitutionMap;
@@ -86,14 +87,14 @@ class ExpressionCell : public SelfReferenceCountingObject {
 
   static intrusive_ptr<ExpressionCell> New();
   static intrusive_ptr<ExpressionCell> New(Variable var);
-  static intrusive_ptr<ExpressionCell> New(LinearMonomial linear_monomial);
+  static intrusive_ptr<ExpressionCell> New(Addend linear_monomial);
   static intrusive_ptr<ExpressionCell> New(Addends addends);
   static intrusive_ptr<ExpressionCell> Copy(const ExpressionCell& o);
 
  protected:
   ExpressionCell() = default;
   explicit ExpressionCell(Variable var);
-  explicit ExpressionCell(LinearMonomial linear_monomial);
+  explicit ExpressionCell(Addend linear_monomial);
   explicit ExpressionCell(Addends addends);
 
   mutable std::size_t hash_;     ///< Cached hash of the object

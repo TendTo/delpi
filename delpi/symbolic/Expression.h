@@ -16,7 +16,6 @@
 #include <vector>
 
 #include "delpi/libs/gmp.h"
-#include "delpi/symbolic/LinearMonomial.h"
 #include "delpi/symbolic/Variable.h"
 #include "delpi/util/intrusive_ptr.hpp"
 
@@ -42,9 +41,10 @@ class Expression {
 
   /** @constructor{expression, Default to zero} */
   Expression();
-  Expression(Variable var);                    // NOLINT (runtime/explicit): This conversion is desirable.
-  Expression(LinearMonomial linear_monomial);  // NOLINT (runtime/explicit): This conversion is desirable.
+  Expression(Variable var);   // NOLINT (runtime/explicit): This conversion is desirable.
+  Expression(Addend addend);  // NOLINT (runtime/explicit): This conversion is desirable.
   explicit Expression(Addends addends);
+  explicit Expression(std::vector<Addend> addends);
   Expression(const Expression& e);
   Expression(Expression&& e) noexcept;
   Expression& operator=(const Expression& e);
@@ -118,10 +118,10 @@ class Expression {
   Expression& operator-=(const Variable& o);
   Expression operator+(const Variable& o) const;
   Expression operator-(const Variable& o) const;
-  Expression& operator+=(const LinearMonomial& o);
-  Expression& operator-=(const LinearMonomial& o);
-  Expression operator+(const LinearMonomial& o) const;
-  Expression operator-(const LinearMonomial& o) const;
+  Expression& operator+=(const Addend& o);
+  Expression& operator-=(const Addend& o);
+  Expression operator+(const Addend& o) const;
+  Expression operator-(const Addend& o) const;
   Expression& operator+=(const Expression& o);
   Expression& operator-=(const Expression& o);
   Expression operator+(const Expression& o) const;
@@ -149,8 +149,8 @@ Expression operator/(const Variable& lhs, const mpq_class& rhs);
 
 Expression operator+(const Variable& lhs, const Expression& rhs);
 Expression operator-(const Variable& lhs, const Expression& rhs);
-Expression operator+(const LinearMonomial& lhs, const Expression& rhs);
-Expression operator-(const LinearMonomial& lhs, const Expression& rhs);
+Expression operator+(const Expression::Addend& lhs, const Expression& rhs);
+Expression operator-(const Expression::Addend& lhs, const Expression& rhs);
 
 std::ostream& operator<<(std::ostream& os, const Expression& e);
 

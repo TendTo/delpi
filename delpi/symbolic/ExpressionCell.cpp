@@ -15,7 +15,7 @@ intrusive_ptr<ExpressionCell> ExpressionCell::New() { return intrusive_ptr(new E
 intrusive_ptr<ExpressionCell> ExpressionCell::New(Variable var) {
   return intrusive_ptr(new ExpressionCell{std::move(var)});
 }
-intrusive_ptr<ExpressionCell> ExpressionCell::New(LinearMonomial linear_monomial) {
+intrusive_ptr<ExpressionCell> ExpressionCell::New(Expression::Addend linear_monomial) {
   return intrusive_ptr(new ExpressionCell{std::move(linear_monomial)});
 }
 intrusive_ptr<ExpressionCell> ExpressionCell::New(Addends addends) {
@@ -26,8 +26,8 @@ intrusive_ptr<ExpressionCell> ExpressionCell::Copy(const ExpressionCell& o) {
 }
 
 ExpressionCell::ExpressionCell(Variable var) : hash_{0} { addends_.emplace(std::move(var), 1); }
-ExpressionCell::ExpressionCell(LinearMonomial linear_monomial) : hash_{0} {
-  addends_.emplace(std::move(linear_monomial.var), std::move(linear_monomial.coeff));
+ExpressionCell::ExpressionCell(Addend linear_monomial) : hash_{0} {
+  addends_.emplace(std::move(linear_monomial.first), std::move(linear_monomial.second));
 }
 ExpressionCell::ExpressionCell(Addends addends) : hash_{0}, addends_{std::move(addends)} {}
 

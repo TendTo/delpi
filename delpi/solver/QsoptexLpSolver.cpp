@@ -118,27 +118,29 @@ LpSolver::ColumnIndex QsoptexLpSolver::AddColumn(const Variable& var, const mpq_
   DELPI_ASSERT(!status, "Invalid status");
   return column_idx;
 }
-LpSolver::RowIndex QsoptexLpSolver::AddRow(const Row& row) {
+LpSolver::RowIndex QsoptexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
+                                           const mpq_class& ub) {
   // Add the row to the LP. If the row is bounded both ways with an equality, we can add it in one go.
-  if (row.lb.has_value() && row.ub.has_value() && *row.lb == *row.ub) {
-    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, row.lb->get_mpq_t(), 'B', nullptr);
+  if (lb == ub) {
+    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, lb.get_mpq_t(), 'B', nullptr);
     DELPI_ASSERT(!status, "Invalid status");
-    SetRowCoeff(num_rows() - 1, row.addends);
+    SetRowCoeff(num_rows() - 1, addends);
     return num_rows() - 1;
   }
   // Else, add the two bounds separately. Note that this introduces 2 new rows.
-  if (row.lb.has_value()) {
-    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, row.lb->get_mpq_t(), 'G', nullptr);
+  if (!mpq_equal(lb.get_mpq_t(), mpq_NINFTY)) {
+    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, lb.get_mpq_t(), 'G', nullptr);
     DELPI_ASSERT(!status, "Invalid status");
-    SetRowCoeff(num_rows() - 1, row.addends);
+    SetRowCoeff(num_rows() - 1, addends);
   }
-  if (row.ub.has_value()) {
-    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, row.ub->get_mpq_t(), 'L', nullptr);
+  if (!mpq_equal(ub.get_mpq_t(), mpq_INFTY)) {
+    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, ub.get_mpq_t(), 'L', nullptr);
     DELPI_ASSERT(!status, "Invalid status");
-    SetRowCoeff(num_rows() - 1, row.addends);
+    SetRowCoeff(num_rows() - 1, addends);
   }
   return num_rows() - 1;
 }
+
 LpSolver::RowIndex QsoptexLpSolver::AddRow(const Expression::Addends& lhs, const FormulaKind sense,
                                            const mpq_class& rhs) {
   char qsoptex_sense;

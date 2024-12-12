@@ -20,12 +20,12 @@
 #include "delpi/symbolic/Variable.h"
 #include "delpi/util/Config.h"
 #include "delpi/util/Stats.h"
+#include "delpi/util/concepts.h"
 
 namespace delpi {
 
 /**
  * Facade class that hides the underlying LP solver used by delpi.
- *
  * It provides a common interface to interact with any number of LP solvers, implemented as subclasses.
  * An LP problem is defined as
  * @f[
@@ -70,6 +70,10 @@ class LpSolver {
   LpSolver(mpq_class ninfinity, mpq_class infinity, Config config = {}, const std::string& class_name = "LpSolver");
   virtual ~LpSolver() = default;
 
+  bool ParseFile(const std::string& filename);
+  bool ParseString(const std::string& string);
+  bool ParseStream(std::istream& stream);
+
   /** @getter{number of columns, lp solver} */
   [[nodiscard]] virtual int num_columns() const = 0;
   /** @getter{number of rows, lp solver} */
@@ -88,10 +92,11 @@ class LpSolver {
   [[nodiscard]] const std::vector<mpq_class>& dual_solution() const { return dual_solution_; }
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
   [[nodiscard]] const std::unordered_map<Variable, int>& var_to_col() const { return var_to_col_; }
-  /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
-  [[nodiscard]] const std::vector<Variable>& col_to_var() const { return col_to_var_; }
   /** @getter{vector of all the variables, lp solver} */
-  [[nodiscard]] std::vector<Variable> variables() const;
+  [[nodiscard]] const std::vector<Variable>& variables() const { return col_to_var_; }
+  /** @getter{maps from and to LP columns to SMT variables, lp solver} */
+  [[nodiscard]] std::vector<Formula> constraints() const;
+
   /**
    * Get the value of `var` in the solution vector.
    * @param var variable to get the value for
@@ -150,6 +155,25 @@ class LpSolver {
    * The options will modify the Config of the LP solver.
    * Boolean parameters will be set to true if the value is "yes", "true", "1", or "on" (case-insensitive)
    * and false otherwise.
+   * Available options are:
+   *
+   *  - `:csv` (bool): whether to output in CSV format
+   * - `:silent` (bool): whether to output nothing
+   * - `:with-timings` (bool): whether to output timings
+   * - `:precision` (double): precision of the solver
+   * - `:continuous-output` (bool): whether to output continuously (at each delta-satisfying point)
+   * - `:verbosity` (int): verbosity level
+   * - `:simplex-verbosity` (int): verbosity level of the simplex solver
+   * - `:produce-models` (bool): whether to produce models
+   * - `:timeout` (int): timeout in milliseconds
+   *
+   * Note that the spacing before the '*' is mandatory.
+   * ```
+   *  * @set-option :precision 0.505
+   *  * @set-option :produce-models false
+   *  ENDATA
+   *  ```
+   * @note Parameters set from the command line will have precedence over the ones set in the input file.
    * @param key key of the option to set
    * @param value value of the option
    */
@@ -157,13 +181,16 @@ class LpSolver {
 
   /**
    * Add a new `column` to the LP problem.
+   * Not indicating a `column.lb` or `column.ub` will result in an unbounded variable in that direction.
    * @warning The objective coefficient is set with respect to a minimisation problem.
    * @param column column to add to the LP problem
+   * @return index of the last column added
    */
   ColumnIndex AddColumn(const Column& column);
   /**
    * Add a new unbounded column corresponding to the variable `var` to the LP problem.
    * @param var variable to add to the LP problem
+   * @return index of the last column added
    */
   ColumnIndex AddColumn(const Variable& var);
   /**
@@ -171,6 +198,7 @@ class LpSolver {
    * @warning The objective coefficient is set with respect to a minimisation problem.
    * @param var variable to add to the LP problem
    * @param obj coefficient of the variable in the objective function for minimisation
+   * @return index of the last column added
    */
   ColumnIndex AddColumn(const Variable& var, const mpq_class& obj);
   /**
@@ -178,6 +206,7 @@ class LpSolver {
    * @param var variable to add to the LP problem
    * @param lb lower bound of the column
    * @param ub upper bound of the column
+   * @return index of the last column added
    */
   ColumnIndex AddColumn(const Variable& var, const mpq_class& lb, const mpq_class& ub);
   /**
@@ -188,15 +217,31 @@ class LpSolver {
    * @param obj objective coefficient of the column
    * @param lb lower bound of the column
    * @param ub upper bound of the column
+   * @return index of the last column added
    */
   virtual ColumnIndex AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb,
                                 const mpq_class& ub) = 0;
 
   /**
    * Add a new row to the LP problem with the given `row`.
+   * Not indicating a `row.lb` or `row.ub` will result in an unbounded row in that direction.
+   * If `row.lb` and `row.ub` are equal, a single equality constraint is added.
+   * Otherwise, a pair of inequality constraints may be added, depending on the underlying solver implementation.
    * @param row structure of the row to add
+   * @return index of the last row added
    */
-  virtual RowIndex AddRow(const Row& row) = 0;
+  RowIndex AddRow(const Row& row);
+  /**
+   * Add a new row to the LP problem with the given `addends` bounded by `lb` and `ub`.
+   * If `lb` and `ub` are equal, a single equality constraint is added.
+   * Otherwise, a pair of inequality constraints may be added, depending on the underlying solver implementation.
+   * @param addends vector of pairs (Variable, coeff) that represent the linear summation of the row
+   * @param lb lower bound of the row
+   * @param ub upper bound of the row
+   * @return index of the last row added
+   */
+  virtual RowIndex AddRow(const std::vector<std::pair<Variable, mpq_class>>& addends, const mpq_class& lb,
+                          const mpq_class& ub) = 0;
   /**
    * Add a new row to the LP problem with the given `formula`.
    * @param formula symbolic formula representing a constraint to add as a row
@@ -281,20 +326,34 @@ class LpSolver {
 
   /**
    * Set the `objective_function` to maximise while being subject to all the constraints.
-   *
    * The objective function coefficients will overwrite the current ones, if any.
    * @warning The objective coefficient of variables not appearing in the `objective_function` is not altered.
    * @param objective_function expression to maximise}
    */
   void Maximise(const Expression& objective_function);
   /**
+   * Set the `objective_function` to maximise while being subject to all the constraints.
+   * The objective function coefficients will overwrite the current ones, if any.
+   * @warning The objective coefficient of variables not appearing in the `objective_function` is not altered.
+   * @param objective_function expression to maximise}
+   */
+  template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+  void Maximise(const T& objective_function);
+  /**
    * Set the `objective_function` to minimise while being subject to all the constraints.
-   *
    * The objective function coefficients will overwrite the current ones, if any.
    * @warning The objective coefficient of variables not appearing in the `objective_function` is not altered.
    * @param objective_function expression to minimise
    */
   void Minimise(const Expression& objective_function);
+  /**
+   * Set the `objective_function` to maximise while being subject to all the constraints.
+   * The objective function coefficients will overwrite the current ones, if any.
+   * @warning The objective coefficient of variables not appearing in the `objective_function` is not altered.
+   * @param objective_function expression to maximise}
+   */
+  template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+  void Minimise(const T& objective_function);
 
 #ifndef NDEBUG
   virtual void Dump() = 0;

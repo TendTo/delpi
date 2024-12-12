@@ -10,7 +10,7 @@
 #include "delpi/parser/mps/scanner.h"
 #undef __DELPI_MPS_SCANNER_H__
 
-#include "delpi/parser/mps/Sense.h"
+#include "delpi/parser/mps/SenseType.h"
 #include "delpi/parser/mps/BoundType.h"
 
 /* import the parser's token type into a local typedef */
@@ -125,7 +125,7 @@ rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 
 {whitespace}+(?i:MAX)                { return token::MAX; }
 {whitespace}+(?i:MIN)                { return token::MIN; }
-{whitespace}+[NELGnelg]              { yylval->emplace<Sense>(ParseSense(yytext)); return token::SENSE; }
+{whitespace}+[NELGnelg]              { yylval->emplace<SenseType>(ParseSense(yytext)); return token::SENSE; }
 {whitespace}+(?i:BV|MI|PL|FR)        { yylval->emplace<BoundType>(ParseBoundType(yytext)); return token::BOUND_TYPE_SINGLE; }
 {whitespace}+(?i:LO|UP|FX|LI|UI|SC)  { yylval->emplace<BoundType>(ParseBoundType(yytext)); return token::BOUND_TYPE; }
 

@@ -10,14 +10,12 @@
 #include <string>
 
 #include "delpi/solver/LpSolver.h"
-#include "delpi/symbolic/Expression.h"
 #include "delpi/util/Stats.h"
 
 namespace delpi {
 
 /**
  * The Driver is the base class for all the parsers.
- *
  * It contains the common logic to allow the parsed data to be saved in the context.
  * It coordinates the communication between the parser (bison) and the scanner (flex).
  */
@@ -60,13 +58,6 @@ class Driver {
 
   /** Call context_.CheckSat() and print proper output messages to the standard output. */
   void CheckSat();
-
-  /**
-   * @smtcommand{get-assertions, Print all the assertions currently in the context.
-     If the mode is set to silent\, it does not print anything.}
-   */
-  void GetConstraints() const;
-
   /**
    * @smtcommand{get-info, Print information about the solver or the current context.
      @param key key of the information to print}
@@ -84,20 +75,6 @@ class Driver {
      @param value value of the option}
    */
   void SetOption(const std::string &key, const std::string &value);
-
-  /**
-   * Maximise the objective function `f`. The objective function is
-   * added to the context as a constraint.
-   * @param objective_function expression to maximise}
-   */
-  void Maximise(const Expression &objective_function);
-
-  /**
-   * Minimise the objective function `f`. The objective function is
-   * added to the context as a constraint.
-   * @param objective_function expression to minimise
-   */
-  void Minimise(const Expression &objective_function);
 
   /** @smtcommand{exit, Terminate the parsing} */
   void Exit();

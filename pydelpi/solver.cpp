@@ -44,6 +44,11 @@ void init_solver(py::module_ &m) {
 
   py::class_<LpSolver>(m, "LpSolver")
       .def_static("get_instance", &LpSolver::GetInstance, py::arg("config"))
+      .def_property_readonly("variables", &LpSolver::variables)
+      .def_property_readonly("constraints", &LpSolver::constraints)
+      .def("parse_file", &LpSolver::ParseFile, py::arg("filename"))
+      .def("parse_string", &LpSolver::ParseString, py::arg("input"))
+      .def("parse_stream", &LpSolver::ParseStream, py::arg("stream"))
       .def("add_column", py::overload_cast<const Variable &>(&LpSolver::AddColumn), py::arg("column"))
       .def("add_column", py::overload_cast<const Variable &, const mpq_class &>(&LpSolver::AddColumn),
            py::arg("column"), py::arg("obj"))

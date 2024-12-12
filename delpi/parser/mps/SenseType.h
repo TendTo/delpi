@@ -2,8 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
- * Sense of a constraint row.
- *
+ * SenseType of a constraint row.
  * The sense indicates the type or relation a contraint row has with
  * respect to its right-hand side.
  * The supported values are 'L', 'E', 'G', or 'N'.
@@ -18,9 +17,9 @@
 namespace delpi::mps {
 
 /**
- * Sense of a constraint row.
+ * SenseType of a constraint row.
  */
-enum class Sense {
+enum class SenseType {
   L,  ///< Less or equal to
   E,  ///< Equal to
   G,  ///< Greater or equal to
@@ -40,7 +39,7 @@ enum class Sense {
  * @param sense string representation of the sense
  * @return corresponding sense
  */
-Sense ParseSense(const std::string &sense);
+SenseType ParseSense(const std::string &sense);
 /**
  * Parse a sense from a C-style string.
  * The string must be one of the following:
@@ -54,7 +53,7 @@ Sense ParseSense(const std::string &sense);
  * @param sense C-style string representation of the sense
  * @return corresponding sense
  */
-Sense ParseSense(const char sense[]);
+SenseType ParseSense(const char sense[]);
 /**
  * Parse a sense from a character.
  * The character must be one of the following:
@@ -67,9 +66,9 @@ Sense ParseSense(const char sense[]);
  * @param sense character representation of the sense
  * @return corresponding sense
  */
-Sense ParseSense(char sense);
+SenseType ParseSense(char sense);
 
-std::ostream &operator<<(std::ostream &os, const Sense &sense);
+std::ostream &operator<<(std::ostream &os, const SenseType &sense);
 
 }  // namespace delpi::mps
 
@@ -77,6 +76,6 @@ std::ostream &operator<<(std::ostream &os, const Sense &sense);
 
 #include "delpi/util/logging.h"
 
-OSTREAM_FORMATTER(delpi::mps::Sense)
+OSTREAM_FORMATTER(delpi::mps::SenseType)
 
 #endif

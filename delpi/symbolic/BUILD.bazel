@@ -21,7 +21,6 @@ delpi_cc_library(
         ":expression",
         ":formula",
         ":formula_kind",
-        ":linear_monomial",
         ":variable",
     ],
 )
@@ -32,17 +31,6 @@ delpi_cc_library(
     hdrs = ["Variable.h"],
     implementation_deps = ["//delpi/util:error"],
     deps = ["//delpi/util:logging"],
-)
-
-delpi_cc_library(
-    name = "linear_monomial",
-    srcs = ["LinearMonomial.cpp"],
-    hdrs = ["LinearMonomial.h"],
-    deps = [
-        ":variable",
-        "//delpi/libs:gmp",
-        "//delpi/util:logging",
-    ],
 )
 
 delpi_cc_library(
@@ -60,7 +48,6 @@ delpi_cc_library(
         "//delpi/util:hash",
     ],
     deps = [
-        ":linear_monomial",
         ":variable",
         "//delpi/libs:gmp",
         "//delpi/util:intrusive_ptr",

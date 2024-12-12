@@ -102,10 +102,9 @@ LpSolver::ColumnIndex SoplexLpSolver::AddColumn(const Variable& var, const mpq_c
     spx_cols_.add(col_rational);
   return column_idx;
 }
-LpSolver::RowIndex SoplexLpSolver::AddRow(const Row& row) {
-  const soplex::LPRowRational row_rational(soplex::Rational(row.lb.value_or(ninfinity_).get_mpq_t()),
-                                           ParseRowCoeff(row.addends),
-                                           soplex::Rational(row.ub.value_or(infinity_).get_mpq_t()));
+LpSolver::RowIndex SoplexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
+                                          const mpq_class& ub) {
+  const soplex::LPRowRational row_rational(lb.get_mpq_t(), ParseRowCoeff(addends), ub.get_mpq_t());
   if (consolidated_)
     spx_.addRowRational(row_rational);
   else

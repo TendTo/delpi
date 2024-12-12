@@ -3,7 +3,6 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  * Bound type.
- *
  * The bound type is used to specify the type of a variable bound.
  * It is indicated in the MPS file format.
  * The supported values are 'LO', 'LI', 'UP', 'UI', 'FX', 'FR', 'MI', 'PL', or 'BV'.
@@ -39,6 +38,7 @@ enum class BoundType {
 /**
  * Parse a bound type from a string.
  * The string must be one of the following:
+ *
  * - "LO"
  * - "LI"
  * - "UP"
@@ -51,7 +51,6 @@ enum class BoundType {
  *
  * Any leading or trailing spaces are ignored.
  * The input is case-insensitive.
- *
  * @param bound_type string representation of the bound type
  * @return corresponding bound type
  */

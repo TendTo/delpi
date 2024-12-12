@@ -45,34 +45,12 @@ void Driver::CheckSat() {
   stats_.m_timer().Resume();
 }
 
-void Driver::GetConstraints() const {
-  if (lp_solver_.config().silent()) return;
-  std::cout << "(constraints\n";
-  for (const Formula& f : context_.assertions()) {
-    std::cout << "\t" << f << "\n";
-  }
-  std::cout << ")" << std::endl;
-}
-
 void Driver::GetInfo(const std::string& key) const {
   if (lp_solver_.config().silent()) return;
   std::cout << "get-info ( " << key << " ): " << lp_solver_.GetInfo(key) << std::endl;
 }
 void Driver::SetInfo(const std::string& key, const std::string& value) { lp_solver_.SetInfo(key, value); }
 void Driver::SetOption(const std::string& key, const std::string& value) { lp_solver_.SetOption(key, value); }
-
-void Driver::Maximise(const Expression& objective_function) {
-  // Don't consider the time spent checking sat in the time spent parsing.
-  stats_.m_timer().Pause();
-  lp_solver_.Maximise(objective_function);
-  stats_.m_timer().Resume();
-}
-
-void Driver::Minimise(const Expression& objective_function) {
-  // Don't consider the time spent checking sat in the time spent parsing.
-  stats_.m_timer().Pause();
-  lp_solver_.Minimise(objective_function);
-  stats_.m_timer().Resume();
-}
+void Driver::Exit() { DELPI_DEBUG("Exit"); }
 
 }  // namespace delpi

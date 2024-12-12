@@ -3,7 +3,7 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "delpi/parser/mps/Sense.h"
+#include "delpi/parser/mps/SenseType.h"
 
 #include <cctype>
 #include <cstddef>
@@ -13,39 +13,39 @@
 
 namespace delpi::mps {
 
-Sense ParseSense(const std::string &sense) {
+SenseType ParseSense(const std::string &sense) {
   std::size_t pos = sense.find_first_not_of(' ');
   return ParseSense(sense[pos]);
 }
-Sense ParseSense(const char sense[]) {
+SenseType ParseSense(const char sense[]) {
   while (*sense == ' ') ++sense;
   return ParseSense(*sense);
 }
-Sense ParseSense(char sense) {
+SenseType ParseSense(char sense) {
   sense = std::tolower(sense);
   switch (sense) {
     case 'l':
-      return Sense::L;
+      return SenseType::L;
     case 'e':
-      return Sense::E;
+      return SenseType::E;
     case 'g':
-      return Sense::G;
+      return SenseType::G;
     case 'n':
-      return Sense::N;
+      return SenseType::N;
     default:
       DELPI_UNREACHABLE();
   }
 }
 
-std::ostream &operator<<(std::ostream &os, const Sense &sense) {
+std::ostream &operator<<(std::ostream &os, const SenseType &sense) {
   switch (sense) {
-    case Sense::L:
+    case SenseType::L:
       return os << "L";
-    case Sense::E:
+    case SenseType::E:
       return os << "E";
-    case Sense::G:
+    case SenseType::G:
       return os << "G";
-    case Sense::N:
+    case SenseType::N:
       return os << "N";
     default:
       DELPI_UNREACHABLE();

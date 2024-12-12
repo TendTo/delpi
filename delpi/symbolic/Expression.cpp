@@ -15,8 +15,10 @@ namespace delpi {
 
 Expression::Expression() : ptr_(ExpressionCell::New()) {}
 Expression::Expression(Variable var) : ptr_(ExpressionCell::New(std::move(var))) {}
-Expression::Expression(LinearMonomial linear_monomial) : ptr_(ExpressionCell::New(std::move(linear_monomial))) {}
+Expression::Expression(Addend addend) : ptr_(ExpressionCell::New(std::move(addend))) {}
 Expression::Expression(Addends addends) : ptr_{ExpressionCell::New(std::move(addends))} {}
+Expression::Expression(std::vector<Addend> addends)
+    : ptr_{ExpressionCell::New(Addends{addends.begin(), addends.end()})} {}
 Expression::Expression(const Expression& e) : ptr_{e.ptr_} {}
 Expression::Expression(Expression&& e) noexcept : ptr_{std::move(e.ptr_)} {}
 Expression& Expression::operator=(const Expression& e) {
@@ -89,14 +91,14 @@ Expression Expression::operator-(const Variable& o) const {
   return temp -= o;
 }
 
-Expression& Expression::operator+=(const LinearMonomial& o) { return Add(o.var, o.coeff); }
-Expression& Expression::operator-=(const LinearMonomial& o) { return Subtract(o.var, o.coeff); }
-Expression Expression::operator+(const LinearMonomial& o) const {
+Expression& Expression::operator+=(const Addend& o) { return Add(o.first, o.second); }
+Expression& Expression::operator-=(const Addend& o) { return Subtract(o.first, o.second); }
+Expression Expression::operator+(const Addend& o) const {
   Expression temp{*this};
   return temp += o;
 }
 
-Expression Expression::operator-(const LinearMonomial& o) const {
+Expression Expression::operator-(const Addend& o) const {
   Expression temp{*this};
   return temp -= o;
 }
@@ -119,7 +121,7 @@ Expression Expression::operator-(const Expression& o) const {
   return temp -= o;
 }
 
-Expression operator-(const Variable& var) { return Expression{LinearMonomial{var, -1}}; }
+Expression operator-(const Variable& var) { return Expression{Expression::Addend{var, -1}}; }
 
 Expression operator*(const mpq_class& lhs, const Expression& rhs) {
   Expression temp{rhs};
@@ -145,11 +147,11 @@ Expression operator-(const Variable& lhs, const Expression& rhs) {
   Expression temp(rhs);
   return temp -= lhs;
 }
-Expression operator+(const LinearMonomial& lhs, const Expression& rhs) {
+Expression operator+(const Expression::Addend& lhs, const Expression& rhs) {
   Expression temp(rhs);
   return temp += lhs;
 }
-Expression operator-(const LinearMonomial& lhs, const Expression& rhs) {
+Expression operator-(const Expression::Addend& lhs, const Expression& rhs) {
   Expression temp(rhs);
   return temp -= lhs;
 }
