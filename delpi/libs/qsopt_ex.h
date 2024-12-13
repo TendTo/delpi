@@ -68,24 +68,36 @@ class MpqArray {
    * Construct a new MpqArray object, allocating the array with `n_elements` elements.
    * @param n_elements The number of elements in the array.
    */
-  explicit MpqArray(size_t n_elements);
+  explicit MpqArray(size_t n_elements = 0);
   MpqArray(const MpqArray &) = delete;
   MpqArray(MpqArray &&) = delete;
   MpqArray &operator=(const MpqArray &) = delete;
   MpqArray &operator=(MpqArray &&) = delete;
   /** Destroy the MpqArray object, freeing the array */
   ~MpqArray();
+
   /**
    * Obtain a constant pointer to the internal @ref array_.
    * @return internal mpq_t array as a constant pointer
    */
-  explicit operator const mpq_t *() const { return array_; }
+  operator const mpq_t * const *() const { return &array_; }
+  /**
+   * Obtain a constant pointer to the internal @ref array_.
+   * @return internal mpq_t array as a constant pointer
+   */
+  operator mpq_t **() { return &(array_); }
+
+  /**
+   * Obtain a constant pointer to the internal @ref array_.
+   * @return internal mpq_t array as a constant pointer
+   */
+  operator const mpq_t *() const { return array_; }
 
   /**
    * Obtain a pointer to the internal array.
    * @return internal mpq_t array
    */
-  explicit operator mpq_t *() { return array_; }
+  operator mpq_t *() { return array_; }
 
   mpq_t &operator[](const int idx) { return array_[idx]; }
 

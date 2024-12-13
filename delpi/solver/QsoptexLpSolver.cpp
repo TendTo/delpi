@@ -54,10 +54,10 @@ int QsoptexLpSolver::num_rows() const { return mpq_QSget_rowcount(qsx_); }
 
 Column QsoptexLpSolver::column(ColumnIndex column_idx) const {
   DELPI_ASSERT(column_idx < num_columns(), "Column index out of bounds");
-  mpq_t *obj = nullptr, *lb = nullptr, *ub = nullptr;
+  qsopt_ex::MpqArray obj, lb, ub;
 
   [[maybe_unused]] const int status =
-      mpq_QSget_columns_list(qsx_, 1, &column_idx, nullptr, nullptr, nullptr, nullptr, &obj, &lb, &ub, nullptr);
+      mpq_QSget_columns_list(qsx_, 1, &column_idx, nullptr, nullptr, nullptr, nullptr, obj, lb, ub, nullptr);
   DELPI_ASSERT(!status, "Invalid status");
 
   Column column{};
@@ -71,12 +71,12 @@ Column QsoptexLpSolver::column(ColumnIndex column_idx) const {
 }
 Row QsoptexLpSolver::row(RowIndex row_idx) const {
   DELPI_ASSERT(row_idx < num_rows(), "Row index out of bounds");
-  mpq_t *row_val = nullptr, *rhs = nullptr;
+  qsopt_ex::MpqArray row_val, rhs;
   int *row_cnt = nullptr, *row_ind = nullptr;
   char* sense = nullptr;
 
   [[maybe_unused]] const int status =
-      mpq_QSget_rows_list(qsx_, 1, &row_idx, &row_cnt, nullptr, &row_ind, &row_val, &rhs, &sense, nullptr);
+      mpq_QSget_rows_list(qsx_, 1, &row_idx, &row_cnt, nullptr, &row_ind, row_val, rhs, &sense, nullptr);
   DELPI_ASSERT(!status, "Invalid status");
 
   Row row{};
@@ -189,14 +189,13 @@ void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
 LpResult QsoptexLpSolver::SolveCore(mpq_class& precision, const bool store_solution) {
   // x: must be allocated/deallocated using QSopt_ex.
   // Should have room for the (rowcount) "logical" variables, which come after the (colcount) "structural" variables.
-  x_.Resize(num_columns() + num_rows());
+  x_.Resize(num_columns());
   ray_.Resize(num_rows());
 
   int lp_status = -1;
-  const int status =
-      QSdelta_full_solver(qsx_, precision.get_mpq_t(), static_cast<mpq_t*>(x_), static_cast<mpq_t*>(ray_),
-                          obj_lb_.get_mpq_t(), obj_ub_.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status,
-                          config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
+  const int status = QSdelta_full_solver(qsx_, precision.get_mpq_t(), x_, ray_, obj_lb_.get_mpq_t(),
+                                         obj_ub_.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status,
+                                         config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
   if (status) {
     DELPI_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
     return LpResult::ERROR;
