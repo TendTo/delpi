@@ -231,8 +231,9 @@ class MpsDriver : public Driver {
    * The result is then combined with the rhs value and the correct row sense to build the Formula that makes up the
    * assertion.
    */
-  std::map<std::string, Row> rows_;        ///< The rows of the problem.
-  std::map<std::string, Column> columns_;  ///< The columns of the problem. Contains the variables.
+  std::map<std::string, Row> rows_;                  ///< The rows of the problem.
+  std::map<std::string, Column> columns_;            ///< The columns of the problem. Contains the variables.
+  std::vector<std::pair<Variable, mpq_class>> obj_;  ///< The objective function.
 
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.

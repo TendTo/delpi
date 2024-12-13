@@ -68,6 +68,7 @@ void MpsDriver::AddRow(const SenseType sense, const std::string &row) {
   if (sense == SenseType::N && obj_row_.empty()) {
     DELPI_DEBUG("Objective row not found. Adding the first row with sense N as objective row");
     obj_row_ = row;
+    return;
   }
   rows_.emplace(row, Row{sense});
 }
@@ -80,7 +81,11 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
     auto [insert_it, val] = columns_.emplace(column, Column{Variable{column}});
     it = insert_it;
   }
-  if (!config().optimize() && row == obj_row_) return;
+  if (config().optimize() && row == obj_row_) {
+    obj_.emplace_back(it->second.var, std::move(value));
+    DELPI_TRACE_FMT("Updated obj function {}", row);
+    return;
+  }
   rows_.at(row).addends.emplace_back(it->second.var, std::move(value));
   DELPI_TRACE_FMT("Updated row {}", row);
 }
@@ -217,12 +222,11 @@ void MpsDriver::End() {
     lp_solver_.AddRow(row_data.addends, row_data.lb.value_or(lp_solver_.ninfinity()),
                       row_data.ub.value_or(lp_solver_.infinity()));
   }
-  if (!obj_row_.empty()) {
-    if (is_min_) {
-      lp_solver_.Minimise(rows_.at(obj_row_).addends);
-    } else {
-      lp_solver_.Maximise(rows_.at(obj_row_).addends);
-    }
+
+  if (is_min_) {
+    lp_solver_.Minimise(obj_);
+  } else {
+    lp_solver_.Maximise(obj_);
   }
 }
 
