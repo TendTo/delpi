@@ -58,6 +58,38 @@ class LpSolver {
  public:
   using ColumnIndex = int;
   using RowIndex = int;
+  /**
+   * Callback invoked by the LP solver when a solution (or delta solution) is found.
+   * @param lp_solver LP solver that invoked the callback
+   * @param result result of the LP solver
+   * @param x solution vector
+   * @param y dual solution vector
+   * @param obj_lb lower bound of the objective
+   * @param obj_ub upper bound of the objective
+   * @param delta delta value
+   * @return true if the solver should continue
+   * @return false if the solver should stop
+   */
+  using SolveCallback = std::function<void(const LpSolver& lp_solver, LpResult result, const std::vector<mpq_class>& x,
+                                           const std::vector<mpq_class>& y, const mpq_class& obj_lb,
+                                           const mpq_class& obj_ub, const mpq_class& delta)>;
+  /**
+   * Callback invoked by the LP solver when a solution (or delta solution) is found.
+   * @param lp_solver LP solver that invoked the callback
+   * @param result result of the LP solver
+   * @param x solution vector
+   * @param y dual solution vector
+   * @param obj_lb lower bound of the objective
+   * @param obj_ub upper bound of the objective
+   * @param diff difference between the lower and upper bounds
+   * @param delta delta value
+   * @return true if the solver should continue
+   * @return false if the solver should stop
+   */
+  using PartialSolveCallback = std::function<bool(
+      const LpSolver& lp_solver, LpResult result, const std::vector<mpq_class>& x, const std::vector<mpq_class>& y,
+      const mpq_class& obj_lb, const mpq_class& obj_ub, const mpq_class& diff, const mpq_class& delta)>;
+
   static std::unique_ptr<LpSolver> GetInstance(const Config& config);
 
   /**
@@ -129,7 +161,20 @@ class LpSolver {
   [[nodiscard]] LpResult expected() const;
   /** @getter{mapping between each variable and its value, lp solution} */
   [[nodiscard]] std::unordered_map<Variable, mpq_class> model() const;
-
+  /** @getter{callback function invoked upon solving the problem, lp solver} */
+  [[nodiscard]] const SolveCallback& solve_cb() const { return solve_cb_; }
+  /** @getsetter{callback function invoked upon solving the problem, lp solver} */
+  [[nodiscard]] SolveCallback& m_solve_cb() { return solve_cb_; }
+  /** @getter{callback function invoked upon finding a partial solution to the problem, lp solver} */
+  [[nodiscard]] const PartialSolveCallback& partial_solve_cb() const { return partial_solve_cb_; }
+  /** @getsetter{callback function invoked upon finding a partial solution to the problem, lp solver} */
+  [[nodiscard]] PartialSolveCallback& m_partial_solve_cb() { return partial_solve_cb_; }
+  /**
+   * Get a mapping between the variables and their values in the solution vector `x`.
+   * @param x solution vector
+   * @return mapping between the variables and their values
+   */
+  [[nodiscard]] std::unordered_map<Variable, mpq_class> model(const std::vector<mpq_class>& x) const;
   /**
    * Get the value of `var` in the solution vector.
    * @param var variable to get the value for
@@ -432,6 +477,11 @@ class LpSolver {
                                                   ///< The row is the constraint used by the lp solver.
   std::vector<mpq_class> solution_;               ///< Solution vector
   std::vector<mpq_class> dual_solution_;          ///< Dual solution vector
+  mpq_class obj_lb_;                              ///< Lower bound on the objective value, if any
+  mpq_class obj_ub_;                              ///< Upper bound on the objective value, if any
+
+  SolveCallback solve_cb_;                 ///< Callback to call after solving the LP problem
+  PartialSolveCallback partial_solve_cb_;  ///< Callback to call after solving the LP problem with a partial solution
 
   mpq_class ninfinity_;  ///< Negative infinity threshold value
   mpq_class infinity_;   ///< Infinity threshold value

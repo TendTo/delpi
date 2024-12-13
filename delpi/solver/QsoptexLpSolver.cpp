@@ -14,17 +14,18 @@
 
 namespace delpi {
 
-extern "C" void QsoptexPartialSolutionCb(mpq_QSdata const* /*prob*/, const mpq_t* /*x*/, const mpq_t* const /* y */,
-                                         const mpq_t obj_lb, const mpq_t obj_up, const mpq_t /*diff*/,
-                                         const mpq_t /*delta*/, void* data) {
+namespace {}  // namespace
+
+extern "C" void QsoptexPartialSolutionCb(mpq_QSdata const* /*prob*/, const mpq_t* x, const mpq_t* const y,
+                                         const mpq_t obj_lb, const mpq_t obj_up, const mpq_t diff, const mpq_t delta,
+                                         void* data) {
   DELPI_DEBUG_FMT("QsoptexLpSolver::QsoptexPartialSolutionCb called with objective value in [{}, {}]",
                   mpq_class{obj_lb}, mpq_class{obj_up});
-  const QsoptexLpSolver* const lp_solver = static_cast<QsoptexLpSolver*>(data);
-  // mpq_get_d() rounds towards 0.  This code guarantees infeas_gt > infeas.
-  const double infeas_gt = nextafter(mpq_get_d(obj_lb), std::numeric_limits<double>::infinity());
-  std::cout << "PARTIAL: delta-sat with delta = " << infeas_gt << " ( > " << obj_lb << ")";
-  if (lp_solver->config().with_timings()) std::cout << " after " << lp_solver->stats().timer().seconds() << " seconds";
-  std::cout << std::endl;
+  const QsoptexLpSolver& lp_solver = *static_cast<QsoptexLpSolver*>(data);
+  if (lp_solver.partial_solve_cb())
+    lp_solver.partial_solve_cb()(lp_solver, LpResult::DELTA_OPTIMAL, gmp::ToMpqVector(x, lp_solver.num_columns()),
+                                 gmp::ToMpqVector(y, lp_solver.num_rows()), mpq_class{obj_lb}, mpq_class{obj_up},
+                                 mpq_class{diff}, mpq_class{delta});
 }
 
 QsoptexLpSolver::QsoptexLpSolver(Config config, const std::string& class_name)
@@ -171,21 +172,17 @@ void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
 }
 
 LpResult QsoptexLpSolver::SolveCore(mpq_class& precision, const bool store_solution) {
-  const std::size_t rowcount = num_rows();
-  const std::size_t colcount = num_columns();
   // x: must be allocated/deallocated using QSopt_ex.
   // Should have room for the (rowcount) "logical" variables, which come after the (colcount) "structural" variables.
-  x_.Resize(colcount + rowcount);
-  ray_.Resize(rowcount);
-  mpq_class lb, ub;
+  x_.Resize(num_columns());
+  ray_.Resize(num_rows());
 
   int lp_status = -1;
   int status = -1;
 
   status = QSdelta_full_solver(qsx_, precision.get_mpq_t(), static_cast<mpq_t*>(x_), static_cast<mpq_t*>(ray_),
-                               lb.get_mpq_t(), ub.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status,
+                               obj_lb_.get_mpq_t(), obj_ub_.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status,
                                config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
-
   if (status) {
     DELPI_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
     return LpResult::ERROR;

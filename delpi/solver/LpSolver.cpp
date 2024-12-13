@@ -35,6 +35,7 @@ LpSolver::LpSolver(mpq_class ninfinity, mpq_class infinity, Config config, const
       col_to_var_{},
       solution_{},
       dual_solution_{},
+      solve_cb_{},
       ninfinity_{std::move(ninfinity)},
       infinity_{std::move(infinity)} {}
 
@@ -60,12 +61,13 @@ LpResult LpSolver::expected() const {
   return LpResult::UNSOLVED;
 }
 
-std::unordered_map<Variable, mpq_class> LpSolver::model() const {
-  if (solution_.size() == 0) return {};
-  DELPI_ASSERT(col_to_var_.size() == solution_.size(), "All variables must appear in the solution");
+std::unordered_map<Variable, mpq_class> LpSolver::model() const { return model(solution_); }
+std::unordered_map<Variable, mpq_class> LpSolver::model(const std::vector<mpq_class>& x) const {
+  if (x.empty()) return {};
+  DELPI_ASSERT(col_to_var_.size() == x.size(), "All variables must appear in the solution");
   std::unordered_map<Variable, mpq_class> model;
   model.reserve(col_to_var_.size());
-  for (std::size_t i = 0; i < col_to_var_.size(); ++i) model.emplace(col_to_var_.at(i), solution_.at(i));
+  for (std::size_t i = 0; i < col_to_var_.size(); ++i) model.emplace(col_to_var_.at(i), x.at(i));
   return model;
 }
 
@@ -180,7 +182,9 @@ LpResult LpSolver::Solve(mpq_class& precision, const bool store_solution) {
   stats_.Increase();
   solution_.clear();
   dual_solution_.clear();
-  return SolveCore(precision, store_solution);
+  const LpResult result = SolveCore(precision, store_solution);
+  if (solve_cb_) solve_cb_(*this, result, solution_, dual_solution_, obj_lb_, obj_ub_, precision);
+  return result;
 }
 void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetObjective(var_to_col_.at(var), value); }
 
