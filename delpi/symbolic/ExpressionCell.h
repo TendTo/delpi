@@ -26,7 +26,6 @@ class ExpressionCell : public SelfReferenceCountingObject {
  public:
   using Addend = Expression::Addend;
   using Addends = Expression::Addends;
-  using Environment = Expression::Environment;
   using SubstitutionMap = Expression::SubstitutionMap;
 
   /** @getter{variables, expression} */
@@ -65,9 +64,13 @@ class ExpressionCell : public SelfReferenceCountingObject {
 
   /**
    * Evaluates using a given environment (by default, an empty environment).
-   * @throws std::exception if there exists a variable in this expression whose assignment is not provided by `env`
+   * @tparam T map from variable to value (i.e. std::map<Variable, mpq_class>, std::unordered_map<Variable, mpq_class>)
+   * @param env map between each variable and its value
+   * @return value of the expression in the given environment
+   * @throws std::exception if there exists variable in this expression whose assignment is not provided by `env`
    */
-  [[nodiscard]] mpq_class Evaluate(const Environment& env = {}) const;
+  template <MapFromTo<Variable, mpq_class> T>
+  [[nodiscard]] mpq_class Evaluate(const T& env = {}) const;
 
   /**
    * Create a copy of this expression,

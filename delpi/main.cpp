@@ -11,10 +11,20 @@
 
 void OnSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, const std::vector<mpq_class>& x,
              const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub, const mpq_class&) {
-  // mpq_get_d() rounds towards 0.  This code guarantees infeas_gt > infeas.
+  if (lp_solver.config().silent()) return;
+
   const mpq_class diff = obj_ub - obj_lb;
-  // fmt::print uses shortest round-trip format for doubles, by default
-  fmt::println("{} with delta = {} ( = {}), range = [{}, {}]", result, diff.get_d(), diff, obj_lb, obj_ub);
+  switch (result) {
+    case delpi::LpResult::OPTIMAL:
+      fmt::println("{}, objective value = {} ( = {})", result, obj_lb, obj_lb.get_d());
+      break;
+    case delpi::LpResult::DELTA_OPTIMAL:
+      fmt::println("{} with delta = {} ( = {}), range = [{}, {}] ( = [{}, {}])", result, diff.get_d(), diff, obj_lb,
+                   obj_ub, obj_lb.get_d(), obj_ub.get_d());
+      break;
+    default:
+      fmt::println("{}", result);
+  }
   if (lp_solver.config().with_timings()) fmt::println(" after {} seconds", lp_solver.stats().timer().seconds());
   if (lp_solver.config().produce_models()) fmt::println("Model: {}", lp_solver.model(x));
   std::cout << std::flush;
@@ -23,6 +33,8 @@ void OnSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, con
 bool OnPartialSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, const std::vector<mpq_class>& x,
                     const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub,
                     const mpq_class& diff, const mpq_class&) {
+  if (lp_solver.config().silent()) return true;
+
   fmt::println("PARTIAL: {} with delta = {} ( = {}), range = [{}, {}]", result, diff.get_d(), diff, obj_lb, obj_ub);
   if (lp_solver.config().with_timings()) fmt::println(" after {} seconds", lp_solver.stats().timer().seconds());
   if (lp_solver.config().produce_models()) fmt::println("Model: {}", lp_solver.model(x));

@@ -215,8 +215,14 @@ bool LpSolver::ConflictingExpected(const LpResult result) const {
   }
 }
 
-bool LpSolver::Verify() {
-  DELPI_TRACE("LpSolver::Verify()");
+bool LpSolver::Verify() const {
+  const std::unordered_map m{model()};
+  for (const Formula& constraint : constraints()) {
+    if (!constraint.Evaluate(m)) {
+      DELPI_ERROR_FMT("Constraint {} violated by the model", constraint);
+      return false;
+    }
+  }
   return true;
 }
 

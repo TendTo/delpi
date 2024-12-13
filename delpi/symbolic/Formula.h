@@ -9,6 +9,7 @@
 #include "delpi/libs/gmp.h"
 #include "delpi/symbolic/Expression.h"
 #include "delpi/symbolic/FormulaKind.h"
+#include "delpi/util/concepts.h"
 
 namespace delpi {
 
@@ -36,12 +37,14 @@ class Formula {
   [[nodiscard]] Formula Substitute(const Expression::SubstitutionMap& s) const;
   /**
    * Evaluates the formula using a given environment (by default, an empty environment).
+   * @tparam T map from variable to value (i.e. std::map<Variable, mpq_class>, std::unordered_map<Variable, mpq_class>)
    * @param env map between each variable and its value
    * @return true if the formula is satisfied within the given environment
    * @return false if the formula is not satisfied within the given environment
    * @throws std::exception if there exists variable in this expression whose assignment is not provided by `env`
    */
-  [[nodiscard]] bool Evaluate(const Expression::Environment& env) const;
+  template <MapFromTo<Variable, mpq_class> T>
+  [[nodiscard]] bool Evaluate(const T& env) const;
 
   /** @getter{left-hand side expression, formula} */
   [[nodiscard]] const Expression& expression() const { return expression_; }

@@ -13,6 +13,22 @@
 namespace delpi {
 
 /**
+ * Check if the type `T` constitutes a map from type `From` to type `To`.
+ * It has to have a method `at` that takes a `From` and returns a `To`.
+ * @code
+ * template <MapFromTo<int, std::string> T>
+ * void foo(T t); // T can be a map from int to std::string or a vector of std::string
+ * @endcode
+ * @tparam T type to check
+ * @tparam From type domain
+ * @tparam To type codomain
+ */
+template <class T, typename From, typename To>
+concept MapFromTo = requires(T t) {
+  { t.at(From{}) } -> std::convertible_to<To>;
+};  // NOLINT(readability/braces) per C++ standard concept definition
+
+/**
  * Check if the type `T` is a self-reference counter type, i.e. it has both `AddRef` and `Release` methods.
  * The `AddRef` method should increment the internal reference counter.
  * The `Release` method should decrement it, and if it reaches zero, the object should be deleted using its destructor.

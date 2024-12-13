@@ -94,7 +94,8 @@ ExpressionCell& ExpressionCell::Divide(const mpq_class& coeff) {
   return *this;
 }
 
-mpq_class ExpressionCell::Evaluate(const Environment& env) const {
+template <MapFromTo<Variable, mpq_class> T>
+mpq_class ExpressionCell::Evaluate(const T& env) const {
   return std::accumulate(addends_.begin(), addends_.end(), mpq_class{0},
                          [&env](const mpq_class& init, const std::pair<const Variable, mpq_class>& p) {
                            // Without the cast, it would return an expression template
@@ -138,5 +139,8 @@ std::ostream& ExpressionCell::PrintAddend(std::ostream& os, const bool print_plu
   }
   return os << var;
 }
+
+template mpq_class ExpressionCell::Evaluate(const std::map<Variable, mpq_class>& env) const;
+template mpq_class ExpressionCell::Evaluate(const std::unordered_map<Variable, mpq_class>& env) const;
 
 }  // namespace delpi

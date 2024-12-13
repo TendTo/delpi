@@ -305,6 +305,7 @@ class LpSolver {
    * Not indicating a `row.lb` or `row.ub` will result in an unbounded row in that direction.
    * If `row.lb` and `row.ub` are equal, a single equality constraint is added.
    * Otherwise, a pair of inequality constraints may be added, depending on the underlying solver implementation.
+   * @note If the row only refers to a single variable, a bound will be added instead. @see AddBound.
    * @param row structure of the row to add
    * @return index of the last row added
    */
@@ -313,6 +314,7 @@ class LpSolver {
    * Add a new row to the LP problem with the given `addends` bounded by `lb` and `ub`.
    * If `lb` and `ub` are equal, a single equality constraint is added.
    * Otherwise, a pair of inequality constraints may be added, depending on the underlying solver implementation.
+   * @note If the `addends` only refers to a single variable, a bound will be added instead. @see AddBound.
    * @param addends vector of pairs (Variable, coeff) that represent the linear summation of the row
    * @param lb lower bound of the row
    * @param ub upper bound of the row
@@ -334,6 +336,7 @@ class LpSolver {
    * @f]
    * where @f$ lhs @f$ is a linear expression, @f$ \text{ sense } \in \\{ \le, =, \ge \\} @f$
    * and @f$ rhs @f$ is a constant.
+   * @note If the `lhs` only refers to a single variable, a bound will be added instead. @see AddBound.
    * @param lhs linear expression on the left-hand side of the row
    * @param sense sense of the row (i.e. @f$ \le, =, \ge @f$)
    * @param rhs constant on the right-hand side of the row
@@ -348,6 +351,7 @@ class LpSolver {
    * @f]
    * where @f$ lhs @f$ is a linear expression, @f$ \text{ sense } \in \\{ \le, =, \ge \\} @f$
    * and @f$ rhs @f$ is a constant.
+   * @note If the `lhs` only refers to a single variable, a bound will be added instead. @see AddBound.
    * @param lhs linear summation on the left-hand side of the row
    * @param sense sense of the row (i.e. <=, =, >=)
    * @param rhs right-hand side of the row
@@ -384,6 +388,14 @@ class LpSolver {
    * @param value new objective coefficient for the column
    */
   virtual void SetObjective(int column, const mpq_class& value) = 0;
+
+  /**
+   * Set the bounds of a `var` in the LP problem to the given `lb` and `ub`.
+   * @param var variable to be bounded
+   * @param lb lower bound
+   * @param ub upper bound
+   */
+  virtual void SetBound(Variable var, const mpq_class& lb, const mpq_class& ub) = 0;
 
   /**
    * Optimise the LP problem with the given `precision`.
@@ -446,7 +458,7 @@ class LpSolver {
    * @return true if the current @ref solution_ verifies all the constraints
    * @return false if at least one constraint is violated by the current @ref solution_.
    */
-  bool Verify();
+  bool Verify() const;
 
 #ifndef NDEBUG
   virtual void Dump() = 0;

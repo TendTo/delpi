@@ -35,6 +35,7 @@ class QsoptexLpSolver final : public LpSolver {
   ColumnIndex AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) override;
   RowIndex AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb, const mpq_class& ub) override;
   RowIndex AddRow(const Expression::Addends& lhs, FormulaKind sense, const mpq_class& rhs) override;
+  void SetBound(Variable var, const mpq_class& lb, const mpq_class& ub) override;
   void SetCoefficient(RowIndex row, ColumnIndex column, const mpq_class& value) override;
   void SetObjective(int column, const mpq_class& value) override;
 

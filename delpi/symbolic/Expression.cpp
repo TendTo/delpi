@@ -37,7 +37,10 @@ const Expression::Addends& Expression::addends() const { return ptr_->addends();
 bool Expression::equal_to(const Expression& o) const noexcept { return ptr_->equal_to(*o.ptr_); }
 bool Expression::less(const Expression& o) const noexcept { return ptr_->less(*o.ptr_); }
 std::size_t Expression::hash() const noexcept { return ptr_->hash(); }
-mpq_class Expression::Evaluate(const Environment& env) const { return ptr_->Evaluate(env); }
+template <MapFromTo<Variable, mpq_class> T>
+mpq_class Expression::Evaluate(const T& env) const {
+  return ptr_->Evaluate(env);
+}
 Expression Expression::Substitute(const SubstitutionMap& s) const { return ptr_->Substitute(s); }
 std::string Expression::ToString() const { return (std::stringstream{} << *this).str(); }
 std::ostream& Expression::Print(std::ostream& os) const { return ptr_->Print(os); }
@@ -157,5 +160,8 @@ Expression operator-(const Expression::Addend& lhs, const Expression& rhs) {
 }
 
 std::ostream& operator<<(std::ostream& os, const Expression& e) { return e.Print(os); }
+
+template mpq_class Expression::Evaluate(const std::map<Variable, mpq_class>& env) const;
+template mpq_class Expression::Evaluate(const std::unordered_map<Variable, mpq_class>& env) const;
 
 }  // namespace delpi

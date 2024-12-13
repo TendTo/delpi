@@ -19,7 +19,8 @@ Formula::Formula(Expression expression, const FormulaKind kind, mpq_class rhs)
 Formula Formula::Substitute(const Expression::SubstitutionMap& s) const {
   return Formula{expression_.Substitute(s), kind_, rhs_};
 }
-bool Formula::Evaluate(const Expression::Environment& env) const {
+template <MapFromTo<Variable, mpq_class> T>
+bool Formula::Evaluate(const T& env) const {
   const mpq_class value{expression_.Evaluate(env)};
   switch (kind_) {
     case FormulaKind::Eq:
@@ -92,5 +93,8 @@ Formula operator>=(const Expression& lhs, mpq_class rhs) { return Formula{lhs, F
 std::ostream& operator<<(std::ostream& os, const Formula& formula) {
   return os << "(" << formula.expression() << " " << formula.kind() << " " << formula.rhs() << ")";
 }
+
+template bool Formula::Evaluate(const std::map<Variable, mpq_class>& env) const;
+template bool Formula::Evaluate(const std::unordered_map<Variable, mpq_class>& env) const;
 
 }  // namespace delpi

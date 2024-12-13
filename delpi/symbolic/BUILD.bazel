@@ -50,6 +50,7 @@ delpi_cc_library(
     deps = [
         ":variable",
         "//delpi/libs:gmp",
+        "//delpi/util:concepts",
         "//delpi/util:intrusive_ptr",
         "//delpi/util:logging",
         "//delpi/util:self_reference_counting_object",
@@ -76,6 +77,7 @@ delpi_cc_library(
         ":expression",
         ":formula_kind",
         "//delpi/libs:gmp",
+        "//delpi/util:concepts",
         "//delpi/util:logging",
     ],
 )

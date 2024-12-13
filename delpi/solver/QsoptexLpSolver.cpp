@@ -121,9 +121,13 @@ LpSolver::ColumnIndex QsoptexLpSolver::AddColumn(const Variable& var, const mpq_
 }
 LpSolver::RowIndex QsoptexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
                                            const mpq_class& ub) {
+  if (addends.size() == 1u) {
+    SetBound(addends.front().first, lb, ub);
+    return num_rows();
+  }
   // Add the row to the LP. If the row is bounded both ways with an equality, we can add it in one go.
   if (lb == ub) {
-    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, lb.get_mpq_t(), 'B', nullptr);
+    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, lb.get_mpq_t(), 'E', nullptr);
     DELPI_ASSERT(!status, "Invalid status");
     SetRowCoeff(num_rows() - 1, addends);
     return num_rows() - 1;
@@ -164,6 +168,17 @@ LpSolver::RowIndex QsoptexLpSolver::AddRow(const Expression::Addends& lhs, const
   SetRowCoeff(row_idx, lhs);
   return row_idx;
 }
+void QsoptexLpSolver::SetBound(const Variable var, const mpq_class& lb, const mpq_class& ub) {
+  if (lb == ub) {
+    [[maybe_unused]] const int status = mpq_QSchange_bound(qsx_, var_to_col_.at(var), 'B', lb.get_mpq_t());
+    DELPI_ASSERT(!status, "Invalid status");
+    return;
+  }
+  [[maybe_unused]] const int status1 = mpq_QSchange_bound(qsx_, var_to_col_.at(var), 'L', lb.get_mpq_t());
+  DELPI_ASSERT(!status1, "Invalid status");
+  [[maybe_unused]] const int status2 = mpq_QSchange_bound(qsx_, var_to_col_.at(var), 'U', ub.get_mpq_t());
+  DELPI_ASSERT(!status2, "Invalid status");
+}
 
 void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
   DELPI_ASSERT_FMT(column < num_columns(), "Column index out of bounds: {} >= {}", column, num_columns());
@@ -174,15 +189,14 @@ void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
 LpResult QsoptexLpSolver::SolveCore(mpq_class& precision, const bool store_solution) {
   // x: must be allocated/deallocated using QSopt_ex.
   // Should have room for the (rowcount) "logical" variables, which come after the (colcount) "structural" variables.
-  x_.Resize(num_columns());
+  x_.Resize(num_columns() + num_rows());
   ray_.Resize(num_rows());
 
   int lp_status = -1;
-  int status = -1;
-
-  status = QSdelta_full_solver(qsx_, precision.get_mpq_t(), static_cast<mpq_t*>(x_), static_cast<mpq_t*>(ray_),
-                               obj_lb_.get_mpq_t(), obj_ub_.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status,
-                               config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
+  const int status =
+      QSdelta_full_solver(qsx_, precision.get_mpq_t(), static_cast<mpq_t*>(x_), static_cast<mpq_t*>(ray_),
+                          obj_lb_.get_mpq_t(), obj_ub_.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status,
+                          config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
   if (status) {
     DELPI_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
     return LpResult::ERROR;

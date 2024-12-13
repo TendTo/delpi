@@ -104,6 +104,10 @@ LpSolver::ColumnIndex SoplexLpSolver::AddColumn(const Variable& var, const mpq_c
 }
 LpSolver::RowIndex SoplexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
                                           const mpq_class& ub) {
+  if (addends.size() == 1u) {
+    SetBound(addends.front().first, lb, ub);
+    return num_rows();
+  }
   const soplex::LPRowRational row_rational(lb.get_mpq_t(), ParseRowCoeff(addends), ub.get_mpq_t());
   if (consolidated_)
     spx_.addRowRational(row_rational);
@@ -124,7 +128,15 @@ LpSolver::RowIndex SoplexLpSolver::AddRow(const Expression::Addends& lhs, const 
     spx_rows_.add(row_rational);
   return num_rows() - 1;
 }
-void SoplexLpSolver::SetCoefficient(int row, int column, const mpq_class& value) {
+void SoplexLpSolver::SetBound(const Variable var, const mpq_class& lb, const mpq_class& ub) {
+  if (consolidated_) {
+    spx_.changeBoundsRational(var_to_col_.at(var), lb.get_mpq_t(), ub.get_mpq_t());
+  } else {
+    spx_cols_.lower_w()[var_to_col_.at(var)] = lb.get_mpq_t();
+    spx_cols_.upper_w()[var_to_col_.at(var)] = ub.get_mpq_t();
+  }
+}
+void SoplexLpSolver::SetCoefficient(const int row, const int column, const mpq_class& value) {
   DELPI_ASSERT(row < num_rows(), "Row index out of bounds");
   DELPI_ASSERT(column < num_columns(), "Column index out of bounds");
   DELPI_ASSERT(ninfinity_ <= value && value <= infinity_, "LP coefficient value too large");
