@@ -54,6 +54,13 @@ std::strong_ordering operator<=>(const mpq_t &lhs, const mpq_class &rhs) {
 
 namespace gmp {
 
+std::vector<mpq_class> ToMpqVector(const mpq_t *const x, const int size) {
+  std::vector<mpq_class> result{};
+  result.reserve(size);
+  for (int i = 0; i < size; i++) result.emplace_back(x[i]);
+  return result;
+}
+
 mpz_class floor(const mpq_class &val) {
   // This rounds towards zero
   mpz_class t{val};

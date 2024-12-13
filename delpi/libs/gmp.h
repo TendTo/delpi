@@ -37,6 +37,15 @@ inline std::size_t complexity(const mpq_class &val) {
 }
 
 /**
+ * Convert C array of mpq_t elements to a vector of mpq_class elements.
+ * Each element is copied and therefore independent of the original array.
+ * @param x array of mpq_t elements to convert
+ * @param size size of the array
+ * @return vector of mpq_class elements
+ */
+std::vector<mpq_class> ToMpqVector(const mpq_t *x, int size);
+
+/**
  * Calculate the floor of a rational number.
  * @param val The rational number.
  * @return The floor of the rational number.
