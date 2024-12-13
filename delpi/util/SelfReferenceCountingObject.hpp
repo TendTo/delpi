@@ -61,6 +61,13 @@ class SelfReferenceCountingObject {
 #endif
   }
 
+ protected:
+  /**
+   * Virtual destructor for the SelfReferenceCountingObject.
+   * Needed to ensure that the derived classes are deleted correctly.
+   */
+  virtual ~SelfReferenceCountingObject() = default;
+
  private:
 #ifdef DELPI_THREAD_SAFE
   std::atomic<std::size_t> ref_count_;  ///< Thread safe reference counter
