@@ -7,6 +7,8 @@ delpi_srcs(
     name = "srcs",
     deps = [
         "//delpi/libs:all_srcs",
+        "//delpi/parser:all_srcs",
+        "//delpi/solver:all_srcs",
         "//delpi/symbolic:all_srcs",
         "//delpi/util:all_srcs",
     ],
@@ -16,6 +18,9 @@ delpi_hdrs_tar(
     name = "hdrs_tar",
     deps = [
         "//delpi/libs:hdrs_tar",
+        "//delpi/parser:hdrs_tar",
+        "//delpi/solver:hdrs_tar",
+        "//delpi/symbolic:hdrs_tar",
         "//delpi/util:hdrs_tar",
     ],
 )
