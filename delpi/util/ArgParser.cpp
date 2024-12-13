@@ -101,7 +101,7 @@ void ArgParser::AddOptions() {
   DELPI_PARSE_PARAM_BOOL(parser_, continuous_output, "--continuous-output");
   DELPI_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
   DELPI_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
-  DELPI_PARSE_PARAM_BOOL(parser_, optimize, "-o", "--optimize");
+  DELPI_PARSE_PARAM_BOOL(parser_, skip_optimise, "--skip-optimise");
   DELPI_PARSE_PARAM_BOOL(parser_, produce_models, "-m", "--produce-models");
   DELPI_PARSE_PARAM_BOOL(parser_, silent, "-s", "--silent");
   DELPI_PARSE_PARAM_BOOL(parser_, with_timings, "-t", "--timings");
@@ -158,7 +158,7 @@ Config ArgParser::ToConfig() const {
   DELPI_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LpMode);
   DELPI_PARAM_TO_CONFIG("lp-solver", lp_solver, Config::LpSolver);
   // DELPI_PARAM_TO_CONFIG("jobs", number_of_jobs, unsigned int);
-  DELPI_PARAM_TO_CONFIG("optimize", optimize, bool);
+  DELPI_PARAM_TO_CONFIG("skip-optimise", skip_optimise, bool);
   DELPI_PARAM_TO_CONFIG("precision", precision, double);
   DELPI_PARAM_TO_CONFIG("produce-models", produce_models, bool);
   DELPI_PARAM_TO_CONFIG("random-seed", random_seed, unsigned int);

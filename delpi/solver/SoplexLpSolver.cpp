@@ -193,6 +193,8 @@ void SoplexLpSolver::UpdateFeasible() {
   // Set the feasible information
   const int colcount = num_columns();
   const int rowcount = num_rows();
+  solution_.reserve(colcount);
+  dual_solution_.reserve(rowcount);
 
   soplex::VectorRational solution{colcount};
   [[maybe_unused]] const bool has_sol = spx_.getPrimalRational(solution);
@@ -205,8 +207,7 @@ void SoplexLpSolver::UpdateFeasible() {
   DELPI_ASSERT(has_dual, "has_dual must be true");
   for (int i = 0; i < rowcount; i++) dual_solution_.emplace_back(gmp::ToMpqClass(dual[i].backend().data()));
 
-  DELPI_DEV_FMT("solution: {}", solution_);
-  DELPI_DEV_FMT("dual: {}", dual_solution_);
+  obj_lb_ = obj_ub_ = gmp::ToMpqClass(spx_.objValueRational().backend().data());
 }
 
 #if 0

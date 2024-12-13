@@ -109,7 +109,9 @@ class Config {
                   "Underlying LP solver used by the theory solver.\n"
                   "\t\tOne of: soplex (1), qsoptex (2)")
   DELPI_PARAMETER(number_of_jobs, unsigned int, 1u, "Number of jobs")
-  DELPI_PARAMETER(optimize, bool, false, "Whether to optimize the objective function. Only affects the MPS format")
+  DELPI_PARAMETER(skip_optimise, bool, false,
+                  "Whether to skip the objective function, turning the optimisation in a feasibility problem. "
+                  "Only affects the MPS format")
   DELPI_PARAMETER(precision, double, 9.999999999999996e-4,
                   "Delta precision used by the LP solver solver.\n"
                   "\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"

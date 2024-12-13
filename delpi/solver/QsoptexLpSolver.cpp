@@ -217,13 +217,11 @@ void QsoptexLpSolver::UpdateFeasible() {
   // Set the feasible information
   const int colcount = num_columns();
   const int rowcount = num_rows();
+  solution_.reserve(colcount);
+  dual_solution_.reserve(rowcount);
 
   for (int i = 0; i < colcount; i++) solution_.emplace_back(x_[i]);
-
   for (int i = 0; i < rowcount; i++) dual_solution_.emplace_back(ray_[i]);
-
-  DELPI_DEV_FMT("solution {}", solution_);
-  DELPI_DEV_FMT("dual {}", dual_solution_);
 }
 #if 0
 void QsoptexLpSolver::UpdateInfeasible() {

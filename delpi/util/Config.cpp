@@ -86,7 +86,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "lp_mode = '" << config.lp_mode() << "',\n"
             << "lp_solver = " << config.lp_solver() << ",\n"
             << "number_of_jobs = " << config.number_of_jobs() << ",\n"
-            << "optimize = '" << config.optimize() << "',\n"
+            << "skip_optimise = '" << config.skip_optimise() << "',\n"
             << "precision = " << config.precision() << ",\n"
             << "produce_model = " << config.produce_models() << ",\n"
             << "random_seed = " << config.random_seed() << ",\n"

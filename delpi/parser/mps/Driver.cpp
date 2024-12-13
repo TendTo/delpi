@@ -81,8 +81,8 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
     auto [insert_it, val] = columns_.emplace(column, Column{Variable{column}});
     it = insert_it;
   }
-  if (config().optimize() && row == obj_row_) {
-    obj_.emplace_back(it->second.var, std::move(value));
+  if (row == obj_row_) {
+    if (!config().skip_optimise()) obj_.emplace_back(it->second.var, std::move(value));
     DELPI_TRACE_FMT("Updated obj function {}", row);
     return;
   }
