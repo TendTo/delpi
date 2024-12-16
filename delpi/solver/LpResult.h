@@ -10,6 +10,7 @@
 
 namespace delpi {
 
+/** Possible outcomes of the LP solver. */
 enum class LpResult {
   UNSOLVED,       ///< The solver has not yet been run.
   OPTIMAL,        ///< The problem is optimal.

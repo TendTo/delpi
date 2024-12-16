@@ -29,12 +29,13 @@ concept MapFromTo = requires(T t) {
 };  // NOLINT(readability/braces) per C++ standard concept definition
 
 /**
- * Check if the type `T` is a self-reference counter type, i.e. it has both `AddRef` and `Release` methods.
+ * Check if the type `T` is a self-reference counter type.
+ * A self-reference counter type must have both the `AddRef` and `Release` methods.
  * The `AddRef` method should increment the internal reference counter.
  * The `Release` method should decrement it, and if it reaches zero, the object should be deleted using its destructor.
  * @code
- * template <Iterable T>
- * void foo(T t); // T can be any iterable type
+ * template <SelfReferenceCounter T>
+ * void foo(T t); // T can be any self-reference counter type
  * @endcode
  * @tparam T type to check
  */
@@ -146,7 +147,7 @@ concept Arithmetic = requires(T a, T b) {
 
 /**
  * Check if the type `T` supports the arithmetic operations `+`, `-`, `*`, `/`
- * and the comparison operators `<, `>`, `<=`, `>=`.
+ * and the comparison operators `<`, `>`, `<=`, `>=`.
  * @code
  * template <Numeric T>
  * void foo(T a); // a can be added, subtracted, multiplied, divided and ordered with the corresponding operator

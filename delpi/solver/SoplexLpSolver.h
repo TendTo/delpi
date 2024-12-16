@@ -57,7 +57,7 @@ class SoplexLpSolver final : public LpSolver {
    * Set the coefficients to apply to `var` on a specific row.
    *
    * The coefficient is set in `coeff`.
-   * @param coeffs[out] vector of coefficients to apply to the decisional variables
+   * @param[in,out] coeffs vector of coefficients to apply to the decisional variables
    * @param var variable to set the coefficients for
    * @param value value to set the coefficients to
    */
@@ -68,7 +68,6 @@ class SoplexLpSolver final : public LpSolver {
    *
    * The lp solver was able to find a feasible solution to the problem.
    * The useful information will be stored in @ref solution_ and @ref dual_solution_.
-   * On the other hand, both @ref infeasible_rows_ and @ref infeasible_bounds_ will be cleared.
    */
   void UpdateFeasible();
 #if 0
@@ -76,7 +75,6 @@ class SoplexLpSolver final : public LpSolver {
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.
    *
    * This will allow the SAT solver to find a new assignment without the conflict.
-   * The useful information will be stored in @ref infeasible_rows_ and @ref infeasible_bounds_.
    * On the other hand, both @ref solution_ and @ref dual_solution_ will be cleared.
    *
    * More formally, we can use the infeasible ray @f$ y @f$ to create the linear inequality @f$ (y^T A) x \le y^T b @f$,

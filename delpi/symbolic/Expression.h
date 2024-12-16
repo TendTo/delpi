@@ -92,7 +92,7 @@ class Expression {
   [[nodiscard]] std::string ToString() const;
 
   /**
-   * Add a linear monomial @f$ c \cdot x @$,
+   * Add a linear monomial @f$ c \cdot x @f$,
    * where @f$ c @f$ is a constant and @f$ x @f$ is a Variable, to the current expression.
    * @param var variable of the linear monomial
    * @param coeff coefficient of the linear monomial

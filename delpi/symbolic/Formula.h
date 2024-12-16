@@ -13,6 +13,20 @@
 
 namespace delpi {
 
+/**
+ * Symbolic formula used to represent a constraint in the LP problem.
+ * A symbolic formula is therefore a comparison between an expression and a constant.
+ * If two expressions are used as the left-hand side and right-hand side of the comparison,
+ * a new expression is created by subtracting the right-hand side from the left-hand side
+ * and the comparison is made with zero.
+ * @code
+ * Variable x{"x"}, y{"y"}; // Variables
+ * Formula row1 = x + 2 * y >= 0;
+ * Formula row2 = x == 0;
+ * Formula row3 = y != x;                 // row3 is equivalent to y - x != 0
+ * Formula row4 = 2 * y - 5 * x < x + y;  // row4 is equivalent to 2 * y - 5 * x - (x + y) < 0
+ * @endcode
+ */
 class Formula {
  public:
   Formula(Expression expression, FormulaKind kind, mpq_class rhs);

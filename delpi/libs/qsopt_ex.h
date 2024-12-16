@@ -28,6 +28,7 @@ extern "C" {
 #include <iosfwd>
 #include <string>
 
+/** @namespace delpi::qsopt_ex Namespace containing all the utility functions to interact with the QSopt_ex solver */
 namespace delpi::qsopt_ex {
 
 /**

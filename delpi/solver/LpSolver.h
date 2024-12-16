@@ -46,13 +46,11 @@ namespace delpi {
  * its value is still greater than @f$ y^T b @f$.
  *
  * The usual workflow is as follows:
- * - For each real variable in the SMT problem, add a linked column with @ref AddColumn(const Variable&).
- * - For each symbolic formula in the SMT problem, add a linked row with @ref AddRow(const Variable&, const Formula&).
- * - Consolidate the LP problem with @ref Consolidate.
- * - Enable the active rows and bounds with @ref EnableRow and @ref EnableBound.
- * - Optimise the LP problem with @ref Optimise.
- *   - If the problem is feasible, update the model with @ref UpdateModelWithSolution.
- *   - If the problem is infeasible, generate an explanation using the infeasible rows and bounds.
+ * - For each real variable in the SMT problem, add a linked column with @ref AddColumn
+ * - For each symbolic formula in the SMT problem, add a linked row with @ref AddRow
+ * - Optimise the LP problem with @ref Solve
+ *   - If the problem is feasible, the solution is stored in @ref solution_ and @ref dual_solution_
+ *   - If the problem is infeasible, the Farekas ray is stored in @ref dual_solution_
  */
 class LpSolver {
  public:
@@ -149,7 +147,7 @@ class LpSolver {
   [[nodiscard]] const Config& config() const { return config_; }
   /** @getter{primal solution\, if the lp is feasible\,, lp solver} */
   [[nodiscard]] const std::vector<mpq_class>& solution() const { return solution_; }
-  /** @getter{dual solution\, if the lp is feasible\,, lp solver */
+  /** @getter{dual solution\, if the lp is feasible\,, lp solver} */
   [[nodiscard]] const std::vector<mpq_class>& dual_solution() const { return dual_solution_; }
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
   [[nodiscard]] const std::unordered_map<Variable, int>& var_to_col() const { return var_to_col_; }
@@ -235,7 +233,7 @@ class LpSolver {
    * and false otherwise.
    * Available options are:
    *
-   *  - `:csv` (bool): whether to output in CSV format
+   * - `:csv` (bool): whether to output in CSV format
    * - `:silent` (bool): whether to output nothing
    * - `:with-timings` (bool): whether to output timings
    * - `:precision` (double): precision of the solver
@@ -400,8 +398,7 @@ class LpSolver {
   /**
    * Optimise the LP problem with the given `precision`.
    *
-   * The result of the computation will be stored in @ref solution_ and @ref dual_solution_ if the problem is feasible,
-   * and in @ref infeasible_rows_ and @ref infeasible_bounds_ otherwise.
+   * The result of the computation will be stored in @ref solution_ and @ref dual_solution_ if the problem is feasible.
    * If `store_solution` is false, the solution will not be stored, but the LpResult will still be returned.
    * The actual precision will be returned in the `precision` parameter.
    * @param[in,out] precision desired precision for the optimisation that becomes the actual precision achieved
@@ -424,6 +421,7 @@ class LpSolver {
   /**
    * Set the `objective_function` to maximise while being subject to all the constraints.
    * The objective function coefficients will overwrite the current ones, if any.
+   * @tparam T iterable of pairs (Variable, mpq_class) representing the objective function
    * @warning The objective coefficient of variables not appearing in the `objective_function` is not altered.
    * @param objective_function expression to maximise}
    */
@@ -439,6 +437,7 @@ class LpSolver {
   /**
    * Set the `objective_function` to maximise while being subject to all the constraints.
    * The objective function coefficients will overwrite the current ones, if any.
+   * @tparam T iterable of pairs (Variable, mpq_class) representing the objective function
    * @warning The objective coefficient of variables not appearing in the `objective_function` is not altered.
    * @param objective_function expression to maximise}
    */

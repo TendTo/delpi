@@ -66,8 +66,7 @@ class QsoptexLpSolver final : public LpSolver {
    * Use the result from the lp solver to update the solution vector and objective value.
    *
    * The lp solver was able to find a feasible solution to the problem.
-   * The useful information will be stored in @ref objective_value_ and @ref solution_.
-   * On the other hand, both @ref infeasible_rows_ and @ref infeasible_bounds_ will be cleared.
+   * The useful information will be stored in @ref solution_.
    */
   void UpdateFeasible();
 #if 0
@@ -76,7 +75,7 @@ class QsoptexLpSolver final : public LpSolver {
    *
    * This will allow the SAT solver to find a new assignment without the conflict.
    * The useful information will be stored in @ref infeasible_rows_ and @ref infeasible_bounds_.
-   * On the other hand, both @ref objective_value_ and @ref solution_ will be cleared.
+   * On the other hand, both @ref solution_ and @ref dual_solution_ will be cleared.
    *
    * More formally, we can use the infeasible ray @f$ y @f$ to create the linear inequality @f$ (y^T A) x \le y^T b @f$,
    * which is infeasible over the local bounds.

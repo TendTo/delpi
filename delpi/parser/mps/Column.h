@@ -14,6 +14,14 @@
 
 namespace delpi::mps {
 
+/**
+ * Data structure representing a column in the LP solver as it gets parsed from an MPS file.
+ * Missing bounds are represented by `std::nullopt` and may have different menings.
+ * If any of the bounds is set, the variable is bounded from that direction.
+ * A missing upper bound means that the variable is unbounded in the positive direction.
+ * A missing lower bound with @ref is_infinite_lb = false means that the variable is non-negative (@f$ x \geq 0 @f$).
+ * On the other had, if @ref is_infinite_lb = true, the variable is unbounded in the negative direction.
+ */
 struct Column {
   Column() = default;
   explicit Column(const Variable& _var) : var{_var}, lb{std::nullopt}, ub{std::nullopt}, is_infinite_lb{false} {}

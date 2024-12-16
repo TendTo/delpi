@@ -14,6 +14,12 @@
 
 namespace delpi {
 
+/**
+ * Convenient structure representing a column in the LP solver.
+ * A missing lower bound means that the variable is unbounded in the negative direction.
+ * A missing upper bound means that the variable is unbounded in the positive direction.
+ * A missing objective function coefficient means that the variable does not participate in the objective function.
+ */
 struct Column {
   Variable var;                  ///< Variable.
   std::optional<mpq_class> lb;   ///< Lower bound.

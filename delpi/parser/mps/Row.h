@@ -18,7 +18,7 @@ namespace delpi::mps {
 
 /**
  * Structure representing a row in the LP solver in the form of a linear combination of variables.
- * @note Missing bounds are represented by `std::nullopt`, which means that the row is unbounded in that direction.
+ * Missing bounds are represented by `std::nullopt`, which means that the row is unbounded in that direction.
  * E.g. `lb` = `std::nullopt` and `ub` = `5` represents a row such that @f$ -\infty \leq \text{addends} \leq 5 @f$.
  */
 struct Row {

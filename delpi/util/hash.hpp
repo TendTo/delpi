@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-/** @namespace hash Namespace containing all the hash functions and utilities */
+/** @namespace delpi::hash Namespace containing all the hash functions and utilities */
 namespace delpi::hash {
 
 /** Combines a given hash value `seed` and a hash of parameter `v`. */
