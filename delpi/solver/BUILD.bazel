@@ -39,7 +39,7 @@ delpi_cc_library(
     deps = [
         "//delpi/libs:gmp",
         "//delpi/symbolic:variable",
-        #        "//delpi/util:logging",
+        "//delpi/util:logging",
     ],
 )
 
@@ -50,7 +50,7 @@ delpi_cc_library(
     deps = [
         "//delpi/libs:gmp",
         "//delpi/symbolic:variable",
-        #        "//delpi/util:logging",
+        "//delpi/util:logging",
     ],
 )
 

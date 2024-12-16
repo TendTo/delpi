@@ -43,6 +43,5 @@ delpi_cc_library(
     deps = [
         ":driver",
         "//delpi/solver:lp_solver",
-        "//delpi/util:stats",
     ],
 )
