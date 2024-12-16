@@ -448,12 +448,12 @@ class LpSolver {
   void Minimise(const T& objective_function);
 
   /**
-   * Check whether the result obtained by the solver is incompatible with the one collected from the file.
+   * Check whether the result obtained by the solver is compatible with the one collected from the file.
    * @param result result obtained by the solver
-   * @return true if the result obtained by the solver is incompatible with the one collected from the file
-   * @return false if the result obtained by the solver is compatible with the one collected from the file
+   * @return true if the result obtained by the solver is compatible with the one collected from the file
+   * @return false if the result obtained by the solver is incompatible with the one collected from the file
    */
-  [[nodiscard]] bool ConflictingExpected(LpResult result) const;
+  [[nodiscard]] bool CheckAgainstExpected(LpResult result) const;
 
   /**
    * Verify that the current @ref solution_ satisfies all the constraints in the LpSolver.

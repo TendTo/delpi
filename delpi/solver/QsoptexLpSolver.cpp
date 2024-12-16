@@ -219,7 +219,10 @@ LpResult QsoptexLpSolver::SolveCore(mpq_class& precision, const bool store_solut
 #endif
       return LpResult::INFEASIBLE;
     case QS_LP_UNSOLVED:
-      DELPI_WARN("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex failed to return a result");
+      DELPI_ERROR("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex failed to return a result");
+      return LpResult::ERROR;
+    case QS_LP_ITER_LIMIT:
+      DELPI_ERROR("DeltaQsoptexTheorySolver::CheckSat: Iteration limit reached");
       return LpResult::ERROR;
     default:
       DELPI_UNREACHABLE();

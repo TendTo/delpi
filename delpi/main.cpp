@@ -67,7 +67,7 @@ int main(const int argc, const char* argv[]) {
   if (config.silent()) return ExitCode(result);
 
   // Print additional information about the result
-  if (lp_solver->ConflictingExpected(result)) {
+  if (!lp_solver->CheckAgainstExpected(result)) {
     std::cerr << "WARNING: Expected " << lp_solver->expected() << " but got " << result << std::endl;
   }
   if (config.verify() && IsFeasible(result)) {

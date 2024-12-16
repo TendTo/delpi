@@ -7,7 +7,9 @@ delpi_cc_library(
     hdrs = ["SolverUtils.h"],
     tags = ["solver"],
     deps = [
+        "//delpi/parser",
         "//delpi/util:config",
+        "//delpi/util:filesystem",
         "@googletest//:gtest",
     ],
 )
@@ -23,6 +25,7 @@ delpi_cc_googletest(
 
 delpi_cc_googletest(
     name = "test_lp_solver_mps",
+    data = glob(["mps/*.mps"]),
     tags = ["solver"],
     deps = [
         ":test_solver_utils",

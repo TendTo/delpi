@@ -207,7 +207,7 @@ void LpSolver::Minimise(const T& objective_function) {
   for (const auto& [var, coeff] : objective_function) SetObjective(var, coeff);
 }
 
-bool LpSolver::ConflictingExpected(const LpResult result) const {
+bool LpSolver::CheckAgainstExpected(const LpResult result) const {
   DELPI_TRACE_FMT("LpSolver::ConflictingExpected({})", result);
   switch (expected()) {
     case LpResult::OPTIMAL:
