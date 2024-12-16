@@ -4,7 +4,7 @@
  * @licence BSD 3-Clause License
  */
 
-#include "Timer.h"
+#include "delpi/util/Timer.h"
 
 #include <sys/resource.h>
 

@@ -8,6 +8,7 @@
 
 #include <iosfwd>
 #include <optional>
+#include <utility>
 #include <vector>
 
 #include "delpi/libs/gmp.h"

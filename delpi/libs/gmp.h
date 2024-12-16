@@ -15,10 +15,11 @@
 
 #include <cctype>
 #include <cmath>
-#include <compare>
+#include <compare>  // NOLINT (build/include_order): Standard library.
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <vector>
 
 template <>
 struct std::hash<mpq_class> {

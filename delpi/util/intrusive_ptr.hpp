@@ -7,6 +7,8 @@
  */
 #pragma once
 
+#include <utility>
+
 namespace delpi {
 
 /**
@@ -115,13 +117,10 @@ class intrusive_ptr {
 
   /**
    * Exchanges the owned pointer between two intrusive_ptr objects.
+   * @note The reference count is not modified.
    * @param ip intrusive_ptr object to swap with
    */
-  void swap(intrusive_ptr& ip) noexcept {
-    T* const pTemp = ptr_;
-    ptr_ = ip.ptr_;
-    ip.ptr_ = pTemp;
-  }
+  void swap(intrusive_ptr& ip) noexcept { std::swap(ptr_, ip.ptr_); }
 
   /**
    * Sets the owned pointer to the given pointer `ptr` without incrementing the reference count.

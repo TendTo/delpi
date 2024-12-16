@@ -3,7 +3,7 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "LpRowSense.h"
+#include "delpi/solver/LpRowSense.h"
 
 #include <ostream>
 

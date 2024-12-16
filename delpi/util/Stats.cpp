@@ -3,7 +3,7 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "Stats.h"
+#include "delpi/util/Stats.h"
 
 #include <fmt/core.h>
 

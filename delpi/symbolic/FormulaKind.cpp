@@ -3,7 +3,7 @@
  * @copyright 2024 delpi
  * @licence Apache-2.0 license
  */
-#include "FormulaKind.h"
+#include "delpi/symbolic/FormulaKind.h"
 
 #include <ostream>
 

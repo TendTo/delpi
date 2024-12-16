@@ -15,6 +15,8 @@ delpi_hdrs_tar(
     deps = ["//delpi/parser/mps:hdrs_tar"],
 )
 
+cpplint()
+
 delpi_cc_library(
     name = "driver",
     srcs = ["Driver.cpp"],
@@ -44,5 +46,3 @@ delpi_cc_library(
         "//delpi/util:stats",
     ],
 )
-
-cpplint()

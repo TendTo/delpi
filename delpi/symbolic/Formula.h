@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <vector>
+
 #include "delpi/libs/gmp.h"
 #include "delpi/symbolic/Expression.h"
 #include "delpi/symbolic/FormulaKind.h"

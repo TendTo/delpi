@@ -15,6 +15,8 @@ delpi_hdrs_tar(
     subfolder = "mps",
 )
 
+cpplint()
+
 gen_lex(
     name = "scanner",
     src = "scanner.ll",
@@ -92,5 +94,3 @@ delpi_cc_library(
         "//conditions:default": [],
     }),
 )
-
-cpplint()

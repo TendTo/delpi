@@ -4,7 +4,7 @@
  * @licence BSD 3-Clause License
  */
 
-#include "BoundType.h"
+#include "delpi/parser/mps/BoundType.h"
 
 #include <cstring>
 #include <iostream>

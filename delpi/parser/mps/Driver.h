@@ -9,8 +9,11 @@
 #pragma once
 
 #include <istream>
+#include <map>
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "delpi/libs/gmp.h"
 #include "delpi/parser/Driver.h"

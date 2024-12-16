@@ -3,7 +3,9 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "parser.h"
+#include "delpi/parser/parser.h"
+
+#include <string>
 
 #include "delpi/parser/mps/Driver.h"
 #include "delpi/util/error.h"

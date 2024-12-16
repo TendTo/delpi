@@ -7,10 +7,12 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <iosfwd>
 #include <limits>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace delpi {

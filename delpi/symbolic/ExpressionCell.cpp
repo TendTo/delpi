@@ -3,9 +3,12 @@
  * @copyright 2024 delpi
  * @licence Apache-2.0 license
  */
-#include "ExpressionCell.h"
+#include "delpi/symbolic/ExpressionCell.h"
 
+#include <map>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "delpi/util/error.h"
 #include "delpi/util/hash.hpp"

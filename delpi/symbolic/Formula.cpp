@@ -3,9 +3,11 @@
  * @copyright 2024 delpi
  * @licence Apache-2.0 license
  */
-#include "Formula.h"
+#include "delpi/symbolic/Formula.h"
 
+#include <map>
 #include <ostream>
+#include <unordered_map>
 #include <utility>
 
 #include "delpi/util/error.h"

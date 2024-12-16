@@ -4,6 +4,6 @@
  * @licence BSD 3-Clause License
  */
 
-#include "soplex.h"
+#include "delpi/libs/soplex.h"
 
 template class soplex::SoPlexBase<soplex::Real>;

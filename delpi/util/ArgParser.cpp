@@ -4,7 +4,7 @@
  * @licence BSD 3-Clause License
  */
 // IWYU pragma: no_include "argparse/argparse.hpp" // Already included in the header
-#include "ArgParser.h"
+#include "delpi/util/ArgParser.h"
 
 #include <cstdlib>
 #include <filesystem>
@@ -62,16 +62,13 @@ namespace delpi {
 
 ArgParser::ArgParser()
     : parser_{DELPI_PROGRAM_NAME, DELPI_VERSION_STRING},
-      verbosity_{Config::default_verbose_delpi}
 #ifdef DELPI_ENABLED_QSOPTEX
-      ,
-      qsoptex_hash_{QSopt_ex_repository_status()}
+      qsoptex_hash_{QSopt_ex_repository_status()},
 #endif
 #ifdef DELPI_ENABLED_SOPLEX
-      ,
-      soplex_hash_{soplex::getGitHash()}  // NOLINT(whitespace/braces)
+      soplex_hash_{soplex::getGitHash()},
 #endif
-{
+      verbosity_{Config::default_verbose_delpi} {
   DELPI_TRACE("ArgParser::ArgParser");
   AddOptions();
 }
@@ -135,13 +132,15 @@ void ArgParser::AddOptions() {
       if (value == "auto" || value == "1") return Config::LpMode::AUTO;
       if (value == "pure-precision-boosting" || value == "2") return Config::LpMode::PURE_PRECISION_BOOSTING;
       if (value == "pure-iterative-refinement" || value == "3") return Config::LpMode::PURE_ITERATIVE_REFINEMENT;
-      if (value == "hybrid" || value == "4") return Config::LpMode::HYBRID;);
-  DELPI_PARSE_PARAM_ENUM(parser_, format, "--format", "[ auto | mps ] or [ 1 | 2 ]",
-                         if (value == "auto" || value == "1") return Config::Format::AUTO;
-                         if (value == "mps" || value == "2") return Config::Format::MPS;);
-  DELPI_PARSE_PARAM_ENUM(parser_, lp_solver, "--lp-solver", "[ soplex | qsoptex ] or [ 1 | 2 ]",
-                         if (value == "soplex" || value == "1") return Config::LpSolver::SOPLEX;
-                         if (value == "qsoptex" || value == "2") return Config::LpSolver::QSOPTEX;);
+      if (value == "hybrid" || value == "4") return Config::LpMode::HYBRID;);  // NOLINT(readability/braces)
+  DELPI_PARSE_PARAM_ENUM(
+      parser_, format, "--format", "[ auto | mps ] or [ 1 | 2 ]",
+      if (value == "auto" || value == "1") return Config::Format::AUTO;
+      if (value == "mps" || value == "2") return Config::Format::MPS;);  // NOLINT(readability/braces)
+  DELPI_PARSE_PARAM_ENUM(
+      parser_, lp_solver, "--lp-solver", "[ soplex | qsoptex ] or [ 1 | 2 ]",
+      if (value == "soplex" || value == "1") return Config::LpSolver::SOPLEX;
+      if (value == "qsoptex" || value == "2") return Config::LpSolver::QSOPTEX;);  // NOLINT(readability/braces)
   DELPI_TRACE("ArgParser::ArgParser: added all arguments");
 }
 

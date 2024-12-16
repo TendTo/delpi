@@ -4,7 +4,7 @@
  * @licence BSD 3-Clause License
  */
 
-#include "qsopt_ex.h"
+#include "delpi/libs/qsopt_ex.h"
 
 #include <iostream>
 

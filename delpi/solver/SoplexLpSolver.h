@@ -10,6 +10,10 @@
 #error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "delpi/libs/gmp.h"
 #include "delpi/libs/soplex.h"
 #include "delpi/solver/LpSolver.h"

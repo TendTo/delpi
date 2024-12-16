@@ -3,10 +3,13 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "QsoptexLpSolver.h"
+#include "delpi/solver/QsoptexLpSolver.h"
 
 #include <iostream>
-#include <span>
+#include <map>
+#include <set>
+#include <span>  // NOLINT(build/include_order): c++20 header
+#include <unordered_map>
 #include <unordered_set>
 
 #include "delpi/util/error.h"

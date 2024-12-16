@@ -63,7 +63,7 @@ def _add_linter_rules(source_labels, source_filenames, name, data = None):
         tags = ["cpplint"],
     )
 
-def cpplint(data = None, extra_srcs = None):
+def cpplint(data = None, extra_srcs = None, rule_kind = ["filegroup"]):
     """Add a cpplint target for every c++ source file in each target in the BUILD file so far.
 
     For every rule in the BUILD file so far, adds a test rule that runs
@@ -79,10 +79,16 @@ def cpplint(data = None, extra_srcs = None):
     Args:
         data: additional data to include in the py_test() rule.
         extra_srcs: additional sources to lint.
+        rule_kind: the list of rule kinds to consider. Defaults to "filegroup".
     """
 
     # Iterate over all rules.
     for rule in native.existing_rules().values():
+        # Only consider filegroup rules.
+        # This will exclude rules like cc_library, cc_binary, etc.
+        if rule.get("kind") not in rule_kind:
+            continue
+
         # Extract the list of C++ source code labels and convert to filenames.
         candidate_labels = (
             _extract_labels(rule.get("srcs", ())) +

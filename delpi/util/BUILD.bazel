@@ -14,6 +14,8 @@ delpi_hdrs_tar(
     subfolder = "util",
 )
 
+cpplint()
+
 delpi_cc_library(
     name = "argparser",
     srcs = ["ArgParser.cpp"],
@@ -30,7 +32,6 @@ delpi_cc_library(
         "//tools:enabled_soplex": ["//delpi/libs:soplex"],
         "//conditions:default": [],
     }),
-    tags = ["no-cpplint"],
     deps = [
         ":config",
         "@argparse",
@@ -128,5 +129,3 @@ delpi_cc_library(
     name = "hash",
     hdrs = ["hash.hpp"],
 )
-
-cpplint()

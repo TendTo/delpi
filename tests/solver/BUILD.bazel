@@ -20,3 +20,12 @@ delpi_cc_googletest(
         "//delpi/solver:lp_solver",
     ],
 )
+
+delpi_cc_googletest(
+    name = "test_lp_solver_mps",
+    tags = ["solver"],
+    deps = [
+        ":test_solver_utils",
+        "//delpi/solver:lp_solver",
+    ],
+)

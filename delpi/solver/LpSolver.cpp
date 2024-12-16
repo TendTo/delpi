@@ -3,7 +3,7 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "LpSolver.h"
+#include "delpi/solver/LpSolver.h"
 
 #include <ostream>
 #include <utility>
@@ -14,7 +14,10 @@
 #if DELPI_ENABLED_SOPLEX
 #include "delpi/solver/SoplexLpSolver.h"
 #endif
-#include <span>
+#include <map>
+#include <ranges>  // NOLINT(build/include_order): c++20 header
+#include <set>
+#include <span>  // NOLINT(build/include_order): c++20 header
 #include <unordered_set>
 
 #include "delpi/util/error.h"
@@ -23,6 +26,7 @@ namespace delpi {
 
 namespace {
 bool IsYes(std::string value) {
+  // NOLINTNEXTLINE(build/include_what_you_use): c++20 header ranges
   std::ranges::transform(value, value.begin(), [](const unsigned char c) { return std::tolower(c); });
   return value == "yes" || value == "true" || value == "1" || value == "on";
 }

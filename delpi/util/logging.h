@@ -11,7 +11,7 @@
  */
 #pragma once
 
-#include <fmt/core.h>  // IWYU pragma: export
+#include <fmt/core.h>     // IWYU pragma: export
 #include <fmt/ostream.h>  // IWYU pragma: export
 #include <fmt/ranges.h>   // IWYU pragma: export
 
@@ -25,7 +25,7 @@ namespace delpi {
 
 enum class LoggerType { OUT, ERR };
 
-std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
+std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
 
 }  // namespace delpi
 

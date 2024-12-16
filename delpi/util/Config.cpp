@@ -3,7 +3,7 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "Config.h"
+#include "delpi/util/Config.h"
 
 #include <ostream>
 #include <utility>

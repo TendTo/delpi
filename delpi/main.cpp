@@ -7,7 +7,7 @@
  */
 #include <iostream>
 
-#include "delpi.h"
+#include "delpi/delpi.h"
 
 void OnSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, const std::vector<mpq_class>& x,
              const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub, const mpq_class&) {

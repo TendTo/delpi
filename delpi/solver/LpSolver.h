@@ -8,7 +8,10 @@
 
 #include <iosfwd>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "delpi/libs/gmp.h"
 #include "delpi/solver/Column.h"

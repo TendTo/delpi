@@ -14,6 +14,8 @@ delpi_hdrs_tar(
     subfolder = "libs",
 )
 
+cpplint()
+
 delpi_cc_library(
     name = "gmp",
     srcs = ["gmp.cpp"],
@@ -49,5 +51,3 @@ delpi_cc_library(
         "//conditions:default": [],
     }),
 )
-
-cpplint()

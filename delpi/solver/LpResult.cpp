@@ -3,7 +3,7 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "LpResult.h"
+#include "delpi/solver/LpResult.h"
 
 #include <ostream>
 

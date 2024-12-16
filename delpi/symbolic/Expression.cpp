@@ -3,10 +3,11 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "Expression.h"
+#include "delpi/symbolic/Expression.h"
 
 #include <sstream>
 #include <utility>
+#include <vector>
 
 #include "delpi/symbolic/ExpressionCell.h"
 #include "delpi/util/error.h"

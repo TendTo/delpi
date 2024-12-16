@@ -75,9 +75,9 @@ class ArgParser {
   void ValidateOptions();
 
   argparse::ArgumentParser parser_;  ///< The parser object.
-  int verbosity_;                    ///< Verbosity level of the program
   const std::string qsoptex_hash_;   ///< The hash of the QSoptEx library. Used in the prompt
   const std::string soplex_hash_;    ///< The hash of the Soplex library. Used in the prompt
+  int verbosity_;                    ///< Verbosity level of the program
 };
 
 }  // namespace delpi

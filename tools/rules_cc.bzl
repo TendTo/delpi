@@ -371,7 +371,6 @@ def delpi_srcs(name, srcs = None, hdrs = None, deps = [], subfolder = "", visibi
     native.filegroup(
         name = all_srcs_name,
         srcs = srcs + hdrs + deps,
-        tags = ["no-cpplint"],
         visibility = visibility,
     )
 

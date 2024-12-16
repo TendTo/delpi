@@ -25,6 +25,8 @@ delpi_hdrs_tar(
     ],
 )
 
+cpplint()
+
 genrule(
     name = "generate_version_header",
     outs = ["version.h"],
@@ -73,5 +75,3 @@ cc_shared_library(
         "//delpi/util:config",
     ],
 )
-
-cpplint()

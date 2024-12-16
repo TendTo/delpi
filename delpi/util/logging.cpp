@@ -4,7 +4,7 @@
  * @licence BSD 3-Clause License
  */
 
-#include "logging.h"
+#include "delpi/util/logging.h"
 
 #ifndef NLOG
 

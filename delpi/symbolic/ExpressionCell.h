@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <vector>
+
 #include "delpi/symbolic/Expression.h"
 #include "delpi/util/SelfReferenceCountingObject.hpp"
 #include "delpi/util/intrusive_ptr.hpp"

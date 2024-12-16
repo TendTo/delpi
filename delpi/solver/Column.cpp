@@ -3,7 +3,7 @@
  * @copyright 2024 delpi
  * @licence BSD 3-Clause License
  */
-#include "Column.h"
+#include "delpi/solver/Column.h"
 
 #include <ostream>
 

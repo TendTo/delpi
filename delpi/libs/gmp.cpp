@@ -5,7 +5,7 @@
  * @licence BSD 3-Clause License
  */
 
-#include "gmp.h"
+#include "delpi/libs/gmp.h"
 
 namespace {
 /**
