@@ -64,18 +64,80 @@ TEST_F(TestMpsDriver, Rows) {
                          " N  Ob\n"  // only used for  objective
                          "COLUMNS\n"
                          " X1 R1 1.\n"
-                         " X1 R2 2.\n"
-                         " X1 R3 3.\n"
-                         " X1 Ob 4.\n"
+                         " X2 R2 2.\n"
+                         " X3 R3 3.\n"
+                         " X4 Ob 4.\n"
                          "BOUNDS\n"
                          " FR BND X1\n"
                          "ENDATA"));
-  ASSERT_EQ(lp_solver_->variables().size(), 1u);
-  const Variable& x = lp_solver_->variables().front();
+  ASSERT_EQ(lp_solver_->variables().size(), 4u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const Variable& x4 = lp_solver_->variables().at(3);
   const std::vector<Formula> constraints = lp_solver_->constraints();
-  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(1 * x <= 0,  //
-                                                           2 * x >= 0,  //
-                                                           3 * x == 0));
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 <= 0 / 1,  //
+                                                           x2 >= 0 / 2,  //
+                                                           x3 == 0 / 3,  //
+                                                           x4 >= 0));
+}
+
+TEST_F(TestMpsDriver, SimpleBoundsPositive) {
+  MpsDriver driver{*lp_solver_};
+  ASSERT_TRUE(
+      driver.ParseString("ROWS\n"
+                         " L  R1\n"
+                         " G  R2\n"
+                         " E  R3\n"
+                         " E  R4\n"  // ignored row
+                         " N  Ob\n"  // only used for  objective
+                         "COLUMNS\n"
+                         " X1 R1 1.\n"
+                         " X2 R2 2.\n"
+                         " X3 R3 3.\n"
+                         "BOUNDS\n"
+                         " FR BND X1\n"
+                         "RHS\n"
+                         " R1 11\n"
+                         " R2 22 R3 33\n"
+                         "ENDATA"));
+  ASSERT_EQ(lp_solver_->variables().size(), 3u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 <= mpq_class{11} / 1,  //
+                                                           x2 >= mpq_class{22} / 2,  //
+                                                           x3 == mpq_class{33} / 3));
+}
+
+TEST_F(TestMpsDriver, SimpleBoundsNegative) {
+  MpsDriver driver{*lp_solver_};
+  ASSERT_TRUE(
+      driver.ParseString("ROWS\n"
+                         " L  R1\n"
+                         " G  R2\n"
+                         " E  R3\n"
+                         " E  R4\n"  // ignored row
+                         " N  Ob\n"  // only used for  objective
+                         "COLUMNS\n"
+                         " X1 R1 -1.\n"
+                         " X2 R2 -2.\n"
+                         " X3 R3 -3.\n"
+                         "BOUNDS\n"
+                         " FR BND X1\n"
+                         "RHS\n"
+                         " R1 11\n"
+                         " R2 22 R3 33\n"
+                         "ENDATA"));
+  ASSERT_EQ(lp_solver_->variables().size(), 3u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 >= mpq_class{11} / -1,  //
+                                                           x2 <= mpq_class{22} / -2,  //
+                                                           x3 == mpq_class{33} / -3));
 }
 
 TEST_F(TestMpsDriver, Columns) {
@@ -104,7 +166,7 @@ TEST_F(TestMpsDriver, Columns) {
   EXPECT_THAT(constraints,
               ::testing::UnorderedElementsAre(11 * x1 + 31 * x3 <= 0,            //
                                               12 * x1 + 21 * x2 + 32 * x3 >= 0,  //
-                                              33 * x3 == 0));
+                                              x3 == 0 / 33));
 }
 
 TEST_F(TestMpsDriver, Rhs) {
@@ -136,7 +198,7 @@ TEST_F(TestMpsDriver, Rhs) {
   EXPECT_THAT(constraints,
               ::testing::UnorderedElementsAre(11 * x1 + 31 * x3 <= 1,            //
                                               12 * x1 + 21 * x2 + 32 * x3 >= 2,  //
-                                              33 * x3 == 3));
+                                              x3 == mpq_class{3} / 33));
 }
 
 TEST_F(TestMpsDriver, RangePositive) {
@@ -173,8 +235,8 @@ TEST_F(TestMpsDriver, RangePositive) {
                                               11 * x1 + 31 * x3 <= 1,                 //
                                               12 * x1 + 21 * x2 + 32 * x3 >= 2,       //
                                               12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52,  //
-                                              33 * x3 >= 3,                           //
-                                              33 * x3 <= 3 + 53));
+                                              x3 >= mpq_class{3} / 33,                //
+                                              x3 <= mpq_class{(3 + 53)} / 33));
 }
 
 TEST_F(TestMpsDriver, RangeNegative) {
@@ -211,8 +273,8 @@ TEST_F(TestMpsDriver, RangeNegative) {
                                               11 * x1 + 31 * x3 <= 1,                 //
                                               12 * x1 + 21 * x2 + 32 * x3 >= 2,       //
                                               12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52,  //
-                                              33 * x3 >= 3 - 53,                      //
-                                              33 * x3 <= 3));
+                                              x3 >= mpq_class{(3 - 53)} / 33,         //
+                                              x3 <= mpq_class{3} / 33));
 }
 
 TEST_F(TestMpsDriver, BoundsPositive) {

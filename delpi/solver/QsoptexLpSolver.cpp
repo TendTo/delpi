@@ -121,10 +121,9 @@ LpSolver::ColumnIndex QsoptexLpSolver::AddColumn(const Variable& var, const mpq_
 }
 LpSolver::RowIndex QsoptexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
                                            const mpq_class& ub) {
-  if (addends.size() == 1u) {
-    SetBound(addends.front().first, lb, ub);
-    return num_rows();
-  }
+  // Check if we can add a simple bound instead of a row
+  if (SetSimpleBoundInsteadOfAddRow(addends, lb, ub)) return num_rows() - 1;
+
   // Add the row to the LP. If the row is bounded both ways with an equality, we can add it in one go.
   if (lb == ub) {
     [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, lb.get_mpq_t(), 'E', nullptr);

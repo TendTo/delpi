@@ -104,6 +104,7 @@ LpSolver::RowIndex LpSolver::AddRow(const Expression& lhs, const FormulaKind sen
 std::vector<Formula> LpSolver::constraints() const {
   std::vector<Formula> constraints;
   constraints.reserve(num_rows() + num_columns());
+  // Collect all the row constraints
   for (int i = 0; i < num_rows(); ++i) {
     const auto [addends, lb, ub] = row(i);
     if (lb.has_value() && ub.has_value()) {
@@ -119,6 +120,7 @@ std::vector<Formula> LpSolver::constraints() const {
       constraints.emplace_back(Expression{addends}, FormulaKind::Leq, ub.value());
     }
   }
+  // Collect all the bound constraints over the variables
   for (int i = 0; i < num_columns(); ++i) {
     const auto [var, lb, ub, obj] = column(i);
     if (lb.has_value() && ub.has_value()) {
@@ -222,6 +224,23 @@ bool LpSolver::Verify() const {
       DELPI_ERROR_FMT("Constraint {} violated by the model", constraint);
       return false;
     }
+  }
+  return true;
+}
+bool LpSolver::SetSimpleBoundInsteadOfAddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
+                                             const mpq_class& ub) {
+  // Only one variable must be present for a simple bound
+  if (addends.size() != 1u) return false;
+
+  const mpq_class& coeff = addends.front().second;
+  if (coeff == 1) {
+    SetBound(addends.front().first, lb, ub);
+  } else if (coeff > 0) {
+    SetBound(addends.front().first, lb == ninfinity_ ? lb : lb / coeff, ub == infinity_ ? ub : ub / coeff);
+  } else {
+    DELPI_ASSERT(coeff != 0, "Coefficient must be non-zero");
+    SetBound(addends.front().first, ub == infinity_ ? ninfinity_ : ub / coeff,
+             lb == ninfinity_ ? infinity_ : lb / coeff);
   }
   return true;
 }

@@ -477,6 +477,21 @@ class LpSolver {
    */
   virtual LpResult SolveCore(mpq_class& precision, bool store_solution) = 0;
 
+  /**
+   * Check whether the row that is about to be added is a simple bound.
+   * If that is the case, the LP solver should add a simple bound instead of a row.
+   * A simple bound is a constraint of the form @f$ l \le c \cdot x \le u @f$,
+   * where @f$ l @f$ and @f$ u @f$ are the lower and upper bounds of the variable @f$ x @f$ and @f$ c @f$ is a constant.
+   * Any other constraint should be added as a proper row.
+   * @param addends linear summation of the row. If it only contains a single variable, it is a simple bound
+   * @param lb lower bound of the row
+   * @param ub upper bound of the row
+   * @return true if the LP solver has added a simple bound instead of a row
+   * @return false if the LP solver should add proper row
+   */
+  bool SetSimpleBoundInsteadOfAddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
+                                     const mpq_class& ub);
+
   Config config_;                                      ///< Configuration to use
   IterationStats stats_;                               ///< Statistics of the solver
   std::unordered_map<std::string, std::string> info_;  ///< Generic information map. Generally collected from the file
