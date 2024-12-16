@@ -38,7 +38,7 @@ TEST_F(TestExpressionCell, NewInstanceDefault) {
   EXPECT_TRUE(cell->equal_to(*cell));
   EXPECT_FALSE(cell->less(*cell));
   EXPECT_TRUE(cell->variables().empty());
-  EXPECT_EQ(cell->Evaluate(), 0);
+  EXPECT_EQ(cell->Evaluate(std::map<Variable, mpq_class>{}), 0);
   EXPECT_TRUE(cell->Substitute({}).addends().empty());
 }
 

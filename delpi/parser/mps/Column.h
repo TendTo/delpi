@@ -29,10 +29,10 @@ std::ostream& operator<<(std::ostream& os, const Column& column);
 
 }  // namespace delpi::mps
 
-#ifndef DELPI_INCLUDE_FMT
+#ifdef DELPI_INCLUDE_FMT
 
 #include "delpi/util/logging.h"
 
-OSTREAM_FORMATTER(delpi::Column)
+OSTREAM_FORMATTER(delpi::mps::Column)
 
 #endif

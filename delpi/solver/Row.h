@@ -29,7 +29,7 @@ std::ostream& operator<<(std::ostream& os, const Row& row);
 
 }  // namespace delpi
 
-#ifndef DELPI_INCLUDE_FMT
+#ifdef DELPI_INCLUDE_FMT
 
 #include "delpi/util/logging.h"
 

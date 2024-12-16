@@ -9,6 +9,7 @@
 
 using delpi::Expression;
 using delpi::Variable;
+using Environment = std::map<Variable, mpq_class>;
 
 class TestExpression : public ::testing::Test {
  protected:
@@ -27,7 +28,7 @@ TEST_F(TestExpression, DefaultConstructor) {
   EXPECT_TRUE(e.equal_to(e));
   EXPECT_FALSE(e.less(e));
   EXPECT_TRUE(e.variables().empty());
-  EXPECT_EQ(e.Evaluate(), 0);
+  EXPECT_EQ(e.Evaluate(Environment{}), 0);
   EXPECT_TRUE(e.Substitute({}).addends().empty());
 }
 
@@ -229,25 +230,25 @@ TEST_F(TestExpression, NegativeVariable) {
 TEST_F(TestExpression, ComplexExpressions) {
   const Expression e1{x_ + 2 * y_ + 3 * z_};
   EXPECT_EQ(e1.variables().size(), 3u);
-  EXPECT_EQ(e1.Evaluate(Expression::Environment{{x_, 1}, {y_, 2}, {z_, 3}}), 14);
+  EXPECT_EQ(e1.Evaluate(Environment{{x_, 1}, {y_, 2}, {z_, 3}}), 14);
 
   const Expression e2{x_ + 2 * y_ + 3 * z_ + z_ + 4 * y_ * 5 + 6 * x_ * 7 - 8 * x_ - z_ * 4 + x_ / 2};
   EXPECT_EQ(e2.variables().size(), 2u);
-  EXPECT_EQ(e2.Evaluate(Expression::Environment{{x_, 1}, {y_, 2}}), 79 + mpq_class(1, 2));
+  EXPECT_EQ(e2.Evaluate(Environment{{x_, 1}, {y_, 2}}), 79 + mpq_class(1, 2));
 }
 
 TEST_F(TestExpression, SumExpression) {
   const Expression e1{x_ + 2 * y_ + 3 * z_ + z_ + 4 * y_ * 5};
   const Expression e2{6 * x_ * 7 - 8 * x_ - z_ * 4 + x_ / 2};
   EXPECT_EQ((e1 + e2).variables().size(), 2u);
-  EXPECT_EQ((e1 + e2).Evaluate(Expression::Environment{{x_, 1}, {y_, 2}}), 79 + mpq_class(1, 2));
+  EXPECT_EQ((e1 + e2).Evaluate(Environment{{x_, 1}, {y_, 2}}), 79 + mpq_class(1, 2));
 }
 
 TEST_F(TestExpression, Subtractxpression) {
   const Expression e1{x_ + 2 * y_ + 3 * z_ + z_ + 4 * y_ * 5 - 8 * z_};
   const Expression e2{6 * x_ * 7 - 8 * x_ - z_ * 4 + x_ / 2};
   EXPECT_EQ((e1 - e2).variables().size(), 2u);
-  EXPECT_EQ((e1 - e2).Evaluate(Expression::Environment{{x_, 1}, {y_, 2}}), -mpq_class(67, 2) + 44);
+  EXPECT_EQ((e1 - e2).Evaluate(Environment{{x_, 1}, {y_, 2}}), -mpq_class(67, 2) + 44);
 }
 
 #ifndef DELPI_THREAD_SAFE
