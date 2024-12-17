@@ -306,7 +306,6 @@ class LpSolver {
    * Not indicating a `row.lb` or `row.ub` will result in an unbounded row in that direction.
    * If `row.lb` and `row.ub` are equal, a single equality constraint is added.
    * Otherwise, a pair of inequality constraints may be added, depending on the underlying solver implementation.
-   * @note If the row only refers to a single variable, a bound will be added instead. @see AddBound.
    * @param row structure of the row to add
    * @return index of the last row added
    */
@@ -315,7 +314,6 @@ class LpSolver {
    * Add a new row to the LP problem with the given `addends` bounded by `lb` and `ub`.
    * If `lb` and `ub` are equal, a single equality constraint is added.
    * Otherwise, a pair of inequality constraints may be added, depending on the underlying solver implementation.
-   * @note If the `addends` only refers to a single variable, a bound will be added instead. @see AddBound.
    * @param addends vector of pairs (Variable, coeff) that represent the linear summation of the row
    * @param lb lower bound of the row
    * @param ub upper bound of the row
@@ -337,7 +335,6 @@ class LpSolver {
    * @f]
    * where @f$ lhs @f$ is a linear expression, @f$ \text{ sense } \in \\{ \le, =, \ge \\} @f$
    * and @f$ rhs @f$ is a constant.
-   * @note If the `lhs` only refers to a single variable, a bound will be added instead. @see AddBound.
    * @param lhs linear expression on the left-hand side of the row
    * @param sense sense of the row (i.e. @f$ \le, =, \ge @f$)
    * @param rhs constant on the right-hand side of the row
@@ -352,7 +349,6 @@ class LpSolver {
    * @f]
    * where @f$ lhs @f$ is a linear expression, @f$ \text{ sense } \in \\{ \le, =, \ge \\} @f$
    * and @f$ rhs @f$ is a constant.
-   * @note If the `lhs` only refers to a single variable, a bound will be added instead. @see AddBound.
    * @param lhs linear summation on the left-hand side of the row
    * @param sense sense of the row (i.e. <=, =, >=)
    * @param rhs right-hand side of the row

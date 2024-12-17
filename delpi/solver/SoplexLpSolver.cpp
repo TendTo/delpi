@@ -107,9 +107,6 @@ LpSolver::ColumnIndex SoplexLpSolver::AddColumn(const Variable& var, const mpq_c
 }
 LpSolver::RowIndex SoplexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
                                           const mpq_class& ub) {
-  // Check if we can add a simple bound instead of a row
-  if (SetSimpleBoundInsteadOfAddRow(addends, lb, ub)) return num_rows() - 1;
-
   const soplex::LPRowRational row_rational(lb.get_mpq_t(), ParseRowCoeff(addends), ub.get_mpq_t());
   if (consolidated_)
     spx_.addRowRational(row_rational);

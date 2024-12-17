@@ -69,6 +69,8 @@ TEST_F(TestMpsDriver, Rows) {
                          " X4 Ob 4.\n"
                          "BOUNDS\n"
                          " FR BND X1\n"
+                         " FR BND X2\n"
+                         " FR BND X3\n"
                          "ENDATA"));
   ASSERT_EQ(lp_solver_->variables().size(), 4u);
   const Variable& x1 = lp_solver_->variables().at(0);
@@ -76,9 +78,9 @@ TEST_F(TestMpsDriver, Rows) {
   const Variable& x3 = lp_solver_->variables().at(2);
   const Variable& x4 = lp_solver_->variables().at(3);
   const std::vector<Formula> constraints = lp_solver_->constraints();
-  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 <= 0 / 1,  //
-                                                           x2 >= 0 / 2,  //
-                                                           x3 == 0 / 3,  //
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 <= 0,      //
+                                                           2 * x2 >= 0,  //
+                                                           3 * x3 == 0,  //
                                                            x4 >= 0));
 }
 
@@ -97,6 +99,8 @@ TEST_F(TestMpsDriver, SimpleBoundsPositive) {
                          " X3 R3 3.\n"
                          "BOUNDS\n"
                          " FR BND X1\n"
+                         " FR BND X2\n"
+                         " FR BND X3\n"
                          "RHS\n"
                          " R1 11\n"
                          " R2 22 R3 33\n"
@@ -106,9 +110,9 @@ TEST_F(TestMpsDriver, SimpleBoundsPositive) {
   const Variable& x2 = lp_solver_->variables().at(1);
   const Variable& x3 = lp_solver_->variables().at(2);
   const std::vector<Formula> constraints = lp_solver_->constraints();
-  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 <= mpq_class{11} / 1,  //
-                                                           x2 >= mpq_class{22} / 2,  //
-                                                           x3 == mpq_class{33} / 3));
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 <= 11,      //
+                                                           2 * x2 >= 22,  //
+                                                           3 * x3 == 33));
 }
 
 TEST_F(TestMpsDriver, SimpleBoundsNegative) {
@@ -126,6 +130,8 @@ TEST_F(TestMpsDriver, SimpleBoundsNegative) {
                          " X3 R3 -3.\n"
                          "BOUNDS\n"
                          " FR BND X1\n"
+                         " FR BND X2\n"
+                         " FR BND X3\n"
                          "RHS\n"
                          " R1 11\n"
                          " R2 22 R3 33\n"
@@ -135,9 +141,9 @@ TEST_F(TestMpsDriver, SimpleBoundsNegative) {
   const Variable& x2 = lp_solver_->variables().at(1);
   const Variable& x3 = lp_solver_->variables().at(2);
   const std::vector<Formula> constraints = lp_solver_->constraints();
-  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 >= mpq_class{11} / -1,  //
-                                                           x2 <= mpq_class{22} / -2,  //
-                                                           x3 == mpq_class{33} / -3));
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(-1 * x1 <= 11,  //
+                                                           -2 * x2 >= 22,  //
+                                                           -3 * x3 == 33));
 }
 
 TEST_F(TestMpsDriver, Columns) {
@@ -166,7 +172,7 @@ TEST_F(TestMpsDriver, Columns) {
   EXPECT_THAT(constraints,
               ::testing::UnorderedElementsAre(11 * x1 + 31 * x3 <= 0,            //
                                               12 * x1 + 21 * x2 + 32 * x3 >= 0,  //
-                                              x3 == 0 / 33));
+                                              33 * x3 == 0));
 }
 
 TEST_F(TestMpsDriver, Rhs) {
@@ -198,7 +204,7 @@ TEST_F(TestMpsDriver, Rhs) {
   EXPECT_THAT(constraints,
               ::testing::UnorderedElementsAre(11 * x1 + 31 * x3 <= 1,            //
                                               12 * x1 + 21 * x2 + 32 * x3 >= 2,  //
-                                              x3 == mpq_class{3} / 33));
+                                              33 * x3 == 3));
 }
 
 TEST_F(TestMpsDriver, RangePositive) {
@@ -235,8 +241,8 @@ TEST_F(TestMpsDriver, RangePositive) {
                                               11 * x1 + 31 * x3 <= 1,                 //
                                               12 * x1 + 21 * x2 + 32 * x3 >= 2,       //
                                               12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52,  //
-                                              x3 >= mpq_class{3} / 33,                //
-                                              x3 <= mpq_class{(3 + 53)} / 33));
+                                              33 * x3 >= 3,                           //
+                                              33 * x3 <= 3 + 53));
 }
 
 TEST_F(TestMpsDriver, RangeNegative) {
@@ -273,8 +279,8 @@ TEST_F(TestMpsDriver, RangeNegative) {
                                               11 * x1 + 31 * x3 <= 1,                 //
                                               12 * x1 + 21 * x2 + 32 * x3 >= 2,       //
                                               12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52,  //
-                                              x3 >= mpq_class{(3 - 53)} / 33,         //
-                                              x3 <= mpq_class{3} / 33));
+                                              33 * x3 >= 3 - 53,                      //
+                                              33 * x3 <= 3));
 }
 
 TEST_F(TestMpsDriver, BoundsPositive) {

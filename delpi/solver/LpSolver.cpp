@@ -216,6 +216,8 @@ bool LpSolver::CheckAgainstExpected(const LpResult result) const {
       return result == LpResult::DELTA_OPTIMAL;
     case LpResult::UNBOUNDED:
       return result == LpResult::UNBOUNDED;
+    case LpResult::INFEASIBLE:
+      return result == LpResult::INFEASIBLE || result == LpResult::DELTA_OPTIMAL;
     default:
       return false;
   }
