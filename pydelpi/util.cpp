@@ -75,7 +75,8 @@ void init_util(py::module_ &m) {
            py::arg("debug_scanning") = Config::default_debug_scanning,
            py::arg_v("format", Config::default_format, "Format.AUTO"),
            py::arg_v("lp_mode", Config::default_lp_mode, "LpMode.AUTO"),
-           py::arg("number_of_jobs") = Config::default_number_of_jobs, py::arg("skip_optimise") = Config::default_optimize,
+           py::arg("number_of_jobs") = Config::default_number_of_jobs,
+           py::arg("skip_optimise") = Config::default_skip_optimise,
            py::arg("produce_models") = Config::default_produce_models,
            py::arg("random_seed") = Config::default_random_seed,
            py::arg("read_from_stdin") = Config::default_read_from_stdin, py::arg("silent") = Config::default_silent,
@@ -112,7 +113,8 @@ void init_util(py::module_ &m) {
                     [](Config &self, const Config::LpSolver &value) { self.m_lp_solver() = value; })
       .def_property("number_of_jobs", &Config::number_of_jobs,
                     [](Config &self, const int value) { self.m_number_of_jobs() = value; })
-      .def_property("skip_optimise", &Config::skip_optimise, [](Config &self, const bool value) { self.m_skip_optimise() = value; })
+      .def_property("skip_optimise", &Config::skip_optimise,
+                    [](Config &self, const bool value) { self.m_skip_optimise() = value; })
       .def_property("precision", &Config::precision, [](Config &self, double value) { self.m_precision() = value; })
       .def_property("produce_model", &Config::produce_models,
                     [](Config &self, const bool value) { self.m_produce_models() = value; })

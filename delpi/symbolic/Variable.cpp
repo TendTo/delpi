@@ -6,19 +6,15 @@
 #include "delpi/symbolic/Variable.h"
 
 #include <atomic>
+#include <limits>
 #include <ostream>
 
 #include "delpi/util/error.h"
 
-using std::atomic;
-using std::make_shared;
-using std::ostream;
-using std::ostringstream;
-using std::string;
-
 namespace delpi {
 
 std::vector<std::string> Variable::names_{{"dummy"}};
+const Variable::Id Variable::dummy_id{std::numeric_limits<Id>::max()};
 
 Variable::Id Variable::GetNextId() {
   static std::atomic<Id> next_id{0};
@@ -32,6 +28,6 @@ Variable::Variable(std::string name) : id_{GetNextId()} {
   DELPI_ASSERT(names_.size() == id_ + 2u, "The size of the names vector is not equal to the ID + dummy string.");
 }
 
-ostream &operator<<(ostream &os, const Variable &var) { return os << var.name(); }
+std::ostream &operator<<(std::ostream &os, const Variable &var) { return os << var.name(); }
 
 }  // namespace delpi

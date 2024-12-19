@@ -22,7 +22,8 @@ void init_symbolic(py::module_ &m) {
   auto ExpressionClass = py::class_<Expression>(m, "Expression");
   auto FormulaClass = py::class_<Formula>(m, "Formula");
 
-  VariableClass.def(py::init<const std::string &>())
+  VariableClass.def(py::init<>())
+      .def_readonly_static("dummy_id", &Variable::dummy_id)
       .def(py::init<const std::string &>(), py::arg("name"))
       .def_property_readonly("id", &Variable::id)
       .def_property_readonly("name", &Variable::name)
@@ -70,7 +71,7 @@ void init_symbolic(py::module_ &m) {
       .def_property_readonly("variables", &Expression::variables)
       .def("add", &Expression::Add, py::arg("var"), py::arg("coeff"))
       .def("subtract", &Expression::Subtract, py::arg("var"), py::arg("coeff"))
-      .def("evaluate", &Expression::Evaluate, py::arg("env"))
+      .def("evaluate", &Expression::Evaluate<std::map<Variable, mpq_class>>, py::arg("env"))
       .def("substitute", &Expression::Substitute, py::arg("expr_subst"))
       .def("equal_to", &Expression::equal_to, py::arg("o"))
       .def("less", &Expression::less, py::arg("o"))
@@ -140,7 +141,7 @@ void init_symbolic(py::module_ &m) {
       .def_property_readonly("variables", &Formula::variables)
       .def("equal_to", &Formula::equal_to, py::arg("o"))
       .def("less", &Formula::less, py::arg("o"))
-      .def("evaluate", &Formula::Evaluate, py::arg("env"))
+      .def("evaluate", &Formula::Evaluate<std::map<Variable, mpq_class>>, py::arg("env"))
       .def("substitute", &Formula::Substitute, py::arg("expr_subst"))
       .def("__str__", STR_LAMBDA(Formula))
       .def("__repr__", REPR_LAMBDA(Formula))

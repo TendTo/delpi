@@ -7,12 +7,8 @@
 #pragma once
 
 #include <cstddef>
-#include <functional>
 #include <iosfwd>
-#include <limits>
-#include <set>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace delpi {
@@ -24,6 +20,8 @@ class Variable {
  public:
   using Id = std::size_t;
 
+  const static Id dummy_id;  ///< ID of the dummy variable.
+
   /**
    * Construct a new dummy variable object.
    *
@@ -32,7 +30,7 @@ class Variable {
    * As a result, they all are identified as a single variable by equality operator (==) and have the same hash value as
    * well. It is allowed to construct a dummy variable, but it should not be used to construct a symbolic expression.
    */
-  Variable() : id_{std::numeric_limits<Id>::max()} {}
+  Variable() : id_{dummy_id} {}
 
   /**
    * Construct a new real variable object, assigning it a `name`.
@@ -43,7 +41,7 @@ class Variable {
   explicit Variable(std::string name);
 
   /** @checker{a dummy\, i.e. has been created with the default constructor, variable} */
-  [[nodiscard]] bool is_dummy() const { return id_ == std::numeric_limits<Id>::max(); }
+  [[nodiscard]] bool is_dummy() const { return id_ == dummy_id; }
   /** @getter{id, variable} */
   [[nodiscard]] Id id() const { return id_; }
   /** @getter{name, variable} */
@@ -70,9 +68,6 @@ class Variable {
 };
 
 std::ostream &operator<<(std::ostream &os, const Variable &var);
-
-using VariableSet = std::set<Variable>;
-
 }  // namespace delpi
 
 template <>
