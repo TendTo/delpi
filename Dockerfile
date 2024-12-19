@@ -27,8 +27,9 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 COPY . .
 
+# Workaround since the rules_python module will complain about running as root
 RUN sed 's/python.toolchain(/python.toolchain(\nignore_root_user_error = True,/g' MODULE.bazel -i
-RUN bazel build //delpi --cxxopt=-O3 --cxxopt=-DNDEBUG --//tools:enable_static_build=True
+RUN bazel build //delpi --config=docker
 
 FROM alpine:3.19.0
 

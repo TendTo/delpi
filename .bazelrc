@@ -43,5 +43,10 @@ build:python --enable_static_build
 build:python --enable_fpic_build
 build:python --enable_python_build
 
+# Building for docker
+build:docker --cxxopt=-O3
+build:docker --cxxopt=-DNDEBUG
+build:docker --enable_static_build
+
 # Dependency clean
 build:dwyu --aspects=//tools:dwyu.bzl%dwyu --output_groups=dwyu
