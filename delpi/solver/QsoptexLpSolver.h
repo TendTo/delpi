@@ -52,7 +52,7 @@ class QsoptexLpSolver final : public LpSolver {
 
   /**
    * Parse a sequence of `literal_monomials` and set the coefficient for each decisional variable appearing in it.
-   * @tparam TypedIterable generic iterable containing pairs (Variable, coeff) (i.e. std::vector, std::set, std::span)
+   * @tparam T generic iterable containing pairs (Variable, coeff) (i.e. std::vector, std::set, std::span)
    * @param row row to set the coefficients for
    * @param literal_monomials symbolic formula representing the row
    */

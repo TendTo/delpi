@@ -52,7 +52,7 @@ class SoplexLpSolver final : public LpSolver {
   LpResult SolveCore(mpq_class& precision, bool store_solution) override;
   /**
    * Parse a sequence of `literal_monomials` and set the coefficient for each decisional variable appearing in it.
-   * @tparam TypedIterable generic iterable containing pairs (Variable, coeff) (i.e. std::vector, std::set, std::span)
+   * @tparam T generic iterable containing pairs (Variable, coeff) (i.e. std::vector, std::set, std::span)
    * @param literal_monomials symbolic formula representing the row
    */
   template <TypedIterable<std::pair<const Variable, mpq_class>> T>
