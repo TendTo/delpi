@@ -72,7 +72,6 @@ class Config {
   explicit Config(Format format);
 
  public:
-  static constexpr std::string_view help_onnx_file{"ONNX file name"};
   static constexpr std::string_view help_filename{"Input file name"};
 
   /** @getter{`filename` parameter, configuration, Default to ""}*/

@@ -92,7 +92,6 @@ void ArgParser::AddOptions() {
   DELPI_TRACE("ArgParser::AddOptions: adding options");
   parser_.add_description(prompt());
   parser_.add_argument("file").help("input file").default_value("");
-  parser_.add_argument("--onnx-file").help("ONNX file name").default_value("").nargs(1);
 
   DELPI_PARSE_PARAM_BOOL(parser_, csv, "--csv");
   DELPI_PARSE_PARAM_BOOL(parser_, continuous_output, "--continuous-output");
@@ -217,7 +216,7 @@ std::string ArgParser::prompt() const {
     repo_stat = " (repository: " + repo_stat + ")";
   }
 
-  std::string vstr = fmt::format("{} (v{}): {} ({} Build) {}", DELPI_PROGRAM_NAME, DELPI_DESCRIPTION, version(),
+  std::string vstr = fmt::format("{} (v{}): {} ({} Build) {}", DELPI_PROGRAM_NAME, version(), DELPI_DESCRIPTION,
                                  build_type, repo_stat);
   if (!qsoptex_hash_.empty()) vstr += fmt::format(" (qsopt-ex: {})", qsoptex_hash_);
   if (!soplex_hash_.empty()) vstr += fmt::format(" (soplex: {})", soplex_hash_);
