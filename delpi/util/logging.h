@@ -15,6 +15,10 @@
 #include <fmt/ostream.h>  // IWYU pragma: export
 #include <fmt/ranges.h>   // IWYU pragma: export
 
+#define OSTREAM_FORMATTER(type) \
+  template <>                   \
+  struct fmt::formatter<type> : ostream_formatter {};
+
 #ifndef NLOG
 
 #include <spdlog/logger.h>
@@ -29,9 +33,6 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
 
 }  // namespace delpi
 
-#define OSTREAM_FORMATTER(type) \
-  template <>                   \
-  struct fmt::formatter<type> : ostream_formatter {};
 #define DELPI_FORMAT(message, ...) fmt::format(message, __VA_ARGS__)
 
 #define DELPI_VERBOSITY_TO_LOG_LEVEL(verbosity)                        \
@@ -101,7 +102,6 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
 
 #else
 
-#define OSTREAM_FORMATTER(type)
 #define DELPI_FORMAT(message, ...) fmt::format(message, __VA_ARGS__)
 #define DELPI_VERBOSITY_TO_LOG_LEVEL(verbosity) 0
 #define DELPI_LOG_INIT_LEVEL(level) void(0)
