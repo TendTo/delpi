@@ -21,10 +21,11 @@
 #define DELPI_ASSERT_FMT(condition, msg, ...) ((void)0)
 #define DELPI_UNREACHABLE() std::terminate()
 #define DELPI_RUNTIME_ERROR(msg) throw ::delpi::DelpiException(msg)
-#define DELPI_RUNTIME_ERROR_FMT(msg, ...) throw ::delpi::DelpiException(msg)
+#define DELPI_RUNTIME_ERROR_FMT(msg, ...) throw ::delpi::DelpiException(fmt::format(msg, __VA_ARGS__))
 #define DELPI_OUT_OF_RANGE(msg) throw ::delpi::DelpiOutOfRangeException(msg)
-#define DELPI_OUT_OF_RANGE_FMT(msg, ...) throw ::delpi::DelpiOutOfRangeException(msg)
-#define DELPI_INVALID_ARGUMENT(argument, actual) throw ::delpi::DelpiException(argument)
+#define DELPI_OUT_OF_RANGE_FMT(msg, ...) throw ::delpi::DelpiOutOfRangeException(fmt::format(msg, __VA_ARGS__))
+#define DELPI_INVALID_ARGUMENT(argument, actual) \
+  throw ::delpi::DelpiInvalidArgumentException(fmt::format("Invalid argument for {}: {}", argument, actual))
 #define DELPI_INVALID_ARGUMENT_EXPECTED(argument, actual, expected) \
   throw ::delpi::DelpiInvalidArgumentException(                     \
       fmt::format("Invalid argument for {}: received '{}', expected '{}'", argument, actual, expected))
