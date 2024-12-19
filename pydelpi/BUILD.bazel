@@ -51,6 +51,7 @@ py_binary(
     imports = ["."],
     main = "__main__.py",
     python_version = "PY3",
+    visibility = ["//visibility:public"],
     deps = [
         ":pydelpi_lib",
     ],

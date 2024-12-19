@@ -15,9 +15,12 @@
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
+#define COPY_LAMBDA(class_name) [](const class_name &self) { return class_name(self); }
 #define STR_LAMBDA(class_name) [](const class_name &o) { return (std::stringstream{} << o).str(); }
-#define REPR_LAMBDA(class_name) \
-  [](const class_name &o) { return (std::stringstream{} << "<" STRINGIFY(class_name) "'" << o << "'>").str(); }
+#define REPR_LAMBDA(class_name)                                                                        \
+  [](const class_name &o) {                                                                            \
+    return (std::stringstream{} << "<" STRINGIFY(class_name) " '" << o << "' at " << &o << ">").str(); \
+  }
 
 namespace PYBIND11_NAMESPACE {
 template <>

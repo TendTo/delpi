@@ -46,6 +46,7 @@ void init_solver(py::module_ &m) {
       .def_static("get_instance", &LpSolver::GetInstance, py::arg("config"))
       .def_property_readonly("variables", &LpSolver::variables)
       .def_property_readonly("constraints", &LpSolver::constraints)
+      .def("var", &LpSolver::var, py::arg("column_idx"))
       .def("parse", &LpSolver::Parse)
       .def("parse_file", &LpSolver::ParseFile, py::arg("filename"))
       .def("parse_string", &LpSolver::ParseString, py::arg("input"))

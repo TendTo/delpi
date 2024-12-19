@@ -1,0 +1,9 @@
+load("//tools:pytest.bzl", "pydelpi_py_test")
+
+pydelpi_py_test(name = "test_variable")
+
+pydelpi_py_test(name = "test_expression")
+
+pydelpi_py_test(name = "test_formula")
+
+pydelpi_py_test(name = "test_solver")
