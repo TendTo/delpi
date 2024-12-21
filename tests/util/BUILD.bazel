@@ -37,3 +37,9 @@ delpi_cc_googletest(
     tags = ["util"],
     deps = ["//delpi/util:timer"],
 )
+
+delpi_cc_googletest(
+    name = "test_math",
+    tags = ["util"],
+    deps = ["//delpi/util:math"],
+)
