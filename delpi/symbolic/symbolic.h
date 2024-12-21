@@ -10,3 +10,5 @@
 #include "delpi/symbolic/Formula.h"
 #include "delpi/symbolic/FormulaKind.h"
 #include "delpi/symbolic/Variable.h"
+#include "delpi/symbolic/VariableMap.h"
+#include "delpi/symbolic/VariableSet.h"

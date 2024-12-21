@@ -24,6 +24,8 @@ delpi_cc_library(
         ":formula",
         ":formula_kind",
         ":variable",
+        ":variable_map",
+        ":variable_set",
     ],
 )
 
@@ -39,6 +41,18 @@ delpi_cc_library(
     name = "variable_set",
     srcs = ["VariableSet.cpp"],
     hdrs = ["VariableSet.h"],
+    implementation_deps = ["//delpi/util:error"],
+    deps = [
+        ":variable",
+        "//delpi/util:concepts",
+        "//delpi/util:logging",
+    ],
+)
+
+delpi_cc_library(
+    name = "variable_map",
+    srcs = ["VariableMap.cpp"],
+    hdrs = ["VariableMap.h"],
     implementation_deps = ["//delpi/util:error"],
     deps = [
         ":variable",
