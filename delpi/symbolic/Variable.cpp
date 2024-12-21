@@ -12,7 +12,6 @@
 #include "delpi/util/error.h"
 
 namespace delpi {
-
 std::vector<std::string> Variable::names_{{"dummy"}};
 const Variable::Id Variable::dummy_id{std::numeric_limits<Id>::max()};
 
@@ -20,6 +19,9 @@ Variable::Id Variable::GetNextId() {
   static std::atomic<Id> next_id{0};
   const std::size_t counter = next_id.fetch_add(1);
   return counter;
+}
+Variable::Variable(const Id id) : id_{id} {
+  DELPI_ASSERT(id < names_.size(), "The id is out of bounds. Make sure the variable had been created before.");
 }
 
 Variable::Variable(std::string name) : id_{GetNextId()} {

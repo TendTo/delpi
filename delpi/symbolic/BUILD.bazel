@@ -36,6 +36,18 @@ delpi_cc_library(
 )
 
 delpi_cc_library(
+    name = "variable_set",
+    srcs = ["VariableSet.cpp"],
+    hdrs = ["VariableSet.h"],
+    implementation_deps = ["//delpi/util:error"],
+    deps = [
+        ":variable",
+        "//delpi/util:concepts",
+        "//delpi/util:logging",
+    ],
+)
+
+delpi_cc_library(
     name = "expression",
     srcs = [
         "Expression.cpp",

@@ -31,7 +31,6 @@ class Variable {
    * well. It is allowed to construct a dummy variable, but it should not be used to construct a symbolic expression.
    */
   Variable() : id_{dummy_id} {}
-
   /**
    * Construct a new real variable object, assigning it a `name`.
    *
@@ -39,6 +38,13 @@ class Variable {
    * @param name name of the variable
    */
   explicit Variable(std::string name);
+  /**
+   * Construct a new real variable object, but instead of creating a new one, it will use the given `id`,
+   * effectively "connecting" the object to an existing variable.
+   * @pre `id` must have benn assigned to a variable before by the @ref GetNextId method.
+   * @param id unique identifier
+   */
+  explicit Variable(Id id);
 
   /** @checker{a dummy\, i.e. has been created with the default constructor, variable} */
   [[nodiscard]] bool is_dummy() const { return id_ == dummy_id; }
