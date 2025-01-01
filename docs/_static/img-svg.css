@@ -1,0 +1,15 @@
+html .img-svg,
+html.light-mode .img-svg {
+  filter: none !important;
+}
+
+html.dark-mode .img-svg {
+  filter: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html .img-svg,
+  html.light-mode .img-svg {
+    filter: brightness(100%) hue-rotate(180deg) invert() !important;
+  }
+}

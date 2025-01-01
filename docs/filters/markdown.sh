@@ -17,6 +17,9 @@ readonly regex_substitute_slash_curly_math='\1\\\\\2'
 readonly regex_match_mermaid='```mermaid\n([^\`]*)```'
 readonly regex_substitute_mermaid="<pre class='mermaid'>\n\1<\/pre>"
 
+readonly regex_match_realpath='"_static\/img\/(.+)"'
+readonly regex_substitute_realpath='"\1"'
+
 readonly regex_title_logo='<img alt="Icon" src="docs\/_static\/logo.svg" align="left" width="35" height="35">'
 
 cat "${1}" \
@@ -24,6 +27,7 @@ cat "${1}" \
     -e "s/$regex_match_math_split/$regex_substitute_math_split/g" \
     -e "s/$regex_match_slash_curly_math/$regex_substitute_slash_curly_math/g" \
     -e "s/$regex_match_math/$regex_substitute_math/g" \
+    -e "s/$regex_match_realpath/$regex_substitute_realpath/g" \
     -e "s/$regex_title_logo//g" \
 | sed -E -z  \
     -e "s/$regex_match_mermaid/$regex_substitute_mermaid/g"

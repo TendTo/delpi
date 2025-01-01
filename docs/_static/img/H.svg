@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="triangle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+    <style>
+        :root {
+            --text-color: white;
+            --par-color: black;
+            --column-color: black;
+            --spike-color: gray;
+        }
+
+        @media(prefers-color-scheme: dark) {
+            :root {
+                --text-color: black;
+                --par-color: white;
+                --column-color: white;
+            }
+        }
+
+        :root.dark-mode {
+            --text-color: black;
+            --par-color: white;
+            --column-color: white;
+        }
+
+        text {
+            fill: var(--text-color);
+            font-size: 4.5px;
+            text-anchor: middle;
+        }
+
+        .par {
+            stroke: var(--par-color);
+        }
+
+        .column {
+            fill: var(--column-color);
+        }
+
+        .spike {
+            fill: var(--spike-color);
+        }
+    </style>
+    <defs>
+        <pattern id="grid" width="10" height="100" x="5" y="0" patternUnits="userSpaceOnUse">
+            <rect class="column" x="1" y="0" width="8" height="100" fill="black" />
+        </pattern>
+    </defs>
+    <!-- Left parenthesis -->
+    <line class="par" x1="0" y1="0" x2="0" y2="100" />
+    <line class="par" x1="0" y1="0" x2="10" y2="0" />
+    <line class="par" x1="0" y1="100" x2="10" y2="100" />
+    <!-- Right parenthesis -->
+    <line class="par" x1="100" y1="0" x2="100" y2="100" />
+    <line class="par" x1="100" y1="0" x2="90" y2="0" />
+    <line class="par" x1="100" y1="100" x2="90" y2="100" />
+    <!-- Triangle -->
+    <path d="M 5 5 H 95 V 95 H 75 V 85 H 65 V 75 H 55 V 65 H 45 V 55 H 45 V 45 H 35 V 35 H 25 V 25 H 15 V 15 H 5 Z"
+        fill="url(#grid)" />
+    <!-- Spike -->
+    <rect class="spike" x="86" y="5" width="8" height="90" />
+    <!-- Indexes -->
+    <text x="10" y="10">0</text>
+    <text x="20" y="10">1</text>
+    <text x="30" y="10">...</text>
+    <text x="40" y="10">r-1</text>
+    <text x="50" y="10">r+1</text>
+    <text x="60" y="10">...</text>
+    <text x="70" y="10">m-1</text>
+    <text x="80" y="10">m</text>
+    <text x="90" y="10">r</text>
+</svg>

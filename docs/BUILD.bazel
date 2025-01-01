@@ -8,6 +8,7 @@ doxygen(
         "//delpi:all_srcs",
     ] + glob([
         "_static/*",
+        "_static/img/*",
         "filters/*",
         "*.md",
     ]),
@@ -51,6 +52,7 @@ doxygen(
         "EXPAND_ONLY_PREDEF     = YES",
         "EXPAND_AS_DEFINED      = DELPI_PARAMETER",
         "PROJECT_ICON           = docs/_static/logo.svg",
+        "IMAGE_PATH             = docs/_static/img",
     ],
     disable_index = False,
     extract_private = True,
@@ -69,6 +71,7 @@ doxygen(
     html_extra_stylesheet = [
         "docs/_static/doxygen-awesome.css",
         "docs/_static/mermaid.css",
+        "docs/_static/img-svg.css",
     ],
     html_footer = "docs/_static/footer.html",
     html_header = "docs/_static/header.html",
