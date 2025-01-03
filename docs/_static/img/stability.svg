@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 100 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+    <style>
+        :root {
+            --text-color: black;
+            --line-color: black;
+        }
+
+        @media(prefers-color-scheme: dark) {
+            :root {
+                --text-color: white;
+                --line-color: white;
+            }
+        }
+
+        :root.dark-mode {
+            --text-color: white;
+            --line-color: black;
+        }
+
+        text {
+            fill: var(--text-color);
+            font-size: 4.5px;
+        }
+
+        line {
+            stroke: var(--line-color);
+            stroke-width: .3px;
+        }
+
+        .dotted {
+            stroke-dasharray: 1, .8;
+        }
+
+        ellipse {
+            fill: none;
+            stroke: var(--line-color);
+            stroke-width: .3px;
+        }
+    </style>
+    <g id="layer1">
+        <ellipse cx="15" cy="35" rx="14" ry="20" />
+        <ellipse cx="75" cy="39" rx="24" ry="21" />
+
+        <text x="5" y="10"> Input Space</text>
+        <text x="55" y="10"> Output Space </text>
+        <text x="10" y="25"> x </text>
+        <text x="10" y="45"> x+Δx </text>
+        <text x="65" y="25"> y=f(x) </text>
+        <text x="65" y="55"> ŷ=f(x+Δx) </text>
+        <line x1="15" x2="63" y1="24" y2="24" />
+        <line x1="23" x2="63" y1="44" y2="54" />
+        <line x1="12" x2="15" y1="27" y2="41" />
+        <line x1="11" x2="14" y1="27" y2="41" />
+        <line x1="74" x2="77" y1="27" y2="50" />
+        <line x1="73" x2="76" y1="27" y2="50" />
+        <line x1="75" x2="78" y1="27" y2="50" />
+        <line class="dotted" x1="15" x2="72" y1="27" y2="50" />
+
+        <text class="backward" x="5" y="65"> Exact </text>
+        <line class="dotted" x1="4" x2="4" y1="60" y2="66" />
+        <text class="forward" x="65" y="65"> Computed </text>
+        <line x1="64" x2="64" y1="60" y2="66" />
+
+        <text class="backward" x="5" y="75"> Backward error </text>
+        <line x1="3" x2="3" y1="70" y2="76" />
+        <line x1="4" x2="4" y1="70" y2="76" />
+        <text class="forward" x="65" y="75"> Forward error </text>
+        <line x1="62" x2="62" y1="70" y2="76" />
+        <line x1="63" x2="63" y1="70" y2="76" />
+        <line x1="64" x2="64" y1="70" y2="76" />
+    </g>
+</svg>

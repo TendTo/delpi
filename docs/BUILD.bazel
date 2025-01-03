@@ -6,12 +6,18 @@ doxygen(
     srcs = [
         "//:README.md",
         "//delpi:all_srcs",
-    ] + glob([
-        "_static/*",
-        "_static/img/*",
-        "filters/*",
-        "*.md",
-    ]),
+    ] + glob(
+        [
+            "_static/*",
+            "_static/img/*",
+            "filters/*",
+            "*.md",
+        ],
+        exclude = [
+            "Todo.md",
+            "Notes.md",
+        ],
+    ),
     aliases = [
         "licence=\"@par Licence:^^\"",
         "constructor{1}=\"Construct a new \\1 object.^^\"",
