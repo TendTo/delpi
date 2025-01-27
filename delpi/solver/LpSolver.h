@@ -146,6 +146,8 @@ class LpSolver {
   [[nodiscard]] const mpq_class& infinity() const { return infinity_; }
   /** @getter{statistics, lp solver} */
   [[nodiscard]] const IterationStats& stats() const { return stats_; }
+  /** @getter{statistics, parser} */
+  [[nodiscard]] const Stats& parser_stats() const { return parser_stats_; }
   /** @getter{configuration, lp solver} */
   [[nodiscard]] const Config& config() const { return config_; }
   /** @getter{primal solution\, if the lp is feasible\,, lp solver} */
@@ -492,6 +494,7 @@ class LpSolver {
 
   Config config_;                                      ///< Configuration to use
   IterationStats stats_;                               ///< Statistics of the solver
+  Stats parser_stats_;                                 ///< Statistics of the parser
   std::unordered_map<std::string, std::string> info_;  ///< Generic information map. Generally collected from the file
 
   std::unordered_map<Variable, int> var_to_col_;  ///< Theory column ⇔ Variable.

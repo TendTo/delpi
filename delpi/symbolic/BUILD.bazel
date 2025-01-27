@@ -57,6 +57,7 @@ delpi_cc_library(
     deps = [
         ":variable",
         "//delpi/util:concepts",
+        "//delpi/util:exception",
         "//delpi/util:logging",
     ],
 )
