@@ -32,3 +32,12 @@ delpi_cc_googletest(
         "//delpi/solver:lp_solver",
     ],
 )
+
+delpi_cc_googletest(
+    name = "test_basis",
+    tags = ["solver"],
+    deps = [
+        ":test_solver_utils",
+        "//delpi/solver/internal:basis",
+    ],
+)
