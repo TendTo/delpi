@@ -55,3 +55,11 @@ struct scalar_score_coeff_op<mpq_class> {
 #endif
 }  // namespace internal
 }  // namespace Eigen
+
+namespace delpi {
+using EMatrix = Eigen::MatrixX<mpq_class>;
+using EVector = Eigen::VectorX<mpq_class>;
+using DMatrix = Eigen::MatrixXd;
+using DVector = Eigen::VectorXd;
+
+}  // namespace delpi
