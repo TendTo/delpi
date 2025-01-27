@@ -1,0 +1,30 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
+
+package(default_visibility = [
+    "//delpi:__subpackages__",
+    "//pydelpi:__subpackages__",
+    "//tests:__subpackages__",
+])
+
+delpi_srcs(name = "srcs")
+
+delpi_hdrs_tar(
+    name = "hdrs_tar",
+    subfolder = "internal",
+)
+
+cpplint()
+
+delpi_cc_library(
+    name = "basis",
+    srcs = ["Basis.cpp"],
+    hdrs = ["Basis.h"],
+    implementation_deps = ["//delpi/util:error"],
+    deps = [
+        "//delpi/libs:eigen",
+        "//delpi/util:config",
+        "//delpi/util:logging",
+        "//delpi/util:stats",
+    ],
+)
