@@ -326,7 +326,10 @@ If we consider them in a vacuum, the computational complexity will be in the ord
 
 ### Using LU decomposition
 
-Instead of trying to solve all the systems directly, we can opt to use an **LU** decomposition of $\boldsymbol{B}$ to improve the performance of the algorithm. Solving the linear systems in this setup becomes much easier, requiring only two back-propagation steps each. The great challenge is to ensure that the decomposition, which hash a complexity of $O(m^3)$, is updated cheaply at each iteration, without having to recompute it each time.
+Instead of trying to solve all the systems directly, we can opt to use an **LU** decomposition of $\boldsymbol{B}$ to
+improve the performance of the algorithm. Solving the linear systems in this setup becomes much easier, requiring only
+two back-propagation steps each. The great challenge is to ensure that the decomposition, which has a complexity
+of $O(m^3)$, is updated cheaply at each iteration, without having to recompute it each time.
 
 The process starts by computing the LU decomposition of $\boldsymbol{B}$ in the standard way:
 

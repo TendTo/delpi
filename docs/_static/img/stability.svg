@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 100 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 100 80" version="1.1" xmlns="http://www.w3.org/2000/svg">
     <style>
         :root {
             --text-color: black;
@@ -57,10 +57,10 @@
         <line x1="75" x2="78" y1="27" y2="50" />
         <line class="dotted" x1="15" x2="72" y1="27" y2="50" />
 
-        <text class="backward" x="5" y="65"> Exact </text>
-        <line class="dotted" x1="4" x2="4" y1="60" y2="66" />
-        <text class="forward" x="65" y="65"> Computed </text>
-        <line x1="64" x2="64" y1="60" y2="66" />
+        <text x="5" y="65">Exact</text>
+        <line x1="4" x2="4" y1="60" y2="66"/>
+        <text x="65" y="65">Computed</text>
+        <line class="dotted" x1="64" x2="64" y1="60" y2="66"/>
 
         <text class="backward" x="5" y="75"> Backward error </text>
         <line x1="3" x2="3" y1="70" y2="76" />
