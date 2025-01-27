@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "delpi/libs/eigen.h"
+#include "delpi/libs/gmp.h"
 
 namespace delpi::internal {
 
@@ -50,34 +51,37 @@ class Basis {
   [[nodiscard]] const BasisVectors& basis_vectors() const { return basis_vectors_; }
   [[nodiscard]] const std::vector<int>& basis_idxs() const { return *basis_idxs_; }
   [[nodiscard]] int size() const { return basis_idxs_->size(); }
-  [[nodiscard]] int last_in() const { return last_in_; }
-  [[nodiscard]] int last_out() const { return last_out_; }
+  [[nodiscard]] int last_basis_entering() const { return last_basis_entering_; }
+  [[nodiscard]] int last_basis_leaving() const { return last_basis_leaving_; }
+  [[nodiscard]] int last_leaving() const { return last_leaving_; }
+  [[nodiscard]] int last_entering() const { return last_entering_; }
+
+  void Update(const Eigen::MatrixX<T>& A, int leaving, int entering);
 
  protected:
-  /** Each basis is assigned a status flag. */
-  // enum class SPxStatus {
-  //   UNSOLVED = -2,  ///< No Problem has been loaded to the basis
-  //   SINGULAR = -1,  ///< Basis is singular
-  //   REGULAR = 0,    ///< Basis is not known to be dual nor primal feasible
-  //   DUAL = 1,       ///< Basis is dual feasible
-  //   PRIMAL = 2,     ///< Basis is primal feasible
-  //   OPTIMAL = 3,    ///< Basis is optimal, i.e. dual and primal feasible
-  //   UNBOUNDED = 4,  ///< LP has been proven to be primal unbounded
-  //   INFEASIBLE = 5  ///< LP has been proven to be primal infeasible
-  // };
-  int precision_;  ///< Precision of the basis. 0 means we are dealing with rationals
-
   int max_updates_before_refactor_;               ///< Number of updates before a forced refactorization of the basis
   std::shared_ptr<std::vector<int>> basis_idxs_;  ///< Indices of the basis vectors
   BasisVectors basis_vectors_;                    ///< Basis columns taken from A
 
-  int last_in_;   ///< lastEntered(): variable entered the base last
-  int last_out_;  ///< lastLeft(): variable left the base last
-  int last_idx_;  ///< lastIndex(): basis index where last update was done
-  // mpq_class min_stability_;  ///< minimum stability
+  int last_basis_entering_;  ///< Index of where the latest column was added in the basis
+  int last_basis_leaving_;   ///< Index of where the latest column was removed from the basis
+  int last_leaving_;         ///< Index of the variable that left the basis last. Relative to the original matrix
+  int last_entering_;        ///< Index of the variable that entered the basis last. Relative to the original matrix
 };
 
 template <class T>
 std::ostream& operator<<(std::ostream& os, const Basis<T>& basis);
 
+using EBasis = Basis<mpq_class>;
+using DBasis = Basis<double>;
+
 }  // namespace delpi::internal
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::internal::Basis<mpq_class>)
+OSTREAM_FORMATTER(delpi::internal::Basis<double>)
+
+#endif
