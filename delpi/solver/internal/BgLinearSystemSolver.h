@@ -3,6 +3,7 @@
 #include <iosfwd>
 
 #include "LinearSystemSolver.h"
+#include "RetriangularisationFactor.h"
 
 namespace delpi::internal {
 
@@ -11,21 +12,19 @@ template <class T>
 // template <class B>
 class BgLinearSystemSolver final : public LinearSystemSolver<T> {
  public:
-  using typename LinearSystemSolver<T>::Vector;
-  using typename LinearSystemSolver<T>::Matrix;
-  using LowerMatrix = Eigen::TriangularView<const Matrix, Eigen::UnitLower>;
-  using UpperMatrix = Eigen::TriangularView<const Matrix, Eigen::Upper>;
+  using LowerMatrix = Eigen::TriangularView<const Matrix<T>, Eigen::UnitLower>;
+  using UpperMatrix = Eigen::TriangularView<const Matrix<T>, Eigen::Upper>;
   using PermutationMatrix = Eigen::PermutationMatrix<Eigen::Dynamic>;
 
   explicit BgLinearSystemSolver(const Config& config);
 
-  LowerMatrix L() const { return LU_.template triangularView<Eigen::UnitLower>(); }
-  UpperMatrix U() const { return LU_.template triangularView<Eigen::Upper>(); }
-  const PermutationMatrix& P() const { return P_; }
+  [[nodiscard]] LowerMatrix L() const { return L_.template triangularView<Eigen::UnitLower>(); }
+  [[nodiscard]] UpperMatrix U() const { return U_.template triangularView<Eigen::Upper>(); }
+  [[nodiscard]] const PermutationMatrix& P() const { return P_; }
 
  private:
-  Vector SolveCore(const Vector& vector) const override;
-  Vector TransposeSolveCore(const Vector& vector) const override;
+  Vector<T> SolveCore(const Vector<T>& vector) const override;
+  Vector<T> TransposeSolveCore(const Vector<T>& vector) const override;
   void FactoriseCore(const Basis<T>& basis) override;
   void ResetCore() override;
 
@@ -33,7 +32,9 @@ class BgLinearSystemSolver final : public LinearSystemSolver<T> {
   void UpdateFactorisation(const Basis<T>& basis);
 
   size_t n_iteration_;
-  Matrix LU_;
+  Matrix<T> L_;
+  std::vector<RetriangularisationFactor<T>> factors_;
+  Matrix<T> U_;
   PermutationMatrix P_;
 };
 

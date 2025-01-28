@@ -1,5 +1,5 @@
 
-#include "Basis.h"
+#include "delpi/solver/internal/Basis.h"
 
 namespace delpi::internal {
 

@@ -9,13 +9,14 @@
 #include "delpi/util/Config.h"
 
 using delpi::Config;
+using delpi::Matrix;
 using delpi::internal::Basis;
 using delpi::internal::BgLinearSystemSolver;
 
 namespace {
 template <class T>
-Eigen::MatrixX<T> ToEigenMatrix(const std::vector<std::vector<T>>& matrix) {
-  Eigen::MatrixX<T> result(matrix.size(), matrix[0].size());
+Matrix<T> ToEigenMatrix(const std::vector<std::vector<T>>& matrix) {
+  Matrix<T> result(matrix.size(), matrix[0].size());
   for (int i = 0; i < static_cast<int>(matrix.size()); ++i) {
     for (int j = 0; j < static_cast<int>(matrix[0].size()); ++j) {
       result(i, j) = matrix[i][j];
@@ -28,7 +29,7 @@ Eigen::MatrixX<T> ToEigenMatrix(const std::vector<std::vector<T>>& matrix) {
 template <class T>
 class TestBgLinearSystemSolver : public ::testing::Test {
  protected:
-  Eigen::MatrixX<T> matrix_{4, 5};
+  Matrix<T> matrix_{4, 5};
 
   const std::vector<int> basis_idxs_{0, 1, 2, 3};
   Config config_;
@@ -50,12 +51,10 @@ TYPED_TEST(TestBgLinearSystemSolver, Factorise) {
 TYPED_TEST(TestBgLinearSystemSolver, UpdateFactorisation) {
   BgLinearSystemSolver<TypeParam> solver{this->config_};
   Basis<TypeParam> basis{this->matrix_, this->basis_idxs_};
-  std::cout << basis.basis_vectors() << std::endl;
   solver.Factorise(basis);
   EXPECT_EQ(solver.L().toDenseMatrix() * solver.U().toDenseMatrix(), solver.P() * basis.basis_vectors());
   basis.Update(this->matrix_, 2, 4);
   std::cout << basis.basis_vectors() << std::endl;
   std::cout << "FEST" << std::endl;
   solver.Factorise(basis);
-  std::cout << solver.L().toDenseMatrix() * solver.U().toDenseMatrix() << std::endl;
 }
