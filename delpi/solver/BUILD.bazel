@@ -12,6 +12,7 @@ delpi_srcs(name = "srcs")
 delpi_hdrs_tar(
     name = "hdrs_tar",
     subfolder = "solver",
+    deps = ["//delpi/solver/internal:hdrs_tar"],
 )
 
 cpplint()
@@ -56,7 +57,11 @@ delpi_cc_library(
 
 delpi_cc_library(
     name = "lp_solver",
-    srcs = ["LpSolver.cpp"] + select({
+    srcs = [
+        "DelpiLpSolver.cpp",
+        "DelpiLpSolver.h",
+        "LpSolver.cpp",
+    ] + select({
         "//tools:enabled_soplex": [
             "SoplexLpSolver.cpp",
             "SoplexLpSolver.h",
@@ -70,7 +75,10 @@ delpi_cc_library(
         "//conditions:default": [],
     }),
     hdrs = ["LpSolver.h"],
-    implementation_deps = ["//delpi/util:error"] + select({
+    implementation_deps = [
+        "//delpi/solver/internal:linear_system_solver",
+        "//delpi/util:error",
+    ] + select({
         "//tools:enabled_soplex": ["//delpi/libs:soplex"],
         "//conditions:default": [],
     }) + select({
@@ -82,7 +90,9 @@ delpi_cc_library(
         ":lp_result",
         ":lp_row_sense",
         ":row",
+        "//delpi/libs:eigen",
         "//delpi/libs:gmp",
+        "//delpi/solver/internal:basis",
         "//delpi/symbolic:expression",
         "//delpi/symbolic:formula",
         "//delpi/symbolic:variable",

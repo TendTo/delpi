@@ -57,6 +57,7 @@ delpi_cc_library(
     srcs = ["eigen.cpp"],
     hdrs = ["eigen.h"],
     deps = [
+        "//delpi/util:logging",
         "@eigen",
         "@gmp//:gmpxx",
     ],

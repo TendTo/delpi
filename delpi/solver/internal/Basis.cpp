@@ -1,17 +1,27 @@
 
 #include "delpi/solver/internal/Basis.h"
 
+#include <numeric>
+#include <ranges>
+
+#include "delpi/util/error.h"
+
 namespace delpi::internal {
+
+namespace {
+std::vector<int> ToVector(const int size) {
+  std::vector<int> result(size);
+  std::iota(result.begin(), result.end(), 0);
+  return result;
+}
+}  // namespace
+
+template <class T>
+Basis<T>::Basis(const Eigen::MatrixX<T>& A) : Basis(A, ToVector(A.rows())) {}
 
 template <class T>
 Basis<T>::Basis(const Eigen::MatrixX<T>& A, std::vector<int> basis_idxs)
-    : max_updates_before_refactor_{0},
-      basis_idxs_{std::make_shared<std::vector<int>>(std::move(basis_idxs))},
-      basis_vectors_{A(Eigen::all, *basis_idxs_)},
-      last_basis_entering_{-1},
-      last_basis_leaving_{-1},
-      last_leaving_{-1},
-      last_entering_{-1} {}
+    : Basis(A, std::make_shared<std::vector<int>>(std::move(basis_idxs))) {}
 
 template <class T>
 Basis<T>::Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<int>>& basis_idxs)
@@ -21,7 +31,11 @@ Basis<T>::Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<in
       last_basis_entering_{-1},
       last_basis_leaving_{-1},
       last_leaving_{-1},
-      last_entering_{-1} {}
+      last_entering_{-1} {
+  DELPI_ASSERT(static_cast<std::size_t>(basis_vectors_.cols()) == basis_idxs_->size(),
+               "Basis vectors and indices must have the same size");
+}
+
 template <class T>
 void Basis<T>::Update(const Eigen::MatrixX<T>& A, const int leaving, const int entering) {
   DELPI_TRACE_FMT("Basis::Update(leaving = {}, entering = {})", leaving, entering);

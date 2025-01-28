@@ -30,8 +30,9 @@ Vector<T> BgLinearSystemSolver<T>::SolveCore(const Vector<T>& vector) const {
 template <class T>
 Vector<T> BgLinearSystemSolver<T>::TransposeSolveCore(const Vector<T>& vector) const {
   DELPI_TRACE_FMT("BgLinearSystemSolver::TransposeSolveCore({})", vector);
-
-  DELPI_UNREACHABLE();
+  Matrix<T> temp = U_.template triangularView<Eigen::Upper>().transpose().solve(vector);
+  for (const auto& factor : std::views::reverse(factors_)) temp = factor.transpose().inverse() * temp;
+  return P_.inverse() * L_.template triangularView<Eigen::UnitLower>().transpose().solve(temp);
 }
 template <class T>
 void BgLinearSystemSolver<T>::FactoriseCore(const Basis<T>& basis) {
