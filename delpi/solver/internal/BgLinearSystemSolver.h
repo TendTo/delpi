@@ -8,8 +8,6 @@
 namespace delpi::internal {
 
 template <class T>
-// using T = double;
-// template <class B>
 class BgLinearSystemSolver final : public LinearSystemSolver<T> {
  public:
   using LowerMatrix = Eigen::TriangularView<const Matrix<T>, Eigen::UnitLower>;

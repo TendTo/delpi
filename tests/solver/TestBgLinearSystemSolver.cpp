@@ -55,6 +55,5 @@ TYPED_TEST(TestBgLinearSystemSolver, UpdateFactorisation) {
   EXPECT_EQ(solver.L().toDenseMatrix() * solver.U().toDenseMatrix(), solver.P() * basis.basis_vectors());
   basis.Update(this->matrix_, 2, 4);
   std::cout << basis.basis_vectors() << std::endl;
-  std::cout << "FEST" << std::endl;
   solver.Factorise(basis);
 }
