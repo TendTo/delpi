@@ -43,10 +43,11 @@ template <class T>
 class Basis {
  public:
   using BasisVectors = decltype(Eigen::MatrixX<T>(Eigen::all, std::declval<std::vector<int>>()));
-  explicit Basis(const Eigen::MatrixX<T>& A, std::vector<int> basis_idxs = {});
-  explicit Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<int>>& basis_idxs);
+  explicit Basis(const Eigen::MatrixX<T>& A);
+  Basis(const Eigen::MatrixX<T>& A, std::vector<int> basis_idxs);
+  Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<int>>& basis_idxs);
   template <class M>
-  explicit Basis(const Eigen::MatrixX<T>& A, const Basis<M>& basis) : Basis{A, basis.basis_idxs_} {}
+  Basis(const Eigen::MatrixX<T>& A, const Basis<M>& basis) : Basis{A, basis.basis_idxs_} {}
 
   [[nodiscard]] const BasisVectors& basis_vectors() const { return basis_vectors_; }
   [[nodiscard]] const std::vector<int>& basis_idxs() const { return *basis_idxs_; }
