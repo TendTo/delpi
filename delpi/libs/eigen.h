@@ -67,3 +67,12 @@ template <class T>
 using Vector = Eigen::VectorX<T>;
 
 }  // namespace delpi
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::Matrix<mpq_class>)
+OSTREAM_FORMATTER(delpi::Matrix<double>)
+
+#endif

@@ -36,8 +36,23 @@ delpi_cc_googletest(
 delpi_cc_googletest(
     name = "test_basis",
     tags = ["solver"],
+    deps = ["//delpi/solver/internal:basis"],
+)
+
+delpi_cc_googletest(
+    name = "test_retriangularisation_factor",
+    tags = ["solver"],
     deps = [
-        ":test_solver_utils",
-        "//delpi/solver/internal:basis",
+        "//delpi/solver/internal:retriangularisation_factor",
+        "//delpi/util:exception",
+    ],
+)
+
+delpi_cc_googletest(
+    name = "test_bg_linear_system_solver",
+    tags = ["solver"],
+    deps = [
+        "//delpi/solver/internal:linear_system_solver",
+        "//delpi/util:error",
     ],
 )

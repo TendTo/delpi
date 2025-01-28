@@ -18,7 +18,9 @@ class BgLinearSystemSolver final : public LinearSystemSolver<T> {
 
   [[nodiscard]] LowerMatrix L() const { return L_.template triangularView<Eigen::UnitLower>(); }
   [[nodiscard]] UpperMatrix U() const { return U_.template triangularView<Eigen::Upper>(); }
+  // [[nodiscard]] const std::vector<RetriangularisationFactor<T>>& factors() const { return factors_; }
   [[nodiscard]] const PermutationMatrix& P() const { return P_; }
+  [[nodiscard]] Matrix<T> B() const;
 
  private:
   Vector<T> SolveCore(const Vector<T>& vector) const override;
@@ -31,7 +33,8 @@ class BgLinearSystemSolver final : public LinearSystemSolver<T> {
 
   size_t n_iteration_;
   Matrix<T> L_;
-  std::vector<RetriangularisationFactor<T>> factors_;
+  // std::vector<RetriangularisationFactor<T>> factors_;
+  std::vector<Matrix<T>> factors_;
   Matrix<T> U_;
   PermutationMatrix P_;
 };
