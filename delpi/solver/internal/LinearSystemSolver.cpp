@@ -15,12 +15,12 @@ void LinearSystemSolver<T>::Reset() {
   ResetCore();
 }
 template <class T>
-typename LinearSystemSolver<T>::Vector LinearSystemSolver<T>::Solve(const Vector& vector) const {
+Vector<T> LinearSystemSolver<T>::Solve(const Vector<T>& vector) const {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   return SolveCore(vector);
 }
 template <class T>
-typename LinearSystemSolver<T>::Vector LinearSystemSolver<T>::TransposeSolve(const Vector& vector) const {
+Vector<T> LinearSystemSolver<T>::TransposeSolve(const Vector<T>& vector) const {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   return TransposeSolveCore(vector);
 }

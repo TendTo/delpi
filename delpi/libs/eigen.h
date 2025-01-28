@@ -61,5 +61,9 @@ using EMatrix = Eigen::MatrixX<mpq_class>;
 using EVector = Eigen::VectorX<mpq_class>;
 using DMatrix = Eigen::MatrixXd;
 using DVector = Eigen::VectorXd;
+template <class T>
+using Matrix = Eigen::MatrixX<T>;
+template <class T>
+using Vector = Eigen::VectorX<T>;
 
 }  // namespace delpi
