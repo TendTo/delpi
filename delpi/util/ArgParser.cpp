@@ -137,9 +137,10 @@ void ArgParser::AddOptions() {
       if (value == "auto" || value == "1") return Config::Format::AUTO;
       if (value == "mps" || value == "2") return Config::Format::MPS;);  // NOLINT(readability/braces)
   DELPI_PARSE_PARAM_ENUM(
-      parser_, lp_solver, "--lp-solver", "[ soplex | qsoptex ] or [ 1 | 2 ]",
+      parser_, lp_solver, "--lp-solver", "[ soplex | qsoptex | delpi ] or [ 1 | 2 | 3 ]",
       if (value == "soplex" || value == "1") return Config::LpSolver::SOPLEX;
-      if (value == "qsoptex" || value == "2") return Config::LpSolver::QSOPTEX;);  // NOLINT(readability/braces)
+      if (value == "qsoptex" || value == "2") return Config::LpSolver::QSOPTEX;
+      if (value == "delpi" || value == "3") return Config::LpSolver::DELPI;);  // NOLINT(readability/braces)
   DELPI_TRACE("ArgParser::ArgParser: added all arguments");
 }
 

@@ -20,6 +20,7 @@
 #include <span>  // NOLINT(build/include_order): c++20 header
 #include <unordered_set>
 
+#include "delpi/solver/DelpiLpSolver.h"
 #include "delpi/util/error.h"
 
 namespace delpi {
@@ -50,6 +51,8 @@ std::unique_ptr<LpSolver> LpSolver::GetInstance(const Config& config) {
       return std::make_unique<SoplexLpSolver>(config);
     case Config::LpSolver::QSOPTEX:
       return std::make_unique<QsoptexLpSolver>(config);
+    case Config::LpSolver::DELPI:
+      return std::make_unique<DelpiLpSolver>(config);
     default:
       DELPI_UNREACHABLE();
   }
@@ -219,6 +222,8 @@ bool LpSolver::CheckAgainstExpected(const LpResult result) const {
       return result == LpResult::UNBOUNDED;
     case LpResult::INFEASIBLE:
       return result == LpResult::INFEASIBLE || result == LpResult::DELTA_OPTIMAL;
+    case LpResult::UNSOLVED:
+      return true;
     default:
       return false;
   }
