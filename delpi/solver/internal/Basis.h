@@ -58,6 +58,7 @@ class Basis {
   [[nodiscard]] int last_entering() const { return last_entering_; }
 
   void Update(const Eigen::MatrixX<T>& A, int leaving, int entering);
+  void OffsetIndexes(int offset);
 
  protected:
   int max_updates_before_refactor_;               ///< Number of updates before a forced refactorization of the basis
