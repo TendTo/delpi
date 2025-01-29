@@ -41,6 +41,7 @@ TYPED_TEST(TestBgLinearSystemSolver, Factorise) {
   EXPECT_EQ(solver.L().toDenseMatrix() * solver.U().toDenseMatrix(), solver.P() * basis.basis_vectors());
   EXPECT_EQ(solver.B(), basis.basis_vectors());
   EXPECT_EQ(solver.Solve(this->vector_), basis.basis_vectors().fullPivLu().solve(this->vector_));
+  EXPECT_EQ(solver.TransposeSolve(this->vector_), basis.basis_vectors().transpose().fullPivLu().solve(this->vector_));
 }
 
 TYPED_TEST(TestBgLinearSystemSolver, UpdateFactorisationNoFactorsNeeded) {
@@ -51,6 +52,7 @@ TYPED_TEST(TestBgLinearSystemSolver, UpdateFactorisationNoFactorsNeeded) {
   solver.Factorise(basis);
   EXPECT_EQ(solver.B(), basis.basis_vectors());
   EXPECT_EQ(solver.Solve(this->vector_), basis.basis_vectors().fullPivLu().solve(this->vector_));
+  EXPECT_EQ(solver.TransposeSolve(this->vector_), basis.basis_vectors().transpose().fullPivLu().solve(this->vector_));
 }
 
 TYPED_TEST(TestBgLinearSystemSolver, UpdateFactorisationFactors) {
@@ -61,6 +63,7 @@ TYPED_TEST(TestBgLinearSystemSolver, UpdateFactorisationFactors) {
   solver.Factorise(basis);
   EXPECT_EQ(solver.B(), basis.basis_vectors());
   EXPECT_EQ(solver.Solve(this->vector_), basis.basis_vectors().fullPivLu().solve(this->vector_));
+  EXPECT_EQ(solver.TransposeSolve(this->vector_), basis.basis_vectors().transpose().fullPivLu().solve(this->vector_));
 }
 
 TYPED_TEST(TestBgLinearSystemSolver, MultipleUpdateFactorisation) {
@@ -72,5 +75,6 @@ TYPED_TEST(TestBgLinearSystemSolver, MultipleUpdateFactorisation) {
     solver.Factorise(basis);
     EXPECT_EQ(solver.B(), basis.basis_vectors());
     EXPECT_EQ(solver.Solve(this->vector_), basis.basis_vectors().fullPivLu().solve(this->vector_));
+    EXPECT_EQ(solver.TransposeSolve(this->vector_), basis.basis_vectors().transpose().fullPivLu().solve(this->vector_));
   }
 }
