@@ -48,16 +48,23 @@ std::vector<mpq_class> ToMpqVector(const mpq_t *x, int size);
 
 /**
  * Calculate the floor of a rational number.
- * @param val The rational number.
- * @return The floor of the rational number.
+ * @param val rational number.
+ * @return floor of the rational number.
  */
 mpz_class floor(const mpq_class &val);
 /**
  * Calculate the ceil of a rational number.
- * @param val The rational number.
- * @return The ceil of the rational number.
+ * @param val rational number.
+ * @return ceil of the rational number.
  */
 mpz_class ceil(const mpq_class &val);
+/**
+ * Return a boolean representing the sign of the rational number.
+ * @param val rational number
+ * @return false if the rational number is negative
+ * @return true if the rational number is non-negative
+ */
+inline bool sign(const mpq_class &val) { return val.get_num() >= 0; }
 
 /**
  * Cast a mpq_class to a mpq_t.
