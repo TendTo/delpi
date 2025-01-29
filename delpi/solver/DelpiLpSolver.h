@@ -30,10 +30,10 @@ class DelpiLpSolver final : public LpSolver {
   [[nodiscard]] int num_columns() const override;
   [[nodiscard]] int num_rows() const override;
 
-  const Matrix<mpq_class>& A() const { return A_; }
-  const Vector<mpq_class>& c() const { return c_; }
-  const Vector<mpq_class>& b() const { return b_; }
-  const Vector<mpq_class>& x() const { return x_; }
+  [[nodiscard]] const Matrix<mpq_class>& A() const { return A_; }
+  [[nodiscard]] const Vector<mpq_class>& c() const { return c_; }
+  [[nodiscard]] const Vector<mpq_class>& b() const { return b_; }
+  [[nodiscard]] const Vector<mpq_class>& x() const { return x_; }
 
   [[nodiscard]] Column column(ColumnIndex column_idx) const override;
   [[nodiscard]] Row row(RowIndex row_idx) const override;
@@ -52,11 +52,47 @@ class DelpiLpSolver final : public LpSolver {
 
  private:
   LpResult SolveCore(mpq_class& precision, bool store_solution) override;
-  template <class T>
-  LpResult LpSolve(const Matrix<T>& A, const Vector<T>& b, const Vector<T>& c, internal::Basis<T>& basis);
-  LpResult FeasibilityCheck();
-  LpResult OptimalityCheck();
-  LpResult UnboundednessCheck();
+  /**
+   * Solve the LP problem using the Simplex algorithm.
+   * The input is assumed to be in standard form, i.e.
+   * @f[
+   * \begin{array}{rl}
+   * \min & c^T x \\
+   * \text{s.t.} & Ax = b \\
+   * & x \ge 0
+   * \end{array}
+   * @f]
+   * @pre The LP problem must be in standard form.
+   * @pre `A` must have the same number of rows as `b` and the same number of columns as `c`.
+   * @pre `A` must have the same number of rows as `basis` has columns (and rows, since `basis` is a square matrix).
+   * @pre `basis` must be a feasible basis for the problem.
+   * @param A coefficient matrix
+   * @param b rhs vector
+   * @param c objective function
+   * @param basis starting feasible basis
+   * @return LpResult::OPTIMAL if the problem is feasible, bounded and an optimal solution has been found
+   * @return LpResult::UNBOUNDED if the problem is unbounded
+   */
+  LpResult InternalSolve(const Matrix<mpq_class>& A, const Vector<mpq_class>& b, const Vector<mpq_class>& c,
+                         internal::Basis<mpq_class>& basis);
+  // TODO(tend): add mpf_class support
+  // LpResult InternalSolve(const Matrix<T>& A, const Vector<T>& b, const Vector<T>& c, internal::Basis<T>& basis);
+  LpResult FeasibilityCheck(const Matrix<mpq_class>& A, internal::Basis<mpq_class>& basis);
+  LpResult OptimalityCheck(const internal::Basis<mpq_class>& basis);
+  LpResult UnboundednessCheck(const internal::Basis<mpq_class>& basis);
+  /**
+   * Check if `basis` contains any auxiliary columns and remove them, replacing them with valid columns from `A`.
+   * @pre The auxiliary columns must be the leftmost columns of `A`.
+   * @pre The number of auxiliary columns must be less than or equal to the number of actual columns.
+   * @param A coefficient matrix containing the auxiliary columns
+   * @param basis basis possibly containing the auxiliary columns
+   * @param num_columns_to_keep number of rightmost columns of `A` that will be kept. If negative, it will be set to
+   * the number of rows of `A`.
+   */
+  void RemoveAuxiliaryColumns(const Matrix<mpq_class>& A, internal::Basis<mpq_class>& basis,
+                              int num_columns_to_keep = -1) const;
+
+  std::pair<Matrix<mpq_class>, Vector<mpq_class>> ToSlackForm() const;
 #if 0
   /**
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.
@@ -72,11 +108,12 @@ class DelpiLpSolver final : public LpSolver {
   void UpdateInfeasible();
 #endif
 
-  Matrix<mpq_class> A_;  ///< Coefficient matrix
-  Vector<mpq_class> c_;  ///< Objective function coefficients
-  Vector<mpq_class> b_;  ///< Right-hand side
-  Vector<mpq_class> x_;  ///< Solution
-  Vector<mpq_class> y_;  ///< Dual solution
+  Matrix<mpq_class> A_;                  ///< Coefficient matrix
+  Vector<mpq_class> c_;                  ///< Objective function coefficients
+  Vector<mpq_class> b_;                  ///< Right-hand side
+  Vector<mpq_class> x_;                  ///< Solution
+  Vector<mpq_class> y_;                  ///< Dual solution
+  std::vector<FormulaKind> row_senses_;  ///< Row senses (i.e. <=, =, >=)
 };
 
 std::ostream& operator<<(std::ostream& os, const DelpiLpSolver& solver);

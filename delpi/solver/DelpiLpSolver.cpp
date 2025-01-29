@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <ostream>
+#include <unordered_set>
 
 #include "delpi/util/error.h"
 #include "internal/Basis.h"
@@ -14,51 +15,12 @@
 
 namespace delpi {
 
-template <>
-LpResult DelpiLpSolver::LpSolve(const Matrix<mpq_class>& A, const Vector<mpq_class>& b, const Vector<mpq_class>& c,
-                                internal::Basis<mpq_class>& basis) {
-  // TODO(tend): Use a more sophisticated maximum number of iterations
-  constexpr int max_iterations = 5;
-  for (int i = 0; i < max_iterations; ++i) {
-    internal::BgLinearSystemSolver<mpq_class> solver{config_};
-    solver.Factorise(basis);
-    Vector<mpq_class> zb{solver.Solve(b)};
-    Vector<mpq_class> y{solver.TransposeSolve(c(basis.basis_idxs()))};
-    // Compute the reduced costs to determine the entering variable or optimality
-    Vector<mpq_class> r{c - A.transpose() * y};
-    int r_idx = 0;
-    for (; r_idx < r.size(); ++r_idx) {
-      if (r(r_idx) < 0) break;
-    }
-    if (r_idx == r.size()) {
-      x_ = Eigen::VectorX<mpq_class>::Zero(A.cols());
-      x_(basis.basis_idxs()) = zb;
-      return LpResult::OPTIMAL;
-    }
-    // Compute the entering variable or unboundedness
-    Vector<mpq_class> d{solver.Solve(A.col(r_idx))};
-    mpq_class min_ratio = -1;
-    int min_idx = -1;
-    for (int d_idx = 0; d_idx < d.size(); ++d_idx) {
-      if (d(d_idx) <= 0) continue;
-      const mpq_class ratio = zb(d_idx) / d(d_idx);
-      if (min_ratio == -1 || ratio < min_ratio) {
-        min_ratio = ratio;
-        min_idx = d_idx;
-      }
-    }
-    if (min_idx == -1) return LpResult::UNBOUNDED;
-
-    fmt::println("Updating\n{}\n with leaving = {}, entering = {}", basis, min_idx, r_idx);
-    // Update the basis
-    basis.Update(A, min_idx, r_idx);
-  }
-  DELPI_RUNTIME_ERROR("Maximum number of iterations reached");
-}
+namespace {
+inline bool IsInfinity(const mpq_class& value) { return mpz_sgn(value.get_den_mpz_t()) == 0; }
+}  // namespace
 
 DelpiLpSolver::DelpiLpSolver(Config config, const std::string& class_name)
-    : LpSolver{mpq_class{std::numeric_limits<long>::min()}, mpq_class{std::numeric_limits<long>::max()},
-               std::move(config), class_name} {}
+    : LpSolver{mpq_class{mpz_class{0}, 0}, mpq_class{mpz_class{0}, 0}, std::move(config), class_name} {}
 
 int DelpiLpSolver::num_columns() const { return A_.cols(); }
 int DelpiLpSolver::num_rows() const { return A_.rows(); }
@@ -76,7 +38,15 @@ Row DelpiLpSolver::row(const RowIndex row_idx) const {
   for (int i = 0; i < columns; ++i) {
     if (A_(row_idx, i) != 0) addends.emplace_back(col_to_var_.at(i), A_(row_idx, i));
   }
-  return {addends, b_(row_idx), b_(row_idx)};
+  return {addends,
+          row_senses_[row_idx] == FormulaKind::Eq || row_senses_[row_idx] == FormulaKind::Geq ||
+                  row_senses_[row_idx] == FormulaKind::Gt
+              ? std::optional<mpq_class>{b_(row_idx)}
+              : std::nullopt,
+          row_senses_[row_idx] == FormulaKind::Eq || row_senses_[row_idx] == FormulaKind::Leq ||
+                  row_senses_[row_idx] == FormulaKind::Lt
+              ? std::optional<mpq_class>{b_(row_idx)}
+              : std::nullopt};
 }
 
 void DelpiLpSolver::ReserveColumns(const int num_columns) {
@@ -106,16 +76,22 @@ LpSolver::ColumnIndex DelpiLpSolver::AddColumn(const Variable& var, const mpq_cl
 }
 LpSolver::RowIndex DelpiLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
                                          const mpq_class& ub) {
-  // TODO(tend): Support multiple constraint senses
-  if (lb != ub) throw DelpiNotImplementedException("Only equality constraints are supported");
+  if (IsInfinity(lb) && IsInfinity(ub)) {
+    DELPI_WARN_FMT("Ignoring unbounded row with addends: {}", addends);
+    return -1;
+  }
   Expression::Addends map_addends;
   for (const auto& [var, coeff] : addends) map_addends.emplace(var, coeff);
-  return AddRow(map_addends, FormulaKind::Eq, lb);
+  if (lb == ub) return AddRow(map_addends, FormulaKind::Eq, lb);
+  if (!IsInfinity(lb)) AddRow(map_addends, FormulaKind::Geq, lb);
+  if (!IsInfinity(ub)) AddRow(map_addends, FormulaKind::Leq, ub);
+  return num_rows() - 1;
 }
 LpSolver::RowIndex DelpiLpSolver::AddRow(const Expression::Addends& lhs, const FormulaKind sense,
                                          const mpq_class& rhs) {
-  // TODO(tend): Support multiple constraint senses
-  if (sense != FormulaKind::Eq) throw DelpiNotImplementedException("Only equality constraints are supported");
+  DELPI_ASSERT(sense == FormulaKind::Eq || sense == FormulaKind::Leq || sense == FormulaKind::Geq,
+               "Only equality, less than or equal, and greater than or equal constraints are supported");
+
   const RowIndex row_idx = num_rows();
   // Set the coefficients in the A matrix
   A_.conservativeResize(row_idx + 1, Eigen::NoChange);
@@ -124,6 +100,8 @@ LpSolver::RowIndex DelpiLpSolver::AddRow(const Expression::Addends& lhs, const F
   // Set the right-hand side in the b vector
   b_.conservativeResize(row_idx + 1);
   b_.tail(1).setConstant(rhs);
+
+  row_senses_.emplace_back(sense);
   return row_idx;
 }
 void DelpiLpSolver::SetBound(Variable, const mpq_class&, const mpq_class&) {
@@ -136,89 +114,208 @@ void DelpiLpSolver::SetObjective(const int column, const mpq_class& value) { c_(
 
 #ifndef NDEBUG
 void DelpiLpSolver::Dump() {
-  std::cout << "DelpiLpSolver{ A: " << A_ << ",\nb: " << b_ << ",\nc: " << c_ << " }" << std::endl;
+  std::cout << "DelpiLpSolver{ A:\n" << A_ << ",\nb:\n" << b_ << ",\nc:\n" << c_ << "\n}" << std::endl;
 }
 #endif
 LpResult DelpiLpSolver::SolveCore(mpq_class&, bool) {
-  internal::Basis<mpq_class> basis{A_};
-  const LpResult result = LpSolve(A_, b_, c_, basis);
-  obj_lb_ = obj_ub_ = c_.transpose() * x_;
+  DELPI_ASSERT(static_cast<std::size_t>(A_.rows()) == row_senses_.size(), "Inconsistent number of rows and senses");
+
+  auto [slack_A, slack_c] = ToSlackForm();
+  internal::Basis<mpq_class> basis(slack_A);
+  DELPI_DEV_FMT("slack_A:\n{}\nslack_c:\n{}", slack_A, slack_c);
+
+  const LpResult feasibility_check = FeasibilityCheck(slack_A, basis);
+  DELPI_DEV_FMT("Feasibility check: {}. Feasible basis:\n{}\nFesible sol: {}", feasibility_check, basis, x_);
+  if (feasibility_check == LpResult::INFEASIBLE) return feasibility_check;
+
+  const LpResult result = InternalSolve(slack_A, b_, slack_c, basis);
+
+  // Drop the slack variables from the solution
+  x_ = x_.tail(num_columns()).eval();
+  DELPI_DEV_FMT("Result check: {}. Basis:\n{}\nSolution: {}, c: {}", result, basis, x_, c_);
+  if (result == LpResult::OPTIMAL) obj_lb_ = obj_ub_ = c_.transpose() * x_;
   return result;
-  DELPI_UNREACHABLE();
-#if 0
-  const int m = num_rows();
-  // TODO: change row and column indices based on the current situation
-  const auto cb = c_.tail(m);
-  const auto cn = c_.head(c_.size() - m);
-  B_ = A_.rightCols(m);
-  std::cout << "B:\n" << B_ << std::endl;
-  const auto LU = B_.fullPivLu();
-  L_ = LU.matrixLU().triangularView<Eigen::StrictlyLower>();
-  U_ = LU.matrixLU().triangularView<Eigen::Upper>();
-  std::cout << "L:\n" << L_ << std::endl;
-  std::cout << "U:\n" << U_ << std::endl;
-  // 1. B x = b
-  x_ = LU.solve(b_);
-  std::cout << "1. x:\n" << x_ << std::endl;
-  // 2. B^T pi = c_B
-  const Eigen::VectorX<mpq_class> pi{LU.transpose().solve(cb)};
-  std::cout << "2. pi:\n" << pi << std::endl;
-  // 3. C = cn - pi^T A_n
-  const Eigen::VectorX<mpq_class> reduced_cost{cn.transpose() - pi.transpose() * (A_.leftCols(A_.cols() - m))};
-  std::cout << "3. reduced_cost:\n" << reduced_cost.matrix() << std::endl;
-  // 4. Select the most negative reduced cost
-  int min_index = -1;
-  const mpq_class& min_value = reduced_cost.minCoeff(&min_index);
-  std::cout << "4. min_index: " << min_index << ", min_value: " << min_value << std::endl;
-  // 4.1. If all reduced costs are non-negative, the solution is optimal
-  if (min_value >= 0) return LpResult::OPTIMAL;
-  // 4.2. Otherwise, we have found the entering variable at min_index
-  std::cout << "4.2. entering var: " << col_to_var_.at(min_index) << std::endl;
-
-  // 5. B y = A_min
-  const Eigen::VectorX<mpq_class> A_min{LU.solve(A_.col(min_index))};
-  std::cout << "5. A_min:\n" << A_min << std::endl;
-  // 6.1. If all elements of A_min are non-positive, the problem is unbounded
-  if (A_min.maxCoeff() <= 0) return LpResult::UNBOUNDED;
-  // 6.1 Otherwise, we have found the leaving variable
-  int min_ratio_index = -1;
-  const Eigen::ArrayX<mpq_class> ratio{x_.array() / A_min.array()};
-  const mpq_class& min = ratio.minCoeff(&min_ratio_index);
-  std::cout << "6.1. min_ratio_index: " << min_ratio_index << ", min_ratio: " << min << std::endl;
-
-  return LpResult::ERROR;
-#endif
 }
 
-LpResult DelpiLpSolver::FeasibilityCheck() {
-  // Check if the current solution is feasible
+LpResult DelpiLpSolver::InternalSolve(const Matrix<mpq_class>& A, const Vector<mpq_class>& b,
+                                      const Vector<mpq_class>& c, internal::Basis<mpq_class>& basis) {
+  DELPI_ASSERT(A.rows() == b.size(), "Inconsistent number of rows in A and b");
+  DELPI_ASSERT(A.cols() == c.size(), "Inconsistent number of columns in A and c");
+  DELPI_ASSERT(basis.size() == A.rows(), "Inconsistent number of rows in A and basis");
 
-  //              m         n
-  // c' = [ 1 1 1 ... 1 0 0 ... 0 ]
-  Eigen::VectorX<mpq_class> aux_c{Eigen::VectorX<mpq_class>::Zero(num_columns() + num_rows())};
-  aux_c(0, Eigen::seqN(0, num_rows())) = Eigen::VectorX<mpq_class>::Ones(num_rows());
-  DELPI_DEV_FMT("aux_c:\n{}", aux_c);
+  // TODO(tend): Use a more sophisticated maximum number of iterations
+  constexpr int max_iterations = 100;
+  for (int i = 0; i < max_iterations; ++i) {
+    internal::BgLinearSystemSolver<mpq_class> solver{config_};
+    solver.Factorise(basis);
+    Vector<mpq_class> zb{solver.Solve(b)};
+    DELPI_ASSERT((zb.array() >= 0).all(), "All values must be non-negative (feasible)");
+    Vector<mpq_class> y{solver.TransposeSolve(c(basis.basis_idxs()))};
+    fmt::println("cb: {}\ny: {}", c(basis.basis_idxs()), y);
+    // Compute the reduced costs to determine the entering variable or optimality
+    Vector<mpq_class> r{c - A.transpose() * y};
+    fmt::println("c: {}\nrd: {}", c, A.transpose() * y);
+    int r_idx = 0;
+    for (; r_idx < r.size(); ++r_idx) {
+      if (r(r_idx) < 0) break;
+    }
+    if (r_idx == r.size()) {
+      x_ = Eigen::VectorX<mpq_class>::Zero(A.cols());
+      x_(basis.basis_idxs()) = zb;
+      return LpResult::OPTIMAL;
+    }
+    fmt::println("Reduced costs: r: {}\nr [{}] = {}", r, r_idx, r(r_idx));
 
-  // A' = [ I A ]
-  Eigen::MatrixX<mpq_class> aux_A{Eigen::MatrixX<mpq_class>::Zero(num_rows(), num_columns() + num_rows())};
-  aux_A(Eigen::all, Eigen::seqN(0, num_rows())) = Eigen::MatrixX<mpq_class>::Identity(num_rows(), num_rows());
-  aux_A(Eigen::all, Eigen::seqN(num_rows(), num_columns())) = A_;
-  // Set the diagonal value to -1 if the rhs is negative
-  for (int i = 0; i < num_rows(); ++i) {
-    if (b_(i) < 0) aux_A(i, i) = -1;
+    // Compute the entering variable or unboundedness
+    Vector<mpq_class> d{solver.Solve(A.col(r_idx))};
+    mpq_class min_ratio = -1;
+    int min_idx = -1;
+    for (int d_idx = 0; d_idx < d.size(); ++d_idx) {
+      if (d(d_idx) <= 0) continue;
+      const mpq_class ratio = zb(d_idx) / d(d_idx);
+      if (min_ratio == -1 || ratio < min_ratio) {
+        min_ratio = ratio;
+        min_idx = d_idx;
+      }
+    }
+    fmt::println("zb: {}\nd: {}\n", zb, d);
+    if (min_idx == -1) return LpResult::UNBOUNDED;
+    fmt::println("Min ratio: [{}] = {}", min_idx, d(min_idx));
+
+    fmt::println("Updating\n{}\n with leaving = {} ({}), entering = {} from A ({})", basis,
+                 basis.basis_vectors().col(min_idx), min_idx, A.col(r_idx), r_idx);
+    // Update the basis
+    basis.Update(A, min_idx, r_idx);
+  }
+  DELPI_RUNTIME_ERROR("Maximum number of iterations reached");
+}
+
+LpResult DelpiLpSolver::FeasibilityCheck(const Matrix<mpq_class>& A, internal::Basis<mpq_class>& basis) {
+  DELPI_ASSERT(A.rows() == b_.size(), "Inconsistent number of rows in A and b");
+
+  DELPI_TRACE("DelpiLpSolver::FeasibilityCheck()");
+  std::vector<int> aux_columns{};
+  std::vector<int> slack_columns{};
+  aux_columns.reserve(A.rows());
+  slack_columns.reserve(A.rows());
+  for (int i = 0; i < A.rows(); ++i) {
+    // If the rhs and the slack variables have different signs or there was no slack variable, add an auxiliary variable
+    if ((b_(i) >= 0) != (A(i, i) >= 0) || A(i, i) == 0) {
+      aux_columns.push_back(i);
+    } else {  // Otherwise, keep using the already existing slack variable
+      slack_columns.push_back(i);
+    }
+  }
+  const int num_aux_columns = static_cast<int>(aux_columns.size());
+
+  // No need to run any checks if there are no auxiliary variables. Just set the slack columns as the basis
+  if (num_aux_columns == 0) {
+    DELPI_TRACE("DelpiLpSolver::FeasibilityCheck(): No auxiliary variables needed");
+    basis = internal::Basis{A};
+    return LpResult::OPTIMAL;
+  }
+
+  //        m n
+  // A' = [ I A ] m
+  Eigen::MatrixX<mpq_class> aux_A{Eigen::MatrixX<mpq_class>::Zero(A.rows(), num_aux_columns + A.cols())};
+  aux_A.rightCols(A.cols()) = A;
+  // Set the coefficient of the aux variable to -1 if the rhs is negative, otherwise 1
+  for (int i = 0; i < num_aux_columns; ++i) {
+    aux_A(aux_columns[i], i) = (b_(aux_columns[i]) < 0) ? -1 : 1;
   }
   DELPI_DEV_FMT("aux_A:\n{}", aux_A);
 
-  // Initial feasible basis
-  internal::Basis aux_basis{aux_A};
+  //              num_aux_columns         n
+  // c' = [ 1 1 .................. 1 0 0 ... 0 ]
+  Eigen::VectorX<mpq_class> aux_c{Eigen::VectorX<mpq_class>::Zero(num_aux_columns + A.cols())};
+  aux_c.head(num_aux_columns) = Eigen::VectorX<mpq_class>::Ones(num_aux_columns);
+  DELPI_DEV_FMT("aux_c:\n{}", aux_c);
+
+  // Initial feasible basis mapping to the columns of A that either contain an aux variable or an active slack variable
+  for (int& idx : slack_columns) idx += num_aux_columns;
+  std::vector<int> basis_idxs(num_aux_columns);
+  std::iota(basis_idxs.begin(), basis_idxs.end(), 0);
+  basis_idxs.insert(basis_idxs.end(), slack_columns.begin(), slack_columns.end());
+  internal::Basis aux_basis{aux_A, basis_idxs};
   DELPI_DEV_FMT("aux_basis:\n{}", aux_basis);
 
-  // TODO(tend): Solve the feasible problem
+  // TODO(tend): Solve the feasible problem in increasing precision
+  // Solve the auxiliary problem
+  const LpResult result = InternalSolve(aux_A, b_, aux_c, aux_basis);
+  DELPI_TRACE_FMT("DelpiLpSolver::FeasibilityCheck(): Feasibility check result: {}", result);
+  if (result != LpResult::OPTIMAL) return LpResult::INFEASIBLE;
+  // Check if the objective value is zero
+  const mpq_class objective_value = aux_c.transpose() * x_;
+  DELPI_TRACE_FMT("DelpiLpSolver::FeasibilityCheck(): Feasibility check objective value: {}", objective_value);
+  if (objective_value != 0) return LpResult::INFEASIBLE;
 
+  RemoveAuxiliaryColumns(aux_A, aux_basis, A.cols());
+
+  basis = aux_basis;
   return LpResult::OPTIMAL;
 }
-LpResult DelpiLpSolver::OptimalityCheck() { return LpResult::OPTIMAL; }
-LpResult DelpiLpSolver::UnboundednessCheck() { return LpResult::OPTIMAL; }
+LpResult DelpiLpSolver::OptimalityCheck(const internal::Basis<mpq_class>&) {
+  DELPI_TRACE("DelpiLpSolver::OptimalityCheck()");
+  return LpResult::OPTIMAL;
+}
+LpResult DelpiLpSolver::UnboundednessCheck(const internal::Basis<mpq_class>&) {
+  DELPI_TRACE("DelpiLpSolver::UnboundednessCheck()");
+  return LpResult::OPTIMAL;
+}
+void DelpiLpSolver::RemoveAuxiliaryColumns(const Matrix<mpq_class>& A, internal::Basis<mpq_class>& basis,
+                                           const int num_columns_to_keep) const {
+  const int aux_columns = num_columns_to_keep < 0 ? A.cols() - num_columns() : A.cols() - num_columns_to_keep;
+  DELPI_ASSERT(aux_columns >= 0, "The number of auxiliary columns must non-negative");
+
+  // Remove the auxiliary variables from the basis
+  std::unordered_set<int> aux_basis_idxs{};
+  int valid_idx = aux_columns;
+  for (int i = 0; i < static_cast<int>(basis.basis_idxs().size()); ++i) {
+    if (basis.basis_idxs()[i] >= aux_columns) continue;  // Valid non-auxiliary index
+    // Initialise the set only if needed
+    if (aux_basis_idxs.empty()) aux_basis_idxs.insert(basis.basis_idxs().begin(), basis.basis_idxs().end());
+    // Replace the auxiliary index with any valid index not already in the basis
+    for (bool updated = false; valid_idx < A.cols() && !updated; ++valid_idx) {
+      if (!aux_basis_idxs.contains(valid_idx)) {
+        DELPI_DEV_FMT("Removing auxiliary column: {} ({}) to put {}", i, basis.basis_idxs()[i], valid_idx);
+        basis.Update(A, i, valid_idx);
+        updated = true;
+      }
+    }
+  }
+
+  // Make all non-auxiliary indices point to the original indices.
+  basis.OffsetIndexes(-aux_columns);
+  DELPI_ASSERT(
+      std::ranges::all_of(basis.basis_idxs(),
+                          [num_columns_to_keep](const int idx) { return idx >= 0 && idx < num_columns_to_keep; }),
+      "All indices must be valid");
+  DELPI_ASSERT(
+      std::unordered_set(basis.basis_idxs().begin(), basis.basis_idxs().end()).size() == basis.basis_idxs().size(),
+      "All indices must be unique");
+}
+std::pair<Matrix<mpq_class>, Vector<mpq_class>> DelpiLpSolver::ToSlackForm() const {
+  Matrix<mpq_class> slack_A{A_.rows(), A_.cols() + A_.rows()};
+  slack_A.rightCols(A_.cols()) = A_;
+  slack_A.leftCols(A_.rows()) = Matrix<mpq_class>::Zero(A_.rows(), A_.rows());
+  for (int i = 0; i < A_.rows(); ++i) {
+    switch (row_senses_[i]) {
+      case FormulaKind::Eq:
+        break;
+      case FormulaKind::Leq:
+        slack_A(i, i) = 1;
+        break;
+      case FormulaKind::Geq:
+        slack_A(i, i) = -1;
+        break;
+      default:
+        DELPI_UNREACHABLE();
+    }
+  }
+  Vector<mpq_class> slack_c{Vector<mpq_class>::Zero(A_.cols() + A_.rows())};
+  slack_c.tail(c_.size()) = c_;
+  return {std::move(slack_A), std::move(slack_c)};
+}
 
 std::ostream& operator<<(std::ostream& os, const DelpiLpSolver& solver) {
   return os << "DelpiLpSolver{ A:\n" << solver.A() << ",\nb:\n" << solver.b() << ",\nc:\n" << solver.c() << "\n}";
