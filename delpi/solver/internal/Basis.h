@@ -39,6 +39,7 @@ namespace delpi::internal {
  * However, SPxBasisBase does not provide a linear solver by its own.
  * Instead, a SLinSolver object must be loaded to a SPxBasisBase which will be called for solving linear systems.
  */
+// TODO(tend): fix reference to coefficient matrix
 template <class T>
 class Basis {
  public:

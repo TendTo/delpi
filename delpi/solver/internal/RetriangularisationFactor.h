@@ -1,7 +1,7 @@
 #pragma once
 
-#include <algorithm>
 #include <iosfwd>
+#include <vector>
 
 #include "delpi/libs/eigen.h"
 
@@ -37,16 +37,35 @@ class RetriangularisationFactor {
 };
 
 template <class T>
-Eigen::MatrixX<T>& operator*=(Eigen::MatrixX<T>& matrix, const RetriangularisationFactor<T>& factor);
+Matrix<T>& operator*=(Matrix<T>& matrix, const RetriangularisationFactor<T>& factor);
 template <class T>
-Eigen::MatrixX<T> operator*(const RetriangularisationFactor<T>& factor, const Eigen::MatrixX<T>& matrix);
+Matrix<T> operator*(const RetriangularisationFactor<T>& factor, const Matrix<T>& matrix);
 
 template <class T>
-Eigen::MatrixX<T>& operator*=(const RetriangularisationFactor<T>& factor, Eigen::MatrixX<T>& matrix);
+Matrix<T>& operator*=(const RetriangularisationFactor<T>& factor, Matrix<T>& matrix);
 template <class T>
-Eigen::MatrixX<T> operator*(const Eigen::MatrixX<T>& matrix, const RetriangularisationFactor<T>& factor);
+Matrix<T> operator*(const Matrix<T>& matrix, const RetriangularisationFactor<T>& factor);
+
+template <class T>
+Matrix<T>& operator*=(Matrix<T>& matrix, const std::vector<RetriangularisationFactor<T>>& factors);
+template <class T>
+Matrix<T>& operator*=(const std::vector<RetriangularisationFactor<T>>& factors, Matrix<T>& matrix);
+
+template <class T>
+Matrix<T> operator*(const Matrix<T>& matrix, const std::vector<RetriangularisationFactor<T>>& factors);
+template <class T>
+Matrix<T> operator*(const std::vector<RetriangularisationFactor<T>>& factors, const Matrix<T>& matrix);
 
 template <class T>
 std::ostream& operator<<(std::ostream& os, const RetriangularisationFactor<T>& factor);
 
 }  // namespace delpi::internal
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::internal::RetriangularisationFactor<mpq_class>)
+OSTREAM_FORMATTER(delpi::internal::RetriangularisationFactor<double>)
+
+#endif
