@@ -20,6 +20,7 @@
 #include <span>  // NOLINT(build/include_order): c++20 header
 #include <unordered_set>
 
+#include "delpi/solver/DelpiLpSolver.h"
 #include "delpi/util/error.h"
 
 namespace delpi {
@@ -35,6 +36,7 @@ bool IsYes(std::string value) {
 LpSolver::LpSolver(mpq_class ninfinity, mpq_class infinity, Config config, const std::string& class_name)
     : config_{std::move(config)},
       stats_{config.with_timings(), class_name, "Total time spent in Optimise", "Total # of Optimise"},
+      parser_stats_{config.with_timings(), class_name, "Total time spent in parsing"},
       var_to_col_{},
       col_to_var_{},
       solution_{},
@@ -49,6 +51,8 @@ std::unique_ptr<LpSolver> LpSolver::GetInstance(const Config& config) {
       return std::make_unique<SoplexLpSolver>(config);
     case Config::LpSolver::QSOPTEX:
       return std::make_unique<QsoptexLpSolver>(config);
+    case Config::LpSolver::DELPI:
+      return std::make_unique<DelpiLpSolver>(config);
     default:
       DELPI_UNREACHABLE();
   }
@@ -218,6 +222,8 @@ bool LpSolver::CheckAgainstExpected(const LpResult result) const {
       return result == LpResult::UNBOUNDED;
     case LpResult::INFEASIBLE:
       return result == LpResult::INFEASIBLE || result == LpResult::DELTA_OPTIMAL;
+    case LpResult::UNSOLVED:
+      return true;
     default:
       return false;
   }

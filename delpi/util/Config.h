@@ -39,6 +39,7 @@ class Config {
   enum class LpSolver {
     SOPLEX,   ///< Soplex Solver. Default option
     QSOPTEX,  ///< Qsoptex Solver
+    DELPI,    ///< Delpi Solver
   };
   /** Format of the input file. */
   enum class Format {
