@@ -1,7 +1,7 @@
 
 #include "delpi/solver/internal/BgLinearSystemSolver.h"
 
-#include <iostream>
+#include <ostream>
 #include <ostream>
 #include <ranges>
 
