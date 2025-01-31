@@ -5,7 +5,7 @@
  */
 #include "delpi/solver/QsoptexLpSolver.h"
 
-#include <iostream>
+#include <ostream>
 #include <map>
 #include <set>
 #include <span>  // NOLINT(build/include_order): c++20 header

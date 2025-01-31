@@ -69,6 +69,7 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
 
 #ifndef NDEBUG
 
+#include <iostream>
 #include <thread>
 
 #define DELPI_DEV(msg)                                                                                          \

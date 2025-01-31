@@ -1,6 +1,6 @@
 #include "delpi/solver/internal/RetriangularisationFactor.h"
 
-#include <iostream>
+#include <ostream>
 #include <ostream>
 
 #include "delpi/util/error.h"

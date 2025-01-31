@@ -7,7 +7,7 @@
 #include "delpi/parser/mps/BoundType.h"
 
 #include <cstring>
-#include <iostream>
+#include <ostream>
 
 #include "delpi/util/error.h"
 

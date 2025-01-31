@@ -6,7 +6,7 @@
 
 #include "delpi/parser/mps/Driver.h"
 
-#include <iostream>
+#include <ostream>
 
 #include "delpi/util/error.h"
 #include "delpi/util/logging.h"
