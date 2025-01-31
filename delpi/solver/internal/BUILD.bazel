@@ -17,6 +17,23 @@ delpi_hdrs_tar(
 cpplint()
 
 delpi_cc_library(
+    name = "row",
+    srcs = ["Row.cpp"],
+    hdrs = ["Row.h"],
+    deps = [
+        "//delpi/libs:eigen",
+        "//delpi/libs:gmp",
+    ],
+)
+
+delpi_cc_library(
+    name = "column",
+    srcs = ["Column.cpp"],
+    hdrs = ["Column.h"],
+    deps = ["//delpi/libs:gmp"],
+)
+
+delpi_cc_library(
     name = "basis",
     srcs = ["Basis.cpp"],
     hdrs = ["Basis.h"],
@@ -28,6 +45,21 @@ delpi_cc_library(
         "//delpi/util:config",
         "//delpi/util:logging",
         "//delpi/util:stats",
+    ],
+)
+
+delpi_cc_library(
+    name = "lp_problem",
+    srcs = ["LpProblem.cpp"],
+    hdrs = ["LpProblem.h"],
+    implementation_deps = ["//delpi/util:error"],
+    deps = [
+        ":column",
+        ":row",
+        "//delpi/libs:eigen",
+        "//delpi/libs:gmp",
+        "//delpi/util:concepts",
+        "//delpi/util:logging",
     ],
 )
 

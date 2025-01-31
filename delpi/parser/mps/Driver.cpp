@@ -66,7 +66,7 @@ void MpsDriver::ObjectiveName(const std::string &row) {
 void MpsDriver::AddRow(const SenseType sense, const std::string &row) {
   DELPI_TRACE_FMT("Driver::AddRow {} {}", sense, row);
   if (sense == SenseType::N && obj_row_.empty()) {
-    DELPI_DEBUG("Objective row not found. Adding the first row with sense N as objective row");
+    DELPI_DEBUG("Objective row name not found. Adding the first row with sense N as objective row");
     obj_row_ = row;
     return;
   }
