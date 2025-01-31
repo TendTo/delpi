@@ -93,6 +93,7 @@ delpi_cc_library(
         "//delpi/libs:eigen",
         "//delpi/libs:gmp",
         "//delpi/solver/internal:basis",
+        "//delpi/solver/internal:lp_problem",
         "//delpi/symbolic:expression",
         "//delpi/symbolic:formula",
         "//delpi/symbolic:variable",

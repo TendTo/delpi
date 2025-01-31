@@ -16,6 +16,7 @@
 #include "delpi/solver/internal/Basis.h"
 #include "delpi/symbolic/Expression.h"
 #include "delpi/symbolic/Variable.h"
+#include "internal/LpProblem.h"
 
 namespace delpi {
 
@@ -29,10 +30,8 @@ class DelpiLpSolver final : public LpSolver {
 
   [[nodiscard]] int num_columns() const override;
   [[nodiscard]] int num_rows() const override;
+  [[nodiscard]] const internal::LpProblem& problem() const { return problem_; }
 
-  [[nodiscard]] const Matrix<mpq_class>& A() const { return A_; }
-  [[nodiscard]] const Vector<mpq_class>& c() const { return c_; }
-  [[nodiscard]] const Vector<mpq_class>& b() const { return b_; }
   [[nodiscard]] const Vector<mpq_class>& x() const { return x_; }
 
   [[nodiscard]] Column column(ColumnIndex column_idx) const override;
@@ -91,8 +90,9 @@ class DelpiLpSolver final : public LpSolver {
    * @param[out] slack_b rhs vector of the standard form problem
    * @param[out] slack_basis basis associated with the standard form problem to be updated
    */
-  void RemoveAuxiliaryColumns(const internal::Basis<mpq_class>& aux_basis, Matrix<mpq_class>& slack_A,
-                              Vector<mpq_class>& slack_b, internal::Basis<mpq_class>& slack_basis) const;
+  void RemoveAuxiliaryColumns(const internal::Basis<mpq_class>& aux_basis, const std::vector<Index>& aux_columns,
+                              Matrix<mpq_class>& slack_A, Vector<mpq_class>& slack_b,
+                              internal::Basis<mpq_class>& slack_basis) const;
 
   /**
    * Convert a generic LP problem into the standard form by adding slack variables where needed.
@@ -133,8 +133,9 @@ class DelpiLpSolver final : public LpSolver {
    * @param[out] aux_c objective function coefficients to be set in the auxiliary form with respect to `std_A`
    * @return feasible and bounded basis for the auxiliary problem
    */
-  internal::Basis<mpq_class> AuxForm(const Matrix<mpq_class>& slack_A, Matrix<mpq_class>& aux_A,
-                                     Vector<mpq_class>& aux_c) const;
+  internal::Basis<mpq_class> AuxForm(const Matrix<mpq_class>& slack_A, const Vector<mpq_class>& slack_b,
+                                     Matrix<mpq_class>& aux_A, Vector<mpq_class>& aux_c,
+                                     std::vector<Index>& aux_columns) const;
 
   /**
    * Compute the slack and auxiliary variables for the original LP problem stored in @ref A_, @ref b_ and @ref c_
@@ -187,16 +188,10 @@ class DelpiLpSolver final : public LpSolver {
   void UpdateInfeasible();
 #endif
 
-  Matrix<mpq_class> A_;                  ///< Coefficient matrix
-  Vector<mpq_class> c_;                  ///< Objective function coefficients
-  Vector<mpq_class> b_;                  ///< Right-hand side
-  Vector<mpq_class> x_;                  ///< Solution
-  Vector<mpq_class> y_;                  ///< Dual solution
-  std::vector<FormulaKind> row_senses_;  ///< Row senses (i.e. <=, =, >=)
-  std::vector<Index> slack_columns_;     ///< Indices of the slack columns. Element at index `i` is the slack column for
-                                         ///< row `slack_columns_[i]`
-  std::vector<Index> aux_columns_;  ///< Indices of the auxiliary columns. Element at index `i` is the auxiliary column
-                                    ///< for row `aux_columns_[i]`
+  internal::LpProblem problem_;  ///< Linear programming problem
+
+  Vector<mpq_class> x_;  ///< Solution
+  Vector<mpq_class> y_;  ///< Dual solution
 };
 
 std::ostream& operator<<(std::ostream& os, const DelpiLpSolver& solver);

@@ -33,6 +33,8 @@ std::strong_ordering operator<=>(const mpq_t &lhs, const mpq_class &rhs);
 
 namespace gmp {
 
+inline const mpq_class infinity{mpz_class{0}, 0};
+
 inline std::size_t complexity(const mpq_class &val) {
   return mpz_size(val.get_num().get_mpz_t()) + mpz_size(val.get_den().get_mpz_t());
 }
@@ -65,6 +67,14 @@ mpz_class ceil(const mpq_class &val);
  * @return true if the rational number is non-negative
  */
 inline bool sign(const mpq_class &val) { return val.get_num() >= 0; }
+/**
+ * Check if `val` stands for an infinite value.
+ * We consider a rational number to be infinite if the denominator is zero, since it cannot represent a valid value.
+ * @param val rational number
+ * @return true if the denominator of the rational number is zero, meaning it represent an infinite value
+ * @return false if the denominator of the rational number is non-zero, making it a valid rational number
+ */
+inline bool IsInfinity(const mpq_class &val) { return mpz_sgn(val.get_den().get_mpz_t()) == 0; }
 
 /**
  * Cast a mpq_class to a mpq_t.

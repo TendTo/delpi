@@ -1,0 +1,160 @@
+#include "delpi/solver/internal/LpProblem.h"
+
+#include "delpi/util/error.h"
+#include "delpi/util/logging.h"
+
+namespace delpi::internal {
+
+Row LpProblem::row(const Index row_idx) const {
+  DELPI_ASSERT(0 <= row_idx && row_idx < num_rows_, "Row index out of bounds");
+  std::vector<std::pair<Index, T>> addends;
+  addends.reserve(num_columns_);
+  for (Index i = 0; i < num_columns_; ++i) {
+    if (A_(row_idx, i) != 0) addends.emplace_back(i, A_(row_idx, i));
+  }
+  return {addends, gmp::IsInfinity(b_lb_(row_idx)) ? std::nullopt : std::optional<mpq_class>{b_lb_(row_idx)},
+          gmp::IsInfinity(b_ub_(row_idx)) ? std::nullopt : std::optional<mpq_class>{b_ub_(row_idx)}};
+}
+Column LpProblem::column(const Index column_idx) const {
+  DELPI_ASSERT(0 <= column_idx && column_idx < num_columns_, "Column index out of bounds");
+  return {gmp::IsInfinity(x_lb_(column_idx)) ? std::nullopt : std::optional<mpq_class>{x_lb_(column_idx)},
+          x_ub_.contains(column_idx) ? std::optional<mpq_class>{x_ub_.at(column_idx)} : std::nullopt,
+          c_(column_idx) == 0 ? std::nullopt : std::optional<mpq_class>{c_(column_idx)}};
+}
+std::vector<Row> LpProblem::rows() const {
+  std::vector<Row> result;
+  result.reserve(num_rows_);
+  for (Index i = 0; i < num_rows_; ++i) result.push_back(row(i));
+  return result;
+}
+std::vector<Column> LpProblem::columns() const {
+  std::vector<Column> result;
+  result.reserve(num_columns_);
+  for (Index i = 0; i < num_columns_; ++i) result.push_back(column(i));
+  return result;
+}
+void LpProblem::AddColumn(const T& obj, const T& lb, const T& ub) {
+  DELPI_TRACE_FMT("LpProblem::AddColumn({}, {}, {})", obj, lb, ub);
+  const Index column_idx = num_columns_;
+  DELPI_TRACE_FMT("LpProblem::AddColumn: adding new variable at column {}", column_idx);
+  // Coefficient matrix
+  if (A_.cols() < column_idx + 1) A_.conservativeResize(Eigen::NoChange, column_idx + 1);
+  A_.col(column_idx).setZero();
+  // Objective function
+  if (c_.size() < column_idx + 1) c_.conservativeResize(column_idx + 1);
+  c_(column_idx) = obj;
+  // Lower bound
+  if (x_lb_.size() < column_idx + 1) x_lb_.conservativeResize(column_idx + 1);
+  x_lb_(column_idx) = lb;
+  // Upper bound
+  if (!gmp::IsInfinity(ub)) x_ub_.emplace(column_idx, ub);
+  num_columns_++;
+  DELPI_ASSERT(A_.cols() == c_.size(), "Inconsistent number of columns and objective coefficients");
+  DELPI_ASSERT(A_.cols() == x_lb_.size(), "Inconsistent number of columns and lower bounds");
+  DELPI_ASSERT(x_ub_.size() <= static_cast<std::size_t>(A_.cols()), "Inconsistent number of columns and upper bounds");
+}
+void LpProblem::AddRow(const std::unordered_map<Index, T>& row, const T& lb, const T& ub) {
+  DELPI_TRACE_FMT("LpProblem::AddRow({}, {}, {})", row, lb, ub);
+  // No need to consider unbounded rows
+  if (gmp::IsInfinity(lb) && gmp::IsInfinity(ub)) return;
+  const Index row_idx = num_rows_;
+  DELPI_TRACE_FMT("LpProblem::AddRow: adding new row at index {}", row_idx);
+  // Set the coefficients in the A matrix
+  if (A_.rows() < row_idx + 1) A_.conservativeResize(row_idx + 1, Eigen::NoChange);
+  for (const auto& [idx, coeff] : row) A_(row_idx, idx) = coeff;
+  // Set the right-hand side in the lb and ub vectors
+  if (b_lb_.size() < row_idx + 1) b_lb_.conservativeResize(row_idx + 1);
+  b_lb_(row_idx) = lb;
+  if (b_ub_.size() < row_idx + 1) b_ub_.conservativeResize(row_idx + 1);
+  b_ub_(row_idx) = ub;
+  num_rows_++;
+}
+void LpProblem::SetObjective(Index column_idx, const T& value) {
+  DELPI_TRACE_FMT("LpProblem::SetObjective({}, {})", column_idx, value);
+  DELPI_ASSERT(0 <= column_idx && column_idx < num_columns_, "Column index out of bounds");
+  c_(column_idx) = value;
+}
+void LpProblem::Reserve(const Index num_rows, const Index num_columns) {
+  DELPI_TRACE_FMT("LpProblem::Reserve({}, {})", num_columns, num_rows);
+  if (num_columns > 0) {
+    if (A_.cols() < num_columns) A_.conservativeResize(Eigen::NoChange, num_columns);
+    if (c_.size() < num_columns) c_.conservativeResize(num_columns);
+    if (x_lb_.size() < num_columns) x_lb_.conservativeResize(num_columns);
+    x_ub_.reserve(num_columns);
+  }
+  if (num_rows > 0) {
+    if (A_.rows() < num_rows) A_.conservativeResize(num_rows, Eigen::NoChange);
+    if (b_lb_.size() < num_rows) b_lb_.conservativeResize(num_rows);
+    if (b_ub_.size() < num_rows) b_ub_.conservativeResize(num_rows);
+  }
+}
+void LpProblem::SlackForm(Matrix<T>& slack_A, Vector<T>& slack_b, Vector<T>& slack_c) const {
+  DELPI_TRACE_FMT("LpProblem::SlackForm({}, {}, {})", slack_A, slack_b, slack_c);
+  slack_A = Matrix<T>(num_rows_, num_columns_ + num_rows_);
+  slack_A.leftCols(num_columns_) = A_;
+  slack_A.rightCols(num_rows_).setIdentity();
+
+  // TODO(tend): if we make the method not const we can avoid this copy and work directly on x_lb_, x_ub_ and A_
+  Vector<T> x_lb{x_lb_};
+  std::unordered_map<Index, mpq_class> x_ub{x_ub_};
+
+  // Compute the bounds on the slack variables
+  Vector<T> slack_lb{Vector<T>::Constant(num_rows_, gmp::infinity)};
+  Vector<T> slack_ub{Vector<T>::Constant(num_rows_, gmp::infinity)};
+  for (Index i = 0; i < num_rows_; ++i) {
+    DELPI_ASSERT(!gmp::IsInfinity(b_lb_(i) || !gmp::IsInfinity(b_ub_(i))), "At least one bound must be finite");
+    if (!gmp::IsInfinity(b_lb_(i))) slack_ub(i) = -b_lb_(i);
+    if (!gmp::IsInfinity(b_ub_(i))) slack_lb(i) = -b_ub_(i);
+  }
+
+  // Invert the bounds if the lower bound of the variable, slack of otherwise, is infinite
+  for (Index i = 0; i < num_rows_; ++i) {
+    if (gmp::IsInfinity(slack_lb(i))) {
+      DELPI_ASSERT(!gmp::IsInfinity(slack_ub(i)), "Upper bound must be finite");
+      slack_lb(i).swap(slack_ub(i));
+      slack_A(num_columns_ + i, i) = -1;
+    } else if (!gmp::IsInfinity(slack_ub(i))) {
+      slack_ub(i) = slack_ub(i) - slack_lb(i);
+    }
+    if (gmp::IsInfinity(x_lb_(i))) {
+      // TODO(tend): handle free variables
+      DELPI_ASSERT(x_ub_.contains(i), "Upper bound must be finite");
+      x_lb(i) = x_ub.at(i);
+      x_ub.erase(i);
+      slack_A.col(i) *= -1;
+    } else if (x_ub.contains(i)) {
+      x_ub.at(i) = x_ub.at(i) - x_lb(i);
+    }
+  }
+
+  // Set the rhs
+  slack_b = Vector<T>{2 * num_rows_};
+  slack_b.head(num_rows_) = x_lb;
+  slack_b.tail(num_rows_) = slack_lb;
+  slack_b = -(slack_A * slack_b).eval();
+
+  slack_c = Vector<T>::Zero(num_columns_ + num_rows_);
+  slack_c.head(num_columns_) = c_;
+}
+
+std::ostream& operator<<(std::ostream& os, const LpProblem& problem) {
+  os << "Minimise:\n" << problem.c() << "\nSubject to:\n";
+  for (Index i = 0; i < problem.num_rows(); ++i) {
+    DELPI_ASSERT(!gmp::IsInfinity(problem.lb(i)) || !gmp::IsInfinity(problem.ub(i)),
+                 "At least one bound must be finite");
+    if (gmp::IsInfinity(problem.ub(i))) {
+      DELPI_ASSERT(!gmp::IsInfinity(problem.lb(i)), "Lower bound must be finite");
+      os << problem.A().row(i) << " >= " << problem.lb(i) << "\n";
+    } else if (gmp::IsInfinity(problem.lb(i))) {
+      DELPI_ASSERT(!gmp::IsInfinity(problem.ub(i)), "Upper bound must be finite");
+      os << problem.A().row(i) << " <= " << problem.ub(i) << "\n";
+    } else if (problem.lb(i) == problem.ub(i)) {
+      os << problem.A().row(i) << " = " << problem.lb(i) << "\n";
+    } else {
+      os << problem.lb(i) << " <= " << problem.A().row(i) << " <= " << problem.ub(i) << "\n";
+    }
+  }
+  return os;
+}
+
+}  // namespace delpi::internal
