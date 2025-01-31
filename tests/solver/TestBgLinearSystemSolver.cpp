@@ -21,7 +21,7 @@ class TestBgLinearSystemSolver : public ::testing::Test {
   Matrix<T> matrix_{3, 6};
   Vector<T> vector_{3};
 
-  const std::vector<int> basis_idxs_{0, 1, 2};
+  const std::vector<long> basis_idxs_{0, 1, 2};
   Config config_;
   TestBgLinearSystemSolver() : config_{Config{}} {
     matrix_ << 1, 2, 3, 4, 5, 6,  //
@@ -48,7 +48,7 @@ TYPED_TEST(TestBgLinearSystemSolver, UpdateFactorisationNoFactorsNeeded) {
   BgLinearSystemSolver<TypeParam> solver{this->config_};
   Basis<TypeParam> basis{this->matrix_, this->basis_idxs_};
   solver.Factorise(basis);
-  basis.Update(this->matrix_, this->matrix_.rows() - 1, this->matrix_.rows());
+  basis.Update(this->matrix_.rows() - 1, this->matrix_.rows());
   solver.Factorise(basis);
   EXPECT_EQ(solver.B(), basis.basis_vectors());
   EXPECT_EQ(solver.Solve(this->vector_), basis.basis_vectors().fullPivLu().solve(this->vector_));
@@ -59,7 +59,7 @@ TYPED_TEST(TestBgLinearSystemSolver, UpdateFactorisationFactors) {
   BgLinearSystemSolver<TypeParam> solver{this->config_};
   Basis<TypeParam> basis{this->matrix_, this->basis_idxs_};
   solver.Factorise(basis);
-  basis.Update(this->matrix_, 0, this->matrix_.rows());
+  basis.Update(0, this->matrix_.rows());
   solver.Factorise(basis);
   EXPECT_EQ(solver.B(), basis.basis_vectors());
   EXPECT_EQ(solver.Solve(this->vector_), basis.basis_vectors().fullPivLu().solve(this->vector_));
@@ -71,7 +71,7 @@ TYPED_TEST(TestBgLinearSystemSolver, MultipleUpdateFactorisation) {
   Basis<TypeParam> basis{this->matrix_, this->basis_idxs_};
   solver.Factorise(basis);
   for (int i = 0; i < this->matrix_.rows(); ++i) {
-    basis.Update(this->matrix_, i, this->matrix_.rows() + i);
+    basis.Update(i, this->matrix_.rows() + i);
     solver.Factorise(basis);
     EXPECT_EQ(solver.B(), basis.basis_vectors());
     EXPECT_EQ(solver.Solve(this->vector_), basis.basis_vectors().fullPivLu().solve(this->vector_));

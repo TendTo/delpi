@@ -22,11 +22,11 @@ class TestBasis : public ::testing::Test {
   }
 };
 
-using types = ::testing::Types<double, int, mpq_class>;
+using types = ::testing::Types<double, mpq_class>;
 TYPED_TEST_SUITE(TestBasis, types);
 
 TYPED_TEST(TestBasis, Constructor) {
-  const std::vector basis_idxs{1, 2, 4, 19};
+  const std::vector basis_idxs{1l, 2l, 4l, 19l};
   const Basis<TypeParam> basis(this->matrix_, basis_idxs);
 
   ASSERT_EQ(basis_idxs.size(), basis.basis_idxs().size());
@@ -39,7 +39,7 @@ TYPED_TEST(TestBasis, Constructor) {
 }
 
 TYPED_TEST(TestBasis, SharedPointerConstructor) {
-  const std::shared_ptr basis_idxs{std::make_shared<std::vector<int>>(std::vector{1, 2, 4, 19})};
+  const std::shared_ptr basis_idxs{std::make_shared<std::vector<long>>(std::vector{1l, 2l, 4l, 19l})};
   const Basis<TypeParam> basis(this->matrix_, basis_idxs);
 
   EXPECT_EQ(basis_idxs.get(), &basis.basis_idxs());
@@ -54,7 +54,7 @@ TYPED_TEST(TestBasis, SharedPointerConstructor) {
 
 TYPED_TEST(TestBasis, CopyConstructor) {
   Eigen::MatrixXf float_matrix = Eigen::MatrixXf::Ones(10, 20);
-  const std::shared_ptr basis_idxs{std::make_shared<std::vector<int>>(std::vector{1, 2, 4, 19})};
+  const std::shared_ptr basis_idxs{std::make_shared<std::vector<long>>(std::vector{1l, 2l, 4l, 19l})};
   const Basis<TypeParam> float_basis(this->matrix_, basis_idxs);
 
   const Basis<TypeParam> basis(this->matrix_, float_basis);

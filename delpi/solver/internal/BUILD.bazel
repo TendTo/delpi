@@ -24,6 +24,7 @@ delpi_cc_library(
     deps = [
         "//delpi/libs:eigen",
         "//delpi/libs:gmp",
+        "//delpi/util:concepts",
         "//delpi/util:config",
         "//delpi/util:logging",
         "//delpi/util:stats",
