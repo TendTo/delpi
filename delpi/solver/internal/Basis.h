@@ -12,6 +12,7 @@
 
 #include "delpi/libs/eigen.h"
 #include "delpi/libs/gmp.h"
+#include "delpi/util/concepts.h"
 
 namespace delpi::internal {
 
@@ -39,40 +40,46 @@ namespace delpi::internal {
  * However, SPxBasisBase does not provide a linear solver by its own.
  * Instead, a SLinSolver object must be loaded to a SPxBasisBase which will be called for solving linear systems.
  */
-// TODO(tend): fix reference to coefficient matrix
-template <class T>
+template <IsAnyOf<mpq_class, double> T>
 class Basis {
  public:
-  using BasisVectors = decltype(Eigen::MatrixX<T>(Eigen::all, std::declval<std::vector<int>>()));
+  using BasisVectors = decltype(Eigen::MatrixX<T>(Eigen::all, std::declval<std::vector<Index>>()));
   explicit Basis(const Eigen::MatrixX<T>& A);
-  Basis(const Eigen::MatrixX<T>& A, std::vector<int> basis_idxs);
-  Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<int>>& basis_idxs);
-  template <class M>
+  Basis(const Eigen::MatrixX<T>& A, std::vector<Index> basis_idxs);
+  Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<Index>>& basis_idxs);
+  template <IsAnyOf<mpq_class, double> M>
   Basis(const Eigen::MatrixX<T>& A, const Basis<M>& basis) : Basis{A, basis.basis_idxs_} {}
 
-  [[nodiscard]] const BasisVectors& basis_vectors() const { return basis_vectors_; }
-  [[nodiscard]] const std::vector<int>& basis_idxs() const { return *basis_idxs_; }
-  [[nodiscard]] int size() const { return basis_idxs_->size(); }
-  [[nodiscard]] int last_basis_entering() const { return last_basis_entering_; }
-  [[nodiscard]] int last_basis_leaving() const { return last_basis_leaving_; }
-  [[nodiscard]] int last_leaving() const { return last_leaving_; }
-  [[nodiscard]] int last_entering() const { return last_entering_; }
+  Basis<T>& operator=(const Basis<T>& basis);
+  template <IsAnyOf<mpq_class, double> M>
+  Basis<T>& operator=(const Basis<M>& basis);
+  template <IsAnyOf<mpq_class, double> M>
+  Basis<T>& FromBasis(const Basis<M>& basis, const std::vector<std::size_t>& col_to_remove = {});
 
-  void Update(const Eigen::MatrixX<T>& A, int leaving, int entering);
-  void OffsetIndexes(int offset);
+  [[nodiscard]] const Matrix<T>& A() const { return A_; }
+  [[nodiscard]] const BasisVectors& basis_vectors() const { return basis_vectors_; }
+  [[nodiscard]] const std::vector<Index>& basis_idxs() const { return *basis_idxs_; }
+  [[nodiscard]] Index size() const { return static_cast<Index>(basis_idxs_->size()); }
+  [[nodiscard]] Index last_basis_entering() const { return last_basis_entering_; }
+  [[nodiscard]] Index last_basis_leaving() const { return last_basis_leaving_; }
+  [[nodiscard]] Index last_leaving() const { return last_leaving_; }
+  [[nodiscard]] Index last_entering() const { return last_entering_; }
+
+  void Update(Index leaving, Index entering);
+  void OffsetIndexes(Index offset);
 
  protected:
-  int max_updates_before_refactor_;               ///< Number of updates before a forced refactorization of the basis
-  std::shared_ptr<std::vector<int>> basis_idxs_;  ///< Indices of the basis vectors
-  BasisVectors basis_vectors_;                    ///< Basis columns taken from A
+  const Matrix<T>& A_;                              ///< Coefficient matrix
+  BasisVectors basis_vectors_;                      ///< Basis columns taken from A
+  std::shared_ptr<std::vector<Index>> basis_idxs_;  ///< Indices of the basis vectors
 
-  int last_basis_entering_;  ///< Index of where the latest column was added in the basis
-  int last_basis_leaving_;   ///< Index of where the latest column was removed from the basis
-  int last_leaving_;         ///< Index of the variable that left the basis last. Relative to the original matrix
-  int last_entering_;        ///< Index of the variable that entered the basis last. Relative to the original matrix
+  Index last_basis_entering_;  ///< Index of where the latest column was added in the basis
+  Index last_basis_leaving_;   ///< Index of where the latest column was removed from the basis
+  Index last_leaving_;         ///< Index of the variable that left the basis last. Relative to the original matrix
+  Index last_entering_;        ///< Index of the variable that entered the basis last. Relative to the original matrix
 };
 
-template <class T>
+template <IsAnyOf<mpq_class, double> T>
 std::ostream& operator<<(std::ostream& os, const Basis<T>& basis);
 
 using EBasis = Basis<mpq_class>;

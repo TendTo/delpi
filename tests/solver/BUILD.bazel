@@ -34,6 +34,13 @@ delpi_cc_googletest(
 )
 
 delpi_cc_googletest(
+    name = "test_delpi_lp_solver",
+    data = glob(["mps/*.mps"]),
+    tags = ["solver"],
+    deps = ["//delpi/solver:lp_solver"],
+)
+
+delpi_cc_googletest(
     name = "test_basis",
     tags = ["solver"],
     deps = ["//delpi/solver/internal:basis"],

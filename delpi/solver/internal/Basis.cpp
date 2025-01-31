@@ -3,47 +3,95 @@
 
 #include <numeric>
 #include <ranges>
+#include <unordered_set>
 
 #include "delpi/util/error.h"
+#include "delpi/util/logging.h"
 
 namespace delpi::internal {
 
 namespace {
-std::vector<int> ToVector(const int size) {
-  std::vector<int> result(size);
-  std::iota(result.begin(), result.end(), 0);
+std::vector<Index> ToVector(const Index rows, const Index cols) {
+  std::vector<Index> result(rows);
+  std::iota(result.begin(), result.end(), cols - rows);
   return result;
 }
 }  // namespace
 
-template <class T>
-Basis<T>::Basis(const Eigen::MatrixX<T>& A) : Basis(A, ToVector(A.rows())) {}
+template <IsAnyOf<mpq_class, double> T>
+Basis<T>::Basis(const Eigen::MatrixX<T>& A) : Basis(A, ToVector(A.rows(), A.cols())) {}
 
-template <class T>
-Basis<T>::Basis(const Eigen::MatrixX<T>& A, std::vector<int> basis_idxs)
-    : Basis(A, std::make_shared<std::vector<int>>(std::move(basis_idxs))) {}
+template <IsAnyOf<mpq_class, double> T>
+Basis<T>::Basis(const Eigen::MatrixX<T>& A, std::vector<Index> basis_idxs)
+    : Basis(A, std::make_shared<std::vector<Index>>(std::move(basis_idxs))) {}
 
-template <class T>
-Basis<T>::Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<int>>& basis_idxs)
-    : max_updates_before_refactor_{0},
+template <IsAnyOf<mpq_class, double> T>
+Basis<T>::Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<Index>>& basis_idxs)
+    : A_{A},
+      basis_vectors_{A(Eigen::all, *basis_idxs)},
       basis_idxs_{basis_idxs},
-      basis_vectors_{A(Eigen::all, *basis_idxs_)},
       last_basis_entering_{-1},
       last_basis_leaving_{-1},
       last_leaving_{-1},
       last_entering_{-1} {
   DELPI_ASSERT(static_cast<std::size_t>(basis_vectors_.cols()) == basis_idxs_->size(),
                "Basis vectors and indices must have the same size");
+  DELPI_ASSERT(std::ranges::all_of(*basis_idxs_, [this](const int idx) { return idx >= 0 && idx < A_.cols(); }),
+               "All indices must be valid");
+  DELPI_ASSERT(std::unordered_set(basis_idxs_->begin(), basis_idxs_->end()).size() == basis_idxs_->size(),
+               "All indices must be unique");
 }
 
-template <class T>
-void Basis<T>::Update(const Eigen::MatrixX<T>& A, const int leaving, const int entering) {
-  DELPI_ASSERT(leaving >= 0 && leaving < A.rows(), "Invalid leaving index");
-  DELPI_ASSERT(entering >= 0 && entering < A.cols(), "Invalid entering index");
+template <IsAnyOf<mpq_class, double> T>
+template <IsAnyOf<mpq_class, double> M>
+Basis<T>& Basis<T>::operator=(const Basis<M>& basis) {
+  *this = Basis<T>{A_, basis.basis_idxs()};
+  return *this;
+}
+template <IsAnyOf<mpq_class, double> T>
+template <IsAnyOf<mpq_class, double> M>
+Basis<T>& Basis<T>::FromBasis(const Basis<M>& basis, const std::vector<std::size_t>& col_to_remove) {
+  DELPI_DEV_FMT("Current basis idx: {}", basis.basis_idxs());
+  DELPI_DEV_FMT("Col to remove: {}", col_to_remove);
+  if (basis_idxs_.use_count() > 1) basis_idxs_ = std::make_shared<std::vector<Index>>();
+  basis_idxs_->clear();
+  basis_idxs_->reserve(basis.size() - col_to_remove.size());
+  std::size_t inserted_idx = 0;
+  for (const std::size_t removed_col : col_to_remove) {
+    basis_idxs_->insert(basis_idxs_->end(), basis.basis_idxs().begin() + inserted_idx,
+                        basis.basis_idxs().begin() + removed_col);
+    inserted_idx = removed_col + 1;
+  }
+  basis_idxs_->insert(basis_idxs_->end(), basis.basis_idxs().begin() + inserted_idx, basis.basis_idxs().end());
+  DELPI_ASSERT(std::ranges::all_of(*basis_idxs_, [this](const Index idx) { return idx >= 0 && idx < A_.cols(); }),
+               "All indices must be valid");
+  DELPI_ASSERT(std::unordered_set(basis_idxs_->begin(), basis_idxs_->end()).size() == basis_idxs_->size(),
+               "All indices must be unique");
+  basis_vectors_ = A_(Eigen::all, *basis_idxs_);
+  DELPI_DEV_FMT("New basis idx: {}", *basis_idxs_);
+  return *this;
+}
+template <IsAnyOf<mpq_class, double> T>
+Basis<T>& Basis<T>::operator=(const Basis<T>& basis) {
+  if (this == &basis) return *this;
+  DELPI_ASSERT(std::ranges::all_of(basis.basis_idxs(), [this](const int idx) { return idx >= 0 && idx < A_.cols(); }),
+               "All indices must be valid");
+  DELPI_ASSERT(
+      std::unordered_set(basis.basis_idxs().begin(), basis.basis_idxs().end()).size() == basis.basis_idxs().size(),
+      "All indices must be unique");
+  basis_idxs_ = basis.basis_idxs_;
+  basis_vectors_ = A_(Eigen::all, *basis_idxs_);
+  return *this;
+}
+
+template <IsAnyOf<mpq_class, double> T>
+void Basis<T>::Update(const Index leaving, const Index entering) {
+  DELPI_ASSERT(leaving >= 0 && leaving < A_.rows(), "Invalid leaving index");
+  DELPI_ASSERT(entering >= 0 && entering < A_.cols(), "Invalid entering index");
   DELPI_TRACE_FMT("Basis::Update(leaving = {}, entering = {})", leaving, entering);
 
   // Ensure that no other instance sharing the same basis indexes is affected
-  if (basis_idxs_.use_count() > 1) basis_idxs_ = std::make_shared<std::vector<int>>(*basis_idxs_);
+  if (basis_idxs_.use_count() > 1) basis_idxs_ = std::make_shared<std::vector<Index>>(*basis_idxs_);
 
   last_basis_leaving_ = leaving;
   // TODO(tend): the place where the basis is updated could be customised by a subclass
@@ -55,28 +103,37 @@ void Basis<T>::Update(const Eigen::MatrixX<T>& A, const int leaving, const int e
   std::rotate(basis_idxs_->begin() + leaving, basis_idxs_->begin() + leaving + 1, basis_idxs_->end());
   // Set the last basis column to the entering column
   basis_idxs_->back() = entering;
-  basis_vectors_ = A(Eigen::all, *basis_idxs_);
+  basis_vectors_ = A_(Eigen::all, *basis_idxs_);
 }
-template <class T>
-void Basis<T>::OffsetIndexes(const int offset) {
+template <IsAnyOf<mpq_class, double> T>
+void Basis<T>::OffsetIndexes(const Index offset) {
   // Ensure that no other instance sharing the same basis indexes is affected
-  if (basis_idxs_.use_count() > 1) basis_idxs_ = std::make_shared<std::vector<int>>(*basis_idxs_);
+  if (basis_idxs_.use_count() > 1) basis_idxs_ = std::make_shared<std::vector<Index>>(*basis_idxs_);
   for (auto& idx : *basis_idxs_) idx += offset;
+  basis_vectors_ = A_(Eigen::all, *basis_idxs_);
 }
 
-template <class T>
+template <IsAnyOf<mpq_class, double> T>
 std::ostream& operator<<(std::ostream& os, const Basis<T>& basis) {
-  return os << "Basis " << basis.basis_vectors();
+  return os << basis.basis_vectors();
 }
 
 template class Basis<mpq_class>;
 template class Basis<double>;
-template class Basis<int>;
-template class Basis<float>;
+
+template Basis<mpq_class>& Basis<mpq_class>::operator=(const Basis<double>& basis);
+template Basis<double>& Basis<double>::operator=(const Basis<mpq_class>& basis);
+
+template Basis<mpq_class>& Basis<mpq_class>::FromBasis(const Basis<mpq_class>& basis,
+                                                       const std::vector<std::size_t>& col_to_remove);
+template Basis<mpq_class>& Basis<mpq_class>::FromBasis(const Basis<double>& basis,
+                                                       const std::vector<std::size_t>& col_to_remove);
+template Basis<double>& Basis<double>::FromBasis(const Basis<mpq_class>& basis,
+                                                 const std::vector<std::size_t>& col_to_remove);
+template Basis<double>& Basis<double>::FromBasis(const Basis<double>& basis,
+                                                 const std::vector<std::size_t>& col_to_remove);
 
 template std::ostream& operator<<(std::ostream& os, const Basis<mpq_class>& basis);
 template std::ostream& operator<<(std::ostream& os, const Basis<double>& basis);
-template std::ostream& operator<<(std::ostream& os, const Basis<int>& basis);
-template std::ostream& operator<<(std::ostream& os, const Basis<float>& basis);
 
 }  // namespace delpi::internal
