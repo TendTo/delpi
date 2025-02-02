@@ -132,7 +132,7 @@ inline mpq_class &ToMpqClass(mpq_t &mpq) { return reinterpret_cast<mpq_class &>(
  * @return true if the char is a digit or a plus/minus sign
  * @return false if the char is not a digit or a plus/minus sign
  */
-inline bool IsDigitOrSign(char c) { return std::isdigit(c) || c == '+' || c == '-'; }
+inline bool IsDigitOrSign(const char c) { return std::isdigit(c) || c == '+' || c == '-'; }
 
 /**
  * Convert a string to a mpq_class.
