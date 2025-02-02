@@ -48,7 +48,7 @@ class DelpiLpSolver final : public LpSolver {
 #endif
 
  private:
-  LpResult SolveCore(mpq_class& precision, bool store_solution) override;
+  LpResult SolveCore(mpq_class& delta, bool store_solution) override;
   /**
    * Solve the LP problem using the Simplex algorithm.
    * The input is assumed to be in standard form, i.e.
@@ -67,21 +67,25 @@ class DelpiLpSolver final : public LpSolver {
    * @param b rhs vector
    * @param c objective function
    * @param basis starting feasible basis
-   * @param tolerance tolerance for the optimality check. Should be 0 for exact arithmetic.
+   * @param x pointer to the solution vector. If `nullptr`, the solution will not be stored
+   * @param obj pointer to the objective value. If `nullptr`, the objective value will not be stored
+   * @param tolerance tolerance for the optimality check. Must be 0 for exact arithmetic.
    * @return LpResult::OPTIMAL if the problem is feasible, bounded and an optimal solution has been found
    * @return LpResult::UNBOUNDED if the problem is unbounded
    */
   template <IsAnyOf<double, mpq_class> T>
   LpResult InternalSolve(const Matrix<T>& A, const Vector<T>& b, const Vector<T>& c, const T& tolerance,
-                         internal::Basis<T>& basis, Vector<T>& x, Vector<T>& y, T& obj);
-  LpResult InternalSolve(const Matrix<mpq_class>& A, const Vector<mpq_class>& c, const Vector<mpq_class>& lb,
-                         const Vector<mpq_class>& ub, internal::Basis<mpq_class>& basis);
-  // TODO(tend): add mpf_class support
-  // LpResult InternalSolve(const Matrix<T>& A, const Vector<T>& b, const Vector<T>& c, internal::Basis<T>& basis);
-  LpResult FeasibilityCheck(Matrix<mpq_class>& slack_A, Vector<mpq_class>& slack_b,
+                         internal::Basis<T>& basis, Vector<T>* x = nullptr, T* obj = nullptr);
+  LpResult FeasibilitySolve(Matrix<mpq_class>& slack_A, Vector<mpq_class>& slack_b,
                             internal::Basis<mpq_class>& slack_basis);
-  LpResult OptimalityCheck(const internal::Basis<mpq_class>& basis);
-  LpResult UnboundednessCheck(const internal::Basis<mpq_class>& basis);
+  LpResult OptimalitySolve(const Matrix<mpq_class>& slack_A, const Vector<mpq_class>& slack_b,
+                           const Vector<mpq_class>& slack_c, internal::Basis<mpq_class>& slack_basis);
+  LpResult FeasibilityCheck(const Matrix<mpq_class>& aux_A, const Vector<mpq_class>& slack_b,
+                            const Vector<mpq_class>& aux_c, const internal::Basis<mpq_class>& feas_basis) const;
+  LpResult OptimalityCheck(const Matrix<mpq_class>& slack_A, const Vector<mpq_class>& slack_b,
+                           const Vector<mpq_class>& slack_c, const internal::Basis<mpq_class>& basis);
+  LpResult UnboundednessCheck(const Matrix<mpq_class>& slack_A, const Vector<mpq_class>& slack_b,
+                              const Vector<mpq_class>& slack_c, const internal::Basis<mpq_class>& basis) const;
   /**
    * Use `aux_basis` to update `basis` with a set of columns we know feasible.
    * If `aux_basis` still contains any auxiliary columns, they will be removed from the `basis`
@@ -190,7 +194,9 @@ class DelpiLpSolver final : public LpSolver {
   void UpdateInfeasible();
 #endif
 
+  Vector<mpq_class> x_;          ///< Solution vector
   internal::LpProblem problem_;  ///< Linear programming problem
+  mpq_class delta_;              ///< Precision for the optimality check
 };
 
 std::ostream& operator<<(std::ostream& os, const DelpiLpSolver& solver);
