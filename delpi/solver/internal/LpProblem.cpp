@@ -182,6 +182,16 @@ void LpProblem::FixSolution(Vector<T>& x) {
     }
   }
 }
+Vector<mpq_class> LpProblem::rhs() const {
+  DELPI_TRACE("LpProblem::rhs()");
+  Vector<T> rhs{num_rows_ + static_cast<Index>(x_ub_.size())};
+  rhs.head(num_rows_) = b_;
+  Index num_row = num_rows_;
+  for (const auto& [idx, value] : x_ub_) {
+    rhs(num_row++) = value;
+  }
+  return rhs;
+}
 
 std::ostream& operator<<(std::ostream& os, const LpProblem& problem) {
   os << "Minimise:\n" << problem.c().transpose() << "\nSubject to:\n";

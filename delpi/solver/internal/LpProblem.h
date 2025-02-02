@@ -20,6 +20,8 @@ class LpProblem {
   [[nodiscard]] const Matrix<T>& A() const { return A_; }
   [[nodiscard]] const Vector<T>& c() const { return c_; }
   [[nodiscard]] const Vector<T>& l() const { return x_lb_; }
+  [[nodiscard]] Vector<mpq_class> rhs() const;
+  [[nodiscard]] const Vector<T>& b() const { return b_; }
   [[nodiscard]] const std::vector<Index>& free_vars() const { return free_vars_; }
   [[nodiscard]] Index num_columns() const { return num_columns_; }
   [[nodiscard]] Index num_rows() const { return num_rows_; }
