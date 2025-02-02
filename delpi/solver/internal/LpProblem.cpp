@@ -10,14 +10,14 @@ Row LpProblem::row(const Index row_idx) const {
   std::vector<std::pair<Index, T>> addends;
   addends.reserve(num_columns_);
   for (Index i = 0; i < num_columns_; ++i) {
-    if (A_(row_idx, i) != 0) addends.emplace_back(i, A_(row_idx, i));
+    if (A_.coeff(row_idx, i) != 0) addends.emplace_back(i, A_.coeff(row_idx, i));
   }
   return {addends, sense_[row_idx] != FormulaKind::Leq ? std::optional<mpq_class>{b_(row_idx)} : std::nullopt,
           sense_[row_idx] != FormulaKind::Geq ? std::optional<mpq_class>{b_(row_idx)} : std::nullopt};
 }
 Column LpProblem::column(const Index column_idx) const {
   DELPI_ASSERT(0 <= column_idx && column_idx < num_columns_, "Column index out of bounds");
-  return {gmp::IsInfinity(x_lb_(column_idx)) ? std::nullopt : std::optional<mpq_class>{x_lb_(column_idx)},
+  return {gmp::IsInfinity(x_lb_.coeff(column_idx)) ? std::nullopt : std::optional<mpq_class>{x_lb_.coeff(column_idx)},
           x_ub_.contains(column_idx) ? std::optional<mpq_class>{x_ub_.at(column_idx)} : std::nullopt,
           c_(column_idx) == 0 ? std::nullopt : std::optional<mpq_class>{c_(column_idx)}};
 }
@@ -40,13 +40,12 @@ void LpProblem::AddColumn(const T& obj, const T& lb, const T& ub) {
   DELPI_TRACE_FMT("LpProblem::AddColumn: adding new variable at column {}", column_idx);
   // Coefficient matrix
   if (A_.cols() < column_idx + 1) A_.conservativeResize(Eigen::NoChange, column_idx + 1);
-  A_.col(column_idx).setZero();
   // Objective function
   if (c_.size() < column_idx + 1) c_.conservativeResize(column_idx + 1);
   c_(column_idx) = obj;
   // Lower bound
   if (x_lb_.size() < column_idx + 1) x_lb_.conservativeResize(column_idx + 1);
-  x_lb_(column_idx) = lb;
+  x_lb_.insert(column_idx) = lb;
   // Upper bound
   if (!gmp::IsInfinity(ub)) x_ub_.emplace(column_idx, ub);
   num_columns_++;
@@ -62,8 +61,8 @@ void LpProblem::AddRow(const std::unordered_map<Index, T>& row, const T& lb, con
     const Index row_idx = num_rows_;
     DELPI_TRACE_FMT("LpProblem::AddRow: adding new row at index {}", row_idx);
     // Set the coefficients in the A matrix
-    if (A_.rows() < row_idx + 1) A_.conservativeResize(row_idx + 1, Eigen::NoChange);
-    for (const auto& [idx, coeff] : row) A_(row_idx, idx) = coeff;
+    if (A_.rows() < row_idx + 1) A_.conservativeResize(row_idx + 1, num_columns_);
+    for (const auto& [idx, coeff] : row) A_.insert(row_idx, idx) = coeff;
     if (b_.size() < row_idx + 1) b_.conservativeResize(row_idx + 1);
     b_(row_idx) = lb;
     sense_.push_back(FormulaKind::Eq);
@@ -74,8 +73,8 @@ void LpProblem::AddRow(const std::unordered_map<Index, T>& row, const T& lb, con
     const Index row_idx = num_rows_;
     DELPI_TRACE_FMT("LpProblem::AddRow: adding new row at index {}", row_idx);
     // Set the coefficients in the A matrix
-    if (A_.rows() < row_idx + 1) A_.conservativeResize(row_idx + 1, Eigen::NoChange);
-    for (const auto& [idx, coeff] : row) A_(row_idx, idx) = coeff;
+    if (A_.rows() < row_idx + 1) A_.conservativeResize(row_idx + 1, num_columns_);
+    for (const auto& [idx, coeff] : row) A_.insert(row_idx, idx) = coeff;
     if (b_.size() < row_idx + 1) b_.conservativeResize(row_idx + 1);
     b_(row_idx) = lb;
     sense_.push_back(FormulaKind::Geq);
@@ -85,8 +84,8 @@ void LpProblem::AddRow(const std::unordered_map<Index, T>& row, const T& lb, con
     const Index row_idx = num_rows_;
     DELPI_TRACE_FMT("LpProblem::AddRow: adding new row at index {}", row_idx);
     // Set the coefficients in the A matrix
-    if (A_.rows() < row_idx + 1) A_.conservativeResize(row_idx + 1, Eigen::NoChange);
-    for (const auto& [idx, coeff] : row) A_(row_idx, idx) = coeff;
+    if (A_.rows() < row_idx + 1) A_.conservativeResize(row_idx + 1, num_columns_);
+    for (const auto& [idx, coeff] : row) A_.insert(row_idx, idx) = coeff;
     if (b_.size() < row_idx + 1) b_.conservativeResize(row_idx + 1);
     b_(row_idx) = ub;
     sense_.push_back(FormulaKind::Leq);
@@ -118,7 +117,7 @@ void LpProblem::SlackForm(Matrix<T>& slack_A, Vector<T>& slack_b, Vector<T>& sla
   Vector<T> x_lb{x_lb_};
   std::unordered_map<Index, mpq_class> x_ub{x_ub_};
   for (Index i = 0; i < num_columns_; ++i) {
-    if (gmp::IsInfinity(x_lb_(i))) {
+    if (gmp::IsInfinity(x_lb_.coeff(i))) {
       // TODO(tend): handle free variables
       DELPI_ASSERT(x_ub_.contains(i), "Upper bound must be finite");
       x_lb(i) = -x_ub.at(i);
@@ -173,12 +172,12 @@ void LpProblem::FixSolution(Vector<T>& x) {
   DELPI_TRACE_FMT("LpProblem::FixSolution({})", x);
   x.conservativeResize(num_columns_);
   for (Index i = 0; i < num_columns_; ++i) {
-    if (gmp::IsInfinity(x_lb_(i))) {
+    if (gmp::IsInfinity(x_lb_.coeff(i))) {
       DELPI_ASSERT(x_ub_.contains(i), "Upper bound must be finite");
       x(i) -= x_ub_.at(i);
       x(i) = -x(i);
     } else {
-      x(i) += x_lb_(i);
+      x(i) += x_lb_.coeff(i);
     }
   }
 }

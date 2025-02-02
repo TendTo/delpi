@@ -17,9 +17,9 @@ class LpProblem {
  public:
   LpProblem() : num_columns_{0}, num_rows_{0} {}
 
-  [[nodiscard]] const Matrix<T>& A() const { return A_; }
+  [[nodiscard]] const SMatrix<T>& A() const { return A_; }
   [[nodiscard]] const Vector<T>& c() const { return c_; }
-  [[nodiscard]] const Vector<T>& l() const { return x_lb_; }
+  [[nodiscard]] const SVector<T>& l() const { return x_lb_; }
   [[nodiscard]] Vector<mpq_class> rhs() const;
   [[nodiscard]] const Vector<T>& b() const { return b_; }
   [[nodiscard]] const std::vector<Index>& free_vars() const { return free_vars_; }
@@ -44,12 +44,12 @@ class LpProblem {
   Index num_columns_;
   Index num_rows_;
 
-  Matrix<T> A_;
+  SMatrix<T> A_;
   Vector<T> c_;
   Vector<T> b_;
   std::vector<FormulaKind> sense_;
 
-  Vector<T> x_lb_;
+  SVector<T> x_lb_;
   std::unordered_map<Index, T> x_ub_;
   std::vector<Index> free_vars_;
 };

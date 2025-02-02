@@ -14,6 +14,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/LU>
+#include <Eigen/SparseCore>
 
 namespace Eigen {
 template <>
@@ -62,20 +63,15 @@ struct scalar_score_coeff_op<mpq_class> {
 }  // namespace Eigen
 
 namespace delpi {
-using EMatrix = Eigen::MatrixX<mpq_class>;
-using EVector = Eigen::VectorX<mpq_class>;
-using DMatrix = Eigen::MatrixXd;
-using DVector = Eigen::VectorXd;
 template <class T>
 using Matrix = Eigen::MatrixX<T>;
 template <class T>
 using Vector = Eigen::VectorX<T>;
 template <class T>
-using VectorView = Eigen::Map<Eigen::VectorX<T>>;
+using SMatrix = Eigen::SparseMatrix<T>;
 template <class T>
-using MatrixView = Eigen::Map<Eigen::MatrixX<T>>;
+using SVector = Eigen::SparseVector<T>;
 using Index = Eigen::Index;
-
 }  // namespace delpi
 
 #ifdef DELPI_INCLUDE_FMT
