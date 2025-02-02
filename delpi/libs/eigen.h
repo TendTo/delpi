@@ -38,6 +38,11 @@ struct NumTraits<mpq_class> : GenericNumTraits<mpq_class> {
 };
 
 namespace internal {
+
+template <>
+struct cast_impl<mpq_class, double> {
+  static double run(const mpq_class& x) { return x.get_d(); }
+};
 #if 0
 template <>
 struct scalar_score_coeff_op<mpq_class> {

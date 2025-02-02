@@ -16,7 +16,7 @@ std::ostream& operator<<(std::ostream& os, const Row& row) {
   for (const auto& [idx, coeff] : row.addends) {
     os << (print_plus ? " + " : "");
     if (coeff != 1) os << coeff << " * ";
-    os << idx;
+    os << "x" << idx;
     print_plus = true;
   }
   return os << " in [ " << (row.lb.has_value() ? (std::stringstream{} << row.lb.value()).str() : "-inf") << " , "
