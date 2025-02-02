@@ -51,8 +51,7 @@ Basis<T>& Basis<T>::operator=(const Basis<M>& basis) {
 template <IsAnyOf<mpq_class, double> T>
 template <IsAnyOf<mpq_class, double> M>
 Basis<T>& Basis<T>::FromBasis(const Basis<M>& basis, const std::vector<std::size_t>& col_to_remove) {
-  DELPI_DEV_FMT("Current basis idx: {}", basis.basis_idxs());
-  DELPI_DEV_FMT("Col to remove: {}", col_to_remove);
+  DELPI_TRACE("Basis::FromBasis()");
   if (basis_idxs_.use_count() > 1) basis_idxs_ = std::make_shared<std::vector<Index>>();
   basis_idxs_->clear();
   basis_idxs_->reserve(basis.size() - col_to_remove.size());
@@ -68,7 +67,6 @@ Basis<T>& Basis<T>::FromBasis(const Basis<M>& basis, const std::vector<std::size
   DELPI_ASSERT(std::unordered_set(basis_idxs_->begin(), basis_idxs_->end()).size() == basis_idxs_->size(),
                "All indices must be unique");
   basis_vectors_ = A_(Eigen::all, *basis_idxs_);
-  DELPI_DEV_FMT("New basis idx: {}", *basis_idxs_);
   return *this;
 }
 template <IsAnyOf<mpq_class, double> T>

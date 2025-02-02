@@ -69,10 +69,11 @@ class Basis {
   void OffsetIndexes(Index offset);
 
  protected:
-  const Matrix<T>& A_;                              ///< Coefficient matrix
-  BasisVectors basis_vectors_;                      ///< Basis columns taken from A
+  const Matrix<T>& A_;          ///< Coefficient matrix
+  BasisVectors basis_vectors_;  ///< Basis columns taken from A
+ public:
   std::shared_ptr<std::vector<Index>> basis_idxs_;  ///< Indices of the basis vectors
-
+ protected:
   Index last_basis_entering_;  ///< Index of where the latest column was added in the basis
   Index last_basis_leaving_;   ///< Index of where the latest column was removed from the basis
   Index last_leaving_;         ///< Index of the variable that left the basis last. Relative to the original matrix
