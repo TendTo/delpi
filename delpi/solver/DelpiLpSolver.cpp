@@ -14,6 +14,15 @@
 
 namespace delpi {
 
+struct SolveConfiguration {
+  int precision;
+  double tolerance;
+};
+
+namespace {
+std::array precisions{SolveConfiguration{64, 1e-6}, SolveConfiguration{0, 0}};
+}
+
 DelpiLpSolver::DelpiLpSolver(Config config, const std::string& class_name)
     : LpSolver{mpq_class{mpz_class{0}, 0}, mpq_class{mpz_class{0}, 0}, std::move(config), class_name} {}
 
@@ -98,8 +107,8 @@ void DelpiLpSolver::Dump() {
             << problem_ << "}\n";
 }
 #endif
-LpResult DelpiLpSolver::SolveCore(mpq_class&, bool) {
-  DELPI_DEV_FMT("Problem matrix\n{}", problem_);
+LpResult DelpiLpSolver::SolveCore(mpq_class& delta, bool store_solution) {
+  DELPI_DEBUG_FMT("DelpiLpSolver::SolveCore({}, {})", delta, store_solution);
   // Compute the slack and auxiliary variables that will be added to the problem
   // ComputeSlackAndAuxVariables();
   Matrix<mpq_class> slack_A;
@@ -107,30 +116,35 @@ LpResult DelpiLpSolver::SolveCore(mpq_class&, bool) {
   Vector<mpq_class> slack_b;
   problem_.SlackForm(slack_A, slack_b, slack_c);
   internal::Basis<mpq_class> slack_basis(slack_A);
-  DELPI_DEV_FMT("slack_A:\n{}\nslack_b:\n{}\nslack_c:\n{}\nbasis:\n{}", slack_A, slack_b, slack_c, slack_basis);
+  DELPI_DEV("About to check feasibility");
 
   const LpResult feasibility_check = FeasibilityCheck(slack_A, slack_b, slack_basis);
-  DELPI_DEV_FMT("Feasibility check: {}. Feasible basis:\n{}\nidxs: {}\nFesible sol: {}", feasibility_check, slack_basis,
-                slack_basis.basis_idxs(), x_);
+  DELPI_DEV_FMT("Feasibility check: {}", feasibility_check);
   if (feasibility_check == LpResult::INFEASIBLE) return feasibility_check;
   DELPI_ASSERT(feasibility_check == LpResult::OPTIMAL, "Feasibility check must be optimal");
   DELPI_ASSERT(slack_basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
 
-  Matrix<mpq_class> slack_full_matrix{slack_A.rows(), slack_A.cols() + 1};
-  slack_full_matrix << slack_A, slack_b;
-  DELPI_DEV_FMT("Slack Full matrix:\n{}", slack_full_matrix);
-  const LpResult result = InternalSolve(slack_A, slack_b, slack_c, slack_basis);
+  Vector<mpq_class> x, y;
+  mpq_class obj;
+  const LpResult result = InternalSolve(slack_A, slack_b, slack_c, mpq_class{0}, slack_basis, x, y, obj);
 
   // Drop the slack variables from the solution
-  x_ = x_.tail(num_columns()).eval();
-  DELPI_DEV_FMT("Result check: {}. Basis:\n{}\nSolution: {}, c: {}", result, slack_basis, x_, problem_.c());
-  if (result == LpResult::OPTIMAL) obj_lb_ = obj_ub_ = problem_.c().transpose() * x_;
-  solution_ = std::vector<mpq_class>{x_.data(), x_.data() + x_.size()};
+  problem_.FixSolution(x);
+  // x_ = x_.head(num_columns()).eval();
+  // x_ = slack_basis.basis_vectors().transpose() * x_;
+  DELPI_DEV_FMT("Result check: {}. x: {}, c: {}", result, x, problem_.c());
+  if (result == LpResult::OPTIMAL) obj_lb_ = obj_ub_ = problem_.c().transpose() * x;
+  solution_ = std::vector<mpq_class>{x.data(), x.data() + x.size()};
   return result;
 }
 
-LpResult DelpiLpSolver::InternalSolve(const Matrix<mpq_class>& A, const Vector<mpq_class>& b,
-                                      const Vector<mpq_class>& c, internal::Basis<mpq_class>& basis) {
+template <IsAnyOf<double, mpq_class> T>
+LpResult DelpiLpSolver::InternalSolve(const Matrix<T>& A, const Vector<T>& b, const Vector<T>& c, const T& tolerance,
+                                      internal::Basis<T>& basis, Vector<T>& x, Vector<T>& y, T& obj) {
+  if constexpr (std::is_same_v<T, mpq_class>) {
+    DELPI_ASSERT(tolerance == 0, "Tolerance must be 0 for exact arithmetic");
+  }
+
   DELPI_ASSERT(A.rows() == b.size(), "Inconsistent number of rows in A and b");
   DELPI_ASSERT(A.cols() == c.size(), "Inconsistent number of columns in A and c");
   DELPI_ASSERT(basis.size() == A.rows(), "Inconsistent number of rows in A and basis");
@@ -138,16 +152,119 @@ LpResult DelpiLpSolver::InternalSolve(const Matrix<mpq_class>& A, const Vector<m
   DELPI_ASSERT(basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
 
   // TODO(tend): Use a more sophisticated maximum number of iterations
-  constexpr int max_iterations = 100;
+  constexpr int max_iterations = 1000;
   for (int i = 0; i < max_iterations; ++i) {
+    internal::BgLinearSystemSolver<T> solver{config_};
+    solver.Factorise(basis);
+    Vector<T> zb{solver.Solve(b)};
+    DELPI_ASSERT((zb.array() >= -tolerance).all(), "All values must be non-negative (feasible)");
+    y = solver.TransposeSolve(c(basis.basis_idxs()));
+    // fmt::println("cb: {}\ny: {}", c(basis.basis_idxs()), y);
+    // Compute the reduced costs to determine the entering variable or optimality
+    Vector<T> r{c - A.transpose() * y};
+    // fmt::println("c: {}\nrd: {}", c, A.transpose() * y);
+    int r_idx = 0;
+    for (; r_idx < r.size(); ++r_idx) {
+      if (r(r_idx) < -tolerance) break;
+    }
+    if (r_idx == r.size()) {
+      x = Eigen::VectorX<T>::Zero(A.cols());
+      x(basis.basis_idxs()) = zb;
+      obj = c.transpose() * x;
+      // fmt::println("b: {}, index: {}, x_: {}", b, basis.basis_idxs(), x_);
+      return LpResult::OPTIMAL;
+    }
+    // fmt::println("Reduced costs: r: {}\nr [{}] = {}", r, r_idx, r(r_idx));
+
+    // Compute the entering variable or unboundedness
+    Vector<T> d{solver.Solve(A.col(r_idx))};
+    mpq_class min_ratio = -1;
+    int min_idx = -1;
+    for (int d_idx = 0; d_idx < d.size(); ++d_idx) {
+      if (d(d_idx) <= tolerance) continue;
+      const mpq_class ratio = zb(d_idx) / d(d_idx);
+      if (min_ratio == -1 || ratio < min_ratio) {
+        min_ratio = ratio;
+        min_idx = d_idx;
+      }
+    }
+    // fmt::println("zb: {}\nd: {}\n", zb, d);
+    if (min_idx == -1) return LpResult::UNBOUNDED;
+    // fmt::println("Min ratio: [{}] = {}", min_idx, d(min_idx));
+    //
+    // fmt::println("Updating\n{}\n with leaving = {} from basis.col({}), entering = {} from A.col({})", basis,
+    //              basis.basis_vectors().col(min_idx), min_idx, A.col(r_idx), r_idx);
+    fmt::println("Leaving = {}, entering = {}", min_idx, r_idx);
+
+    // Update the basis
+    basis.Update(min_idx, r_idx);
+    // DELPI_ASSERT(basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
+  }
+  DELPI_RUNTIME_ERROR("Maximum number of iterations reached");
+}
+
+LpResult DelpiLpSolver::InternalSolve(const Matrix<mpq_class>& A, const Vector<mpq_class>& c,
+                                      const Vector<mpq_class>& lb, const Vector<mpq_class>& ub,
+                                      internal::Basis<mpq_class>& basis) {
+  DELPI_DEV_FMT("InternalSolve({}, {}, {}, {}, {})", A, c, lb, ub, basis);
+  DELPI_NOT_IMPLEMENTED();
+#if 0
+  DELPI_ASSERT(A.cols() == c.size(), "Inconsistent number of columns in A and c");
+  DELPI_ASSERT(basis.size() == A.rows(), "Inconsistent number of rows in A and basis");
+  DELPI_ASSERT(&A == &basis.A(), "Basis must be built from matrix A");
+  DELPI_ASSERT(basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
+
+  const Vector<mpq_class> b{Vector<mpq_class>::Zero(A.rows())};
+  const Index num_non_basic = A.cols() - basis.size();
+
+  // TODO(tend): Use a more sophisticated maximum number of iterations
+  constexpr int max_iterations = 100;
+  // TODO(tend): Ensure that the non-basic columns are correctly identified
+  std::vector<Index> non_basic_idxs(num_non_basic);
+  std::iota(non_basic_idxs.begin(), non_basic_idxs.end(), 0);
+
+  Vector<mpq_class> xn = lb(non_basic_idxs);
+
+  std::unordered_set<Index> gamma, pi;
+  gamma.reserve(num_non_basic);
+  pi.reserve(num_non_basic);
+
+  for (int i = 0; i < max_iterations; ++i) {
+    pi.clear();
+    gamma.clear();
+    for (Index j = 0; j < num_non_basic; ++j) {
+      if (xn(j) == lb(j)) {
+        pi.insert(j);
+      } else {
+        DELPI_ASSERT(xn(j) == ub(j), "Non-basic variable must be at its upper bound");
+        gamma.insert(j);
+      }
+    }
+
     internal::BgLinearSystemSolver<mpq_class> solver{config_};
     solver.Factorise(basis);
-    Vector<mpq_class> zb{solver.Solve(b)};
-    DELPI_ASSERT((zb.array() >= 0).all(), "All values must be non-negative (feasible)");
     Vector<mpq_class> y{solver.TransposeSolve(c(basis.basis_idxs()))};
     fmt::println("cb: {}\ny: {}", c(basis.basis_idxs()), y);
     // Compute the reduced costs to determine the entering variable or optimality
-    Vector<mpq_class> r{c - A.transpose() * y};
+    Vector<mpq_class> r{c(non_basic_idxs) - A(Eigen::all, non_basic_idxs).transpose() * y};
+
+    DELPI_ASSERT(r.size() == num_non_basic, "Reduced costs must have the same size as the non-basic variables");
+    Index j = 0;
+    for (; j < num_non_basic; ++j) {
+      if (r(j) < 0) {
+        if (pi.contains(j)) break;
+      } else if (r(j) > 0) {
+        if (gamma.contains(j)) break;
+      }
+    }
+    if (j == num_non_basic) {
+      x_ = Eigen::VectorX<mpq_class>::Zero(A.cols());
+      x_(basis.basis_idxs()) = solver.Solve(b);
+      fmt::println("b: {}, index: {}, x_: {}", b, basis.basis_idxs(), x_);
+      return LpResult::OPTIMAL;
+    }
+
+    Vector<mpq_class> zb{solver.Solve(b)};
     fmt::println("c: {}\nrd: {}", c, A.transpose() * y);
     int r_idx = 0;
     for (; r_idx < r.size(); ++r_idx) {
@@ -156,6 +273,7 @@ LpResult DelpiLpSolver::InternalSolve(const Matrix<mpq_class>& A, const Vector<m
     if (r_idx == r.size()) {
       x_ = Eigen::VectorX<mpq_class>::Zero(A.cols());
       x_(basis.basis_idxs()) = zb;
+      fmt::println("b: {}, index: {}, x_: {}", b, basis.basis_idxs(), x_);
       return LpResult::OPTIMAL;
     }
     fmt::println("Reduced costs: r: {}\nr [{}] = {}", r, r_idx, r(r_idx));
@@ -183,6 +301,28 @@ LpResult DelpiLpSolver::InternalSolve(const Matrix<mpq_class>& A, const Vector<m
     DELPI_ASSERT(basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
   }
   DELPI_RUNTIME_ERROR("Maximum number of iterations reached");
+#endif
+}
+
+LpResult ExactFeasibilityCheck(const LpResult result, const Matrix<mpq_class>& A, const Vector<mpq_class>& b,
+                               const Vector<mpq_class>& c, const internal::Basis<mpq_class>& basis,
+                               const mpq_class& obj, const mpq_class& tolerance) {
+  DELPI_ASSERT(A.rows() == b.size(), "Inconsistent number of rows in A and b");
+  DELPI_ASSERT(&A == &basis.A(), "Basis must be built from matrix A");
+  DELPI_ASSERT(basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
+
+  // Auxiliary problem is always feasible and bounded
+  if (result != LpResult::OPTIMAL) return LpResult::ERROR;
+  DELPI_DEV("Feasibility check: auxiliary problem is feasible and bounded");
+  if (obj <= tolerance) return LpResult::OPTIMAL;
+  if (basis.basis_vectors().determinant() == 0) return LpResult::ERROR;
+  internal::BgLinearSystemSolver<mpq_class> solver{Config{}};
+  solver.Factorise(basis);
+  Vector<mpq_class> y{solver.TransposeSolve(c(basis.basis_idxs()))};
+  const mpq_class min_obj{c.transpose() * solver.Solve(b)};
+  DELPI_DEV_FMT("Feasibility check: obj={}, min_obj={}", obj, min_obj);
+  if ((y.array() >= 0).all() && min_obj > 0) return LpResult::INFEASIBLE;
+  return LpResult::OPTIMAL;  // TODO(tend): return ERROR?
 }
 
 LpResult DelpiLpSolver::FeasibilityCheck(Matrix<mpq_class>& slack_A, Vector<mpq_class>& slack_b,
@@ -191,39 +331,60 @@ LpResult DelpiLpSolver::FeasibilityCheck(Matrix<mpq_class>& slack_A, Vector<mpq_
   DELPI_ASSERT(&slack_A == &slack_basis.A(), "Basis must be built from matrix A");
   DELPI_ASSERT(slack_A.rows() == slack_b.size(), "Inconsistent number of rows in A and b");
 
-  Index min_idx = -1;
-  const mpq_class min_val{slack_b.minCoeff(&min_idx)};
-  if (min_val >= 0) {
-    // TODO(tend): we can just not do this assignment and return the status directly
-    slack_basis = internal::Basis<mpq_class>{slack_A};
-    return LpResult::OPTIMAL;
-  }
-
   // Initial feasible basis by adding auxiliary variables
   Matrix<mpq_class> aux_A{};
   Vector<mpq_class> aux_c{};
   std::vector<Index> aux_columns{};
   internal::Basis<mpq_class> aux_basis{AuxForm(slack_A, slack_b, aux_A, aux_c, aux_columns)};
 
-  DELPI_DEV_FMT("aux_A:\n{}", aux_A);
-  DELPI_DEV_FMT("aux_c:\n{}", aux_c);
-  DELPI_DEV_FMT("aux_basis:\n{}", aux_basis);
+  DELPI_ASSERT(!aux_basis.basis_idxs().empty(), "Auxiliary basis must have at least one index");
+  if (*std::ranges::max_element(aux_basis.basis_idxs()) < slack_A.cols()) {
+    // TODO(tend): we can just not do this assignment and return the status directly
+    slack_basis = internal::Basis<mpq_class>{slack_A};
+    return LpResult::OPTIMAL;
+  }
+
+  // DELPI_DEV_FMT("aux_A:\n{}", aux_A);
+  // DELPI_DEV_FMT("aux_c:\n{}", aux_c);
+  // DELPI_DEV_FMT("aux_basis:\n{}", aux_basis);
 
   // TODO(tend): Solve the feasible problem in increasing precision
-  // Solve the auxiliary problem
-  const LpResult result = InternalSolve(aux_A, slack_b, aux_c, aux_basis);
-  DELPI_TRACE_FMT("DelpiLpSolver::FeasibilityCheck(): Feasibility check result: {}", result);
-  if (result != LpResult::OPTIMAL) return LpResult::INFEASIBLE;
-  // Check if the objective value is zero
-  const mpq_class objective_value = aux_c.transpose() * x_;
-  DELPI_TRACE_FMT("DelpiLpSolver::FeasibilityCheck(): Feasibility check objective value: {}", objective_value);
-  if (objective_value != 0) return LpResult::INFEASIBLE;
+  for (const auto& [precision, tolerance] : precisions) {
+    LpResult feas_result;
+    double feas_obj;
+    internal::Basis<mpq_class> feas_basis{aux_A, aux_basis};
 
-  RemoveAuxiliaryColumns(aux_basis, aux_columns, slack_A, slack_b, slack_basis);
-  DELPI_ASSERT(slack_basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
-  DELPI_ASSERT(slack_basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
+    if (precision == 0) {
+      DELPI_DEBUG("Feasibility check with precision=0 (rational)");
+      Vector<mpq_class> x, y;
+      mpq_class obj;
+      feas_result = InternalSolve(aux_A, slack_b, aux_c, mpq_class{0}, feas_basis, x, y, obj);
+      feas_obj = obj.get_d();
+    } else if (precision == 64) {  // double precision
+      DELPI_DEBUG("Feasibility check with precision=64 (double)");
+      Matrix<double> aux_A_d = aux_A.cast<double>();
+      Vector<double> slack_b_d = slack_b.cast<double>();
+      Vector<double> aux_c_d = aux_c.cast<double>();
+      Vector<double> x, y;
+      DELPI_DEV_FMT("A:\n{}\nb:\n{}\nc:\n{}", aux_A_d, slack_b_d, aux_c_d);
+      internal::Basis<double> aux_basis_d{aux_A_d, aux_basis};
+      feas_result = InternalSolve(aux_A_d, slack_b_d, aux_c_d, 1e-6, aux_basis_d, x, y, feas_obj);
+      feas_basis = aux_basis_d;
+    } else {
+      DELPI_UNREACHABLE();
+    }
 
-  return LpResult::OPTIMAL;
+    DELPI_DEV_FMT("Feasibility check: result={}, obj={}, tolerance={}", feas_result, feas_obj, tolerance);
+    const LpResult feasibility =
+        ExactFeasibilityCheck(feas_result, aux_A, slack_b, aux_c, feas_basis, feas_obj, tolerance);
+    if (feasibility == LpResult::INFEASIBLE) return LpResult::INFEASIBLE;
+    if (feasibility == LpResult::OPTIMAL) {
+      RemoveAuxiliaryColumns(feas_basis, aux_columns, slack_A, slack_b, slack_basis);
+      DELPI_ASSERT(slack_basis.basis_vectors().determinant() != 0, "Basis matrix must be non-singular");
+      return LpResult::OPTIMAL;
+    }
+  }
+  throw DelpiLpSolverException("Could not find a solution with the required precision");
 }
 LpResult DelpiLpSolver::OptimalityCheck(const internal::Basis<mpq_class>&) {
   DELPI_TRACE("DelpiLpSolver::OptimalityCheck()");
@@ -233,7 +394,7 @@ LpResult DelpiLpSolver::UnboundednessCheck(const internal::Basis<mpq_class>&) {
   DELPI_TRACE("DelpiLpSolver::UnboundednessCheck()");
   return LpResult::OPTIMAL;
 }
-void DelpiLpSolver::RemoveAuxiliaryColumns(const internal::Basis<mpq_class>& aux_basis,
+void DelpiLpSolver::RemoveAuxiliaryColumns(const internal::Basis<mpq_class>& feas_basis,
                                            const std::vector<Index>& aux_columns, Matrix<mpq_class>& slack_A,
                                            Vector<mpq_class>& slack_b, internal::Basis<mpq_class>& slack_basis) const {
   DELPI_TRACE("DelpiLpSolver::RemoveAuxiliaryColumns()");
@@ -241,11 +402,11 @@ void DelpiLpSolver::RemoveAuxiliaryColumns(const internal::Basis<mpq_class>& aux
 
   std::vector<Index> rows_to_remove{};
   std::vector<std::size_t> columns_to_remove{};
-  for (std::size_t i = 0; i < aux_basis.basis_idxs().size(); ++i) {
-    if (aux_basis.basis_idxs()[i] < slack_A.cols()) continue;  // Valid non-auxiliary index. Keep it
+  for (std::size_t i = 0; i < feas_basis.basis_idxs().size(); ++i) {
+    if (feas_basis.basis_idxs()[i] < slack_A.cols()) continue;  // Valid non-auxiliary index. Keep it
 
     // Remove the row from the coefficient matrix
-    Index row = aux_columns.at(aux_basis.basis_idxs()[i] - slack_A.cols());
+    Index row = aux_columns.at(feas_basis.basis_idxs()[i] - slack_A.cols());
     rows_to_remove.emplace_back(row);
     columns_to_remove.emplace_back(i);
   }
@@ -253,13 +414,13 @@ void DelpiLpSolver::RemoveAuxiliaryColumns(const internal::Basis<mpq_class>& aux
   // TODO(tend): we may need to keep the order of rows fixed. But for now let's take the more efficient approach
   for (const Index i : rows_to_remove) {
     DELPI_DEV_FMT("Removing row {}", i);
-    slack_A.row(i) = slack_A.row(slack_A.rows() - 1);
+    slack_A.row(i) = slack_A.row(slack_A.rows() - 1).eval();
     slack_A.conservativeResize(slack_A.rows() - 1, Eigen::NoChange);
-    slack_b.row(i) = slack_b.row(slack_b.size() - 1);
+    slack_b.row(i) = slack_b.row(slack_b.size() - 1).eval();
     slack_b.conservativeResize(slack_b.size() - 1);
   }
 
-  slack_basis.FromBasis(aux_basis, columns_to_remove);
+  slack_basis.FromBasis(feas_basis, columns_to_remove);
 }
 internal::Basis<mpq_class> DelpiLpSolver::AuxForm(const Matrix<mpq_class>& slack_A, const Vector<mpq_class>& slack_b,
                                                   Matrix<mpq_class>& aux_A, Vector<mpq_class>& aux_c,
@@ -268,12 +429,38 @@ internal::Basis<mpq_class> DelpiLpSolver::AuxForm(const Matrix<mpq_class>& slack
   DELPI_ASSERT(aux_columns.empty(), "Auxiliary columns must be empty");
   DELPI_ASSERT(slack_A.rows() == slack_b.size(), "Inconsistent number of rows in A and b");
 
+  for (Index i = 0; i < slack_A.rows(); ++i) {
+    aux_columns.emplace_back(i);
+  }
+
+  aux_A = Matrix<mpq_class>{slack_A.rows(), slack_A.cols() + slack_b.size()};
+  aux_A.leftCols(slack_A.cols()) = slack_A;
+  aux_A.rightCols(slack_b.size()).setZero();
+
+  std::vector<Index> aux_basis_idx{};
+  aux_basis_idx.reserve(slack_A.rows());
+
+  for (Index i = 0; i < slack_b.size(); ++i) {
+    if (slack_A(i, slack_A.cols() - slack_A.rows() + i) != 0 &&
+        (slack_b(i) < 0) == (slack_A(i, slack_A.cols() - slack_A.rows() + i) < 0)) {
+      aux_basis_idx.emplace_back(slack_A.cols() - slack_A.rows() + i);
+    } else {
+      aux_A(i, slack_A.cols() + i) = slack_b(i) < 0 ? -1 : 1;
+      aux_basis_idx.emplace_back(slack_A.cols() + i);
+    }
+  }
+
+  aux_c = Vector<mpq_class>::Zero(slack_A.cols() + slack_b.size());
+  aux_c.tail(slack_b.size()).setConstant(1);
+
+  // More efficient implementation which only adds the necessary aux columns
+#if 0
   aux_columns.clear();
   std::vector<Index> aux_basis_idx{};
   aux_basis_idx.reserve(slack_A.rows());
   aux_columns.reserve(slack_b.size());
   for (Index i = 0; i < slack_b.size(); ++i) {
-    if (slack_b(i) < 0) {
+    if ((slack_b(i) < 0) != slack_A(i, slack_A.cols() - slack_A.rows()) < 0) {
       aux_columns.emplace_back(i);
     } else {
       aux_basis_idx.emplace_back(i);  // Add the slack columns which we know are trivially feasible to the basis
@@ -297,6 +484,7 @@ internal::Basis<mpq_class> DelpiLpSolver::AuxForm(const Matrix<mpq_class>& slack
                "Inconsistent number of rows in A and basis");
   DELPI_ASSERT(static_cast<Index>(aux_basis_idx.size()) <= slack_A.rows(),
                "Inconsistent number of rows in A and aux columns");
+#endif
 
   return {aux_A, std::move(aux_basis_idx)};
 }
@@ -305,5 +493,12 @@ std::ostream& operator<<(std::ostream& os, const DelpiLpSolver& solver) {
   return os << "DelpiLpSolver{ num_columns: " << solver.num_columns() << ", num_rows: " << solver.num_rows() << "\n"
             << solver.problem() << "}\n";
 }
+
+template LpResult DelpiLpSolver::InternalSolve(const Matrix<double>&, const Vector<double>&, const Vector<double>&,
+                                               const double&, internal::Basis<double>&, Vector<double>&,
+                                               Vector<double>&, double&);
+template LpResult DelpiLpSolver::InternalSolve(const Matrix<mpq_class>&, const Vector<mpq_class>&,
+                                               const Vector<mpq_class>&, const mpq_class&, internal::Basis<mpq_class>&,
+                                               Vector<mpq_class>&, Vector<mpq_class>&, mpq_class&);
 
 }  // namespace delpi

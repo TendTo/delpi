@@ -25,20 +25,15 @@ class TestDelpiLpSolver : public ::testing::Test {
 TEST_F(TestDelpiLpSolver, Constructor) {
   const auto* solver = dynamic_cast<const DelpiLpSolver*>(solver_.get());
   ASSERT_NE(solver, nullptr);
-  EXPECT_EQ(solver->b().size(), 0u);
-  EXPECT_EQ(solver->c().size(), 0u);
   EXPECT_EQ(solver->num_columns(), 0);
   EXPECT_EQ(solver->num_rows(), 0);
-  EXPECT_EQ(solver->A().rows(), 0);
-  EXPECT_EQ(solver->A().cols(), 0);
-  EXPECT_EQ(solver->x().size(), 0);
 }
 
 TEST_F(TestDelpiLpSolver, Feasible) {
-  solver_->AddColumn(x1_, 0);
-  solver_->AddColumn(x2_, 0);
-  solver_->AddColumn(x3_, 0);
-  solver_->AddColumn(x4_, 0);
+  solver_->AddColumn(x1_, 1);
+  solver_->AddColumn(x2_, 1);
+  solver_->AddColumn(x3_, 1);
+  solver_->AddColumn(x4_, 1);
   solver_->AddRow(x1_ + x2_ + x3_ + x4_ <= 1);
   solver_->AddRow(x1_ + x2_ + x3_ + x4_ >= 1);
   solver_->m_solve_cb() = [&](const LpSolver&, const LpResult, const std::vector<mpq_class>& x,
@@ -55,10 +50,10 @@ TEST_F(TestDelpiLpSolver, Feasible) {
 }
 
 TEST_F(TestDelpiLpSolver, Infeasible) {
-  solver_->AddColumn(x1_, 0);
-  solver_->AddColumn(x2_, 0);
-  solver_->AddColumn(x3_, 0);
-  solver_->AddColumn(x4_, 0);
+  solver_->AddColumn(x1_, 1);
+  solver_->AddColumn(x2_, 1);
+  solver_->AddColumn(x3_, 1);
+  solver_->AddColumn(x4_, 1);
   solver_->AddRow(x1_ + x2_ + x3_ + x4_ <= -1);
   solver_->AddRow(x1_ + x2_ + x3_ + x4_ >= -10);
   const LpResult result = solver_->Solve(delta_);

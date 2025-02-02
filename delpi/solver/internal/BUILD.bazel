@@ -58,6 +58,7 @@ delpi_cc_library(
         ":row",
         "//delpi/libs:eigen",
         "//delpi/libs:gmp",
+        "//delpi/symbolic:formula_kind",
         "//delpi/util:concepts",
         "//delpi/util:logging",
     ],

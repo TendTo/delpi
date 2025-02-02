@@ -32,8 +32,6 @@ class DelpiLpSolver final : public LpSolver {
   [[nodiscard]] int num_rows() const override;
   [[nodiscard]] const internal::LpProblem& problem() const { return problem_; }
 
-  [[nodiscard]] const Vector<mpq_class>& x() const { return x_; }
-
   [[nodiscard]] Column column(ColumnIndex column_idx) const override;
   [[nodiscard]] Row row(RowIndex row_idx) const override;
   void ReserveColumns(int num_columns) override;
@@ -69,11 +67,15 @@ class DelpiLpSolver final : public LpSolver {
    * @param b rhs vector
    * @param c objective function
    * @param basis starting feasible basis
+   * @param tolerance tolerance for the optimality check. Should be 0 for exact arithmetic.
    * @return LpResult::OPTIMAL if the problem is feasible, bounded and an optimal solution has been found
    * @return LpResult::UNBOUNDED if the problem is unbounded
    */
-  LpResult InternalSolve(const Matrix<mpq_class>& A, const Vector<mpq_class>& b, const Vector<mpq_class>& c,
-                         internal::Basis<mpq_class>& basis);
+  template <IsAnyOf<double, mpq_class> T>
+  LpResult InternalSolve(const Matrix<T>& A, const Vector<T>& b, const Vector<T>& c, const T& tolerance,
+                         internal::Basis<T>& basis, Vector<T>& x, Vector<T>& y, T& obj);
+  LpResult InternalSolve(const Matrix<mpq_class>& A, const Vector<mpq_class>& c, const Vector<mpq_class>& lb,
+                         const Vector<mpq_class>& ub, internal::Basis<mpq_class>& basis);
   // TODO(tend): add mpf_class support
   // LpResult InternalSolve(const Matrix<T>& A, const Vector<T>& b, const Vector<T>& c, internal::Basis<T>& basis);
   LpResult FeasibilityCheck(Matrix<mpq_class>& slack_A, Vector<mpq_class>& slack_b,
@@ -85,12 +87,12 @@ class DelpiLpSolver final : public LpSolver {
    * If `aux_basis` still contains any auxiliary columns, they will be removed from the `basis`
    * and the corresponding row in `A` and `b` will be removed as well, thus reducing the size of the problem.
    * @pre the auxiliary columns must be the rightmost columns the `aux_basis`' coefficient matrix.
-   * @param aux_basis basis obtained from the auxiliary problem that produces an objective value of 0
+   * @param feas_basis basis obtained from the auxiliary problem that produces an objective value of 0
    * @param[in,out] slack_A coefficient matrix of the standard form problem
    * @param[out] slack_b rhs vector of the standard form problem
    * @param[out] slack_basis basis associated with the standard form problem to be updated
    */
-  void RemoveAuxiliaryColumns(const internal::Basis<mpq_class>& aux_basis, const std::vector<Index>& aux_columns,
+  void RemoveAuxiliaryColumns(const internal::Basis<mpq_class>& feas_basis, const std::vector<Index>& aux_columns,
                               Matrix<mpq_class>& slack_A, Vector<mpq_class>& slack_b,
                               internal::Basis<mpq_class>& slack_basis) const;
 
@@ -189,9 +191,6 @@ class DelpiLpSolver final : public LpSolver {
 #endif
 
   internal::LpProblem problem_;  ///< Linear programming problem
-
-  Vector<mpq_class> x_;  ///< Solution
-  Vector<mpq_class> y_;  ///< Dual solution
 };
 
 std::ostream& operator<<(std::ostream& os, const DelpiLpSolver& solver);
