@@ -8,6 +8,7 @@
 #include "delpi/libs/gmp.h"
 #include "delpi/solver/internal/Column.h"
 #include "delpi/solver/internal/Row.h"
+#include "delpi/symbolic/FormulaKind.h"
 
 namespace delpi::internal {
 
@@ -22,10 +23,6 @@ class LpProblem {
   [[nodiscard]] const std::vector<Index>& free_vars() const { return free_vars_; }
   [[nodiscard]] Index num_columns() const { return num_columns_; }
   [[nodiscard]] Index num_rows() const { return num_rows_; }
-  [[nodiscard]] const Vector<T>& lb() const { return b_lb_; }
-  [[nodiscard]] const Vector<T>& ub() const { return b_ub_; }
-  [[nodiscard]] const mpq_class& lb(const Index row_idx) const { return b_lb_(row_idx); }
-  [[nodiscard]] const mpq_class& ub(const Index row_idx) const { return b_ub_(row_idx); }
 
   [[nodiscard]] Row row(Index row_idx) const;
   [[nodiscard]] Column column(Index column_idx) const;
@@ -39,14 +36,16 @@ class LpProblem {
 
   void SlackForm(Matrix<T>& slack_A, Vector<T>& slack_b, Vector<T>& slack_c) const;
 
+  void FixSolution(Vector<T>& x);
+
  private:
   Index num_columns_;
   Index num_rows_;
 
   Matrix<T> A_;
   Vector<T> c_;
-  Vector<T> b_lb_;
-  Vector<T> b_ub_;
+  Vector<T> b_;
+  std::vector<FormulaKind> sense_;
 
   Vector<T> x_lb_;
   std::unordered_map<Index, T> x_ub_;
