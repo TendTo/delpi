@@ -1,6 +1,10 @@
+/**
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 delpi
+ * @licence BSD 3-Clause License
+ */
 #include "delpi/solver/internal/RetriangularisationFactor.h"
 
-#include <ostream>
 #include <ostream>
 
 #include "delpi/util/error.h"

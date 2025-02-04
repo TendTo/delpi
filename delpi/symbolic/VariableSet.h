@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <algorithm>
+#include <functional>
 #include <iosfwd>
 #include <limits>
 #include <vector>
@@ -117,8 +119,8 @@ class VariableSet {
     vars_.resize(new_max - new_min + 1);
     // If the lower bound of the new range is less than the current min_id, rotate the vector to the left by max_diff
     if (new_min < min_id_) {
-      std::rotate(vars_.begin(), vars_.begin() + static_cast<long>(old_size),
-                  vars_.end() - static_cast<long>(max_diff));
+      std::rotate(vars_.begin(), vars_.begin() + static_cast<std::int64_t>(old_size),
+                  vars_.end() - static_cast<std::int64_t>(max_diff));
       min_id_ = new_min;
     }
     for (const Variable var : vars) vars_.at(var.id() - min_id_) = true;

@@ -24,7 +24,7 @@ bool VariableSet::Insert(const Id id) {
   }
   if (id < min_id_) {
     vars_.resize(vars_.size() + min_id_ - id, false);
-    std::rotate(vars_.begin(), vars_.begin() + static_cast<long>(vars_.size() - (min_id_ - id)), vars_.end());
+    std::rotate(vars_.begin(), vars_.begin() + static_cast<std::int64_t>(vars_.size() - (min_id_ - id)), vars_.end());
     min_id_ = id;
     vars_.front() = true;
     return true;

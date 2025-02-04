@@ -6,7 +6,11 @@
 #include "delpi/solver/DelpiLpSolver.h"
 
 #include <ostream>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "delpi/util/error.h"
 #include "internal/Basis.h"

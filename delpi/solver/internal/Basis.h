@@ -42,6 +42,9 @@ namespace delpi::internal {
  */
 template <IsAnyOf<mpq_class, double> T>
 class Basis {
+  friend Basis<mpq_class>;
+  friend Basis<double>;
+
  public:
   using BasisVectors = decltype(Eigen::MatrixX<T>(Eigen::all, std::declval<std::vector<Index>>()));
   explicit Basis(const Eigen::MatrixX<T>& A);
@@ -69,15 +72,13 @@ class Basis {
   void OffsetIndexes(Index offset);
 
  protected:
-  const Matrix<T>& A_;          ///< Coefficient matrix
-  BasisVectors basis_vectors_;  ///< Basis columns taken from A
- public:
+  const Matrix<T>& A_;                              ///< Coefficient matrix
+  BasisVectors basis_vectors_;                      ///< Basis columns taken from A
   std::shared_ptr<std::vector<Index>> basis_idxs_;  ///< Indices of the basis vectors
- protected:
-  Index last_basis_entering_;  ///< Index of where the latest column was added in the basis
-  Index last_basis_leaving_;   ///< Index of where the latest column was removed from the basis
-  Index last_leaving_;         ///< Index of the variable that left the basis last. Relative to the original matrix
-  Index last_entering_;        ///< Index of the variable that entered the basis last. Relative to the original matrix
+  Index last_basis_entering_;                       ///< Index of where the latest column was added in the basis
+  Index last_basis_leaving_;                        ///< Index of where the latest column was removed from the basis
+  Index last_leaving_;   ///< Index of the variable that left the basis last. Relative to the original matrix
+  Index last_entering_;  ///< Index of the variable that entered the basis last. Relative to the original matrix
 };
 
 template <IsAnyOf<mpq_class, double> T>

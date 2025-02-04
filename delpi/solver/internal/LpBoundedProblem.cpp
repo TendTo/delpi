@@ -1,4 +1,9 @@
-#include "delpi/solver/internal/LpProblem.h"
+/**
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 delpi
+ * @licence BSD 3-Clause License
+ */
+#include "delpi/solver/internal/LpBoundedProblem.h"
 
 #include "delpi/util/error.h"
 #include "delpi/util/logging.h"

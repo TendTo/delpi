@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <limits>
 #include <optional>
+#include <utility>
 #include <vector>
 
 #include "delpi/symbolic/Variable.h"
@@ -128,8 +129,8 @@ class VariableMap {
     vars_.resize(new_max - new_min + 1);
     // If the lower bound of the new range is less than the current min_id, rotate the vector to the left by max_diff
     if (new_min < min_id_) {
-      std::rotate(vars_.begin(), vars_.begin() + static_cast<long>(old_size),
-                  vars_.end() - static_cast<long>(max_diff));
+      std::rotate(vars_.begin(), vars_.begin() + static_cast<std::int64_t>(old_size),
+                  vars_.end() - static_cast<std::int64_t>(max_diff));
       min_id_ = new_min;
     }
     for (const value_type& item : items) vars_.at(item.first.id() - min_id_) = item.second;
@@ -182,7 +183,7 @@ class VariableMap {
     }
     if (id < min_id_) {
       vars_.resize(vars_.size() + min_id_ - id, std::nullopt);
-      std::ranges::rotate(vars_, vars_.begin() + static_cast<long>(vars_.size() - (min_id_ - id)));
+      std::ranges::rotate(vars_, vars_.begin() + static_cast<std::int64_t>(vars_.size() - (min_id_ - id)));
       min_id_ = id;
       vars_.front() = value;
       return true;

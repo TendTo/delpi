@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -20,7 +21,7 @@ class Variable {
  public:
   using Id = std::size_t;
 
-  const static Id dummy_id;  ///< ID of the dummy variable.
+  static const Id dummy_id;  ///< ID of the dummy variable.
 
   /**
    * Construct a new dummy variable object.

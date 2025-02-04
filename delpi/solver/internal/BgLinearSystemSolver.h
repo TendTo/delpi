@@ -1,6 +1,13 @@
+/**
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 delpi
+ * @licence BSD 3-Clause License
+ * BgLinearSystemSolver class.
+ */
 #pragma once
 
 #include <iosfwd>
+#include <vector>
 
 #include "LinearSystemSolver.h"
 #include "RetriangularisationFactor.h"
