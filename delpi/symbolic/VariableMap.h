@@ -213,6 +213,17 @@ class VariableMap {
   std::vector<std::optional<T>> vars_;  ///< Vector tracking the value each variable is mapped to.
 };
 
+template <class T>
+std::ostream& operator<<(std::ostream& os, const VariableMap<T>& var_map);
+
 extern template class VariableMap<int>;
 
 }  // namespace delpi
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::VariableMap<int>)
+
+#endif

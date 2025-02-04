@@ -37,7 +37,12 @@ delpi_cc_googletest(
     name = "test_delpi_lp_solver",
     data = glob(["mps/*.mps"]),
     tags = ["solver"],
-    deps = ["//delpi/solver:lp_solver"],
+    deps = [
+        "//delpi/libs:eigen",
+        "//delpi/solver:lp_solver",
+        "//delpi/solver/internal:basis",
+        "//delpi/solver/internal:lp_problem",
+    ],
 )
 
 delpi_cc_googletest(

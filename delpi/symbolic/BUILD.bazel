@@ -53,7 +53,6 @@ delpi_cc_library(
     name = "variable_map",
     srcs = ["VariableMap.cpp"],
     hdrs = ["VariableMap.h"],
-    implementation_deps = ["//delpi/util:error"],
     deps = [
         ":variable",
         "//delpi/util:concepts",

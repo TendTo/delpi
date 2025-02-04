@@ -202,3 +202,11 @@ class VariableSet {
 std::ostream& operator<<(std::ostream& os, const VariableSet& var_set);
 
 }  // namespace delpi
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::VariableSet)
+
+#endif

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "delpi/libs/eigen.h"
+#include "delpi/libs/gmp.h"
 
 namespace delpi::internal {
 

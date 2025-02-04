@@ -76,7 +76,10 @@ delpi_cc_library(
     }),
     hdrs = ["LpSolver.h"],
     implementation_deps = [
+        "//delpi/libs:eigen",
+        "//delpi/solver/internal:basis",
         "//delpi/solver/internal:linear_system_solver",
+        "//delpi/solver/internal:lp_problem",
         "//delpi/util:error",
     ] + select({
         "//tools:enabled_soplex": ["//delpi/libs:soplex"],
@@ -90,10 +93,7 @@ delpi_cc_library(
         ":lp_result",
         ":lp_row_sense",
         ":row",
-        "//delpi/libs:eigen",
         "//delpi/libs:gmp",
-        "//delpi/solver/internal:basis",
-        "//delpi/solver/internal:lp_problem",
         "//delpi/symbolic:expression",
         "//delpi/symbolic:formula",
         "//delpi/symbolic:variable",

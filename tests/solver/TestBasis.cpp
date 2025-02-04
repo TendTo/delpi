@@ -6,9 +6,7 @@
 #include <gtest/gtest.h>
 
 #include "delpi/solver/internal/Basis.h"
-#include "delpi/util/Config.h"
 
-using delpi::Config;
 using delpi::Matrix;
 using delpi::internal::Basis;
 
@@ -16,8 +14,7 @@ template <class T>
 class TestBasis : public ::testing::Test {
  protected:
   Matrix<T> matrix_ = Matrix<T>::Ones(10, 20);
-  Config config_;
-  TestBasis() : config_{Config{}} {
+  TestBasis() {
     for (int i = 0; i < matrix_.cols(); i++) matrix_.col(i) *= i;
   }
 };

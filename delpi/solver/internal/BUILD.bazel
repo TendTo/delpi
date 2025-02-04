@@ -23,6 +23,7 @@ delpi_cc_library(
     deps = [
         "//delpi/libs:eigen",
         "//delpi/libs:gmp",
+        "//delpi/util:logging",
     ],
 )
 
@@ -30,7 +31,10 @@ delpi_cc_library(
     name = "column",
     srcs = ["Column.cpp"],
     hdrs = ["Column.h"],
-    deps = ["//delpi/libs:gmp"],
+    deps = [
+        "//delpi/libs:gmp",
+        "//delpi/util:logging",
+    ],
 )
 
 delpi_cc_library(
@@ -42,9 +46,7 @@ delpi_cc_library(
         "//delpi/libs:eigen",
         "//delpi/libs:gmp",
         "//delpi/util:concepts",
-        "//delpi/util:config",
         "//delpi/util:logging",
-        "//delpi/util:stats",
     ],
 )
 
@@ -59,7 +61,6 @@ delpi_cc_library(
         "//delpi/libs:eigen",
         "//delpi/libs:gmp",
         "//delpi/symbolic:formula_kind",
-        "//delpi/util:concepts",
         "//delpi/util:logging",
     ],
 )
@@ -69,11 +70,11 @@ delpi_cc_library(
     srcs = ["RetriangularisationFactor.cpp"],
     hdrs = ["RetriangularisationFactor.h"],
     implementation_deps = [
-        "//delpi/libs:gmp",
         "//delpi/util:error",
     ],
     deps = [
         "//delpi/libs:eigen",
+        "//delpi/libs:gmp",
         "//delpi/util:logging",
     ],
 )
@@ -88,13 +89,16 @@ delpi_cc_library(
         "BgLinearSystemSolver.h",
         "LinearSystemSolver.h",
     ],
-    implementation_deps = ["//delpi/util:error"],
+    implementation_deps = [
+        "//delpi/util:error",
+        "//delpi/util:logging",
+    ],
     deps = [
         ":basis",
         ":retriangularisation_factor",
         "//delpi/libs:eigen",
+        "//delpi/libs:gmp",
         "//delpi/util:config",
-        "//delpi/util:logging",
         "//delpi/util:stats",
     ],
 )
