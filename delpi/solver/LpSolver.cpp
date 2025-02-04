@@ -35,6 +35,7 @@ bool IsYes(std::string value) {
 LpSolver::LpSolver(mpq_class ninfinity, mpq_class infinity, Config config, const std::string& class_name)
     : config_{std::move(config)},
       stats_{config.with_timings(), class_name, "Total time spent in Optimise", "Total # of Optimise"},
+      parser_stats_{config.with_timings(), class_name, "Total time spent in Parsing"},
       var_to_col_{},
       col_to_var_{},
       solution_{},
