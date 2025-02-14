@@ -78,7 +78,10 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
   auto it = columns_.find(column);
   if (columns_.end() == it) {
     DELPI_TRACE_FMT("Added column {}", column);
-    auto [insert_it, val] = columns_.emplace(column, Column{Variable{column}});
+    // Integer columns are added with an implicit lower bound of 0 and upper bound of 1.
+    // Non integer columns are added with an implicit lower bound of 0 and no upper bound.
+    auto [insert_it, val] =
+        columns_.emplace(column, integer_columns_ ? Column{Variable{column}, 1} : Column{Variable{column}});
     it = insert_it;
   }
   if (row == obj_row_) {
@@ -198,6 +201,20 @@ void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, c
   }
 
   DELPI_TRACE_FMT("Updated bound {}", column);
+}
+void MpsDriver::SetMarker(const std::string &name, const std::string &keyword) {
+  DELPI_TRACE_FMT("Driver::SetMarker({} {})", name, keyword);
+  if (keyword == "INTORG") {
+    DELPI_DEBUG("Integers start");
+    integer_columns_ = true;
+    return;
+  }
+  if (keyword == "INTEND") {
+    DELPI_DEBUG("Integers end");
+    integer_columns_ = false;
+    return;
+  }
+  DELPI_WARN_FMT("Unknown marker '{}'. Ignoring", keyword);
 }
 
 void MpsDriver::End() {

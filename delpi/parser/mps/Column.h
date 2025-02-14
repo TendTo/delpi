@@ -25,6 +25,7 @@ namespace delpi::mps {
 struct Column {
   Column() = default;
   explicit Column(const Variable& _var) : var{_var}, lb{std::nullopt}, ub{std::nullopt}, is_infinite_lb{false} {}
+  Column(const Variable& _var, const mpq_class& _ub) : var{_var}, lb{std::nullopt}, ub{_ub}, is_infinite_lb{false} {}
   Column(const Variable& _var, const mpq_class& _lb, const mpq_class& _ub)
       : var{_var}, lb{_lb}, ub{_ub}, is_infinite_lb{false} {}
   Variable var;                 ///< Variable.

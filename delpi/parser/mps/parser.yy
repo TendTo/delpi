@@ -68,7 +68,7 @@ using delpi::gmp::StringToMpq;
 %token <std::string>   RATIONAL              "rational used in comments"
 %token <std::string>   SYMBOL                "symbol"
 %token <std::string>   QUOTED_SYMBOL         "symbol in quotes"
-%token <SenseType>         SENSE                 "sense. Acceptable values are: E, L, G, N"
+%token <SenseType>     SENSE                 "sense. Acceptable values are: E, L, G, N"
 %token <BoundType>     BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX"
 %token <BoundType>     BOUND_TYPE_SINGLE     "type of bound. Can only be BV, MI, PL, FR"
 
@@ -165,7 +165,9 @@ column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
     | SYMBOL SYMBOL SYMBOL '\n' { 
         driver.AddColumn($1, $2, mpq_class{StringToMpq($3)});
     }
-    | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' { }
+    | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' {
+        if ( $2 == "MARKER") driver.SetMarker($1, $3);
+    }
     | command
     | '\n'
     ;
