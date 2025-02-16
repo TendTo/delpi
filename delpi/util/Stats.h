@@ -110,3 +110,12 @@ std::ostream &operator<<(std::ostream &os, const Stats &stats);
 std::ostream &operator<<(std::ostream &os, const IterationStats &stats);
 
 }  // namespace delpi
+
+#ifdef DELPI_INCLUDE_FMT
+
+#include "delpi/util/logging.h"
+
+OSTREAM_FORMATTER(delpi::Stats);
+OSTREAM_FORMATTER(delpi::IterationStats);
+
+#endif

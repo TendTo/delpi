@@ -87,13 +87,15 @@ LpSolver::RowIndex DelpiLpSolver::AddRow(const Expression::Addends& lhs, const F
   problem_.AddRow(row_lhs, sense == FormulaKind::Leq ? ninfinity_ : rhs, sense == FormulaKind::Geq ? infinity_ : rhs);
   return num_rows() - 1;
 }
-void DelpiLpSolver::SetBound(Variable var, const mpq_class& lb, const mpq_class& ub) {
+void DelpiLpSolver::SetBound([[maybe_unused]] Variable var, [[maybe_unused]] const mpq_class& lb,
+                             [[maybe_unused]] const mpq_class& ub) {
   DELPI_TRACE_FMT("DelpiLpSolver::SetBound({}, {}, {})", var, lb, ub);
   DELPI_ASSERT(var_to_col_.contains(var), "Variable not found in the LP");
   // TODO(tend): Consider upper and lower bounds
   // problem_.SetColumnBound(0, lb, ub);
 }
-void DelpiLpSolver::SetCoefficient(const RowIndex row, const ColumnIndex column, const mpq_class& value) {
+void DelpiLpSolver::SetCoefficient([[maybe_unused]] const RowIndex row, [[maybe_unused]] const ColumnIndex column,
+                                   [[maybe_unused]] const mpq_class& value) {
   DELPI_TRACE_FMT("DelpiLpSolver::SetCoefficient({}, {}, {})", row, column, value);
   DELPI_ASSERT(row < num_rows(), "Row index out of bounds");
   DELPI_ASSERT(column < num_columns(), "Column index out of bounds");
@@ -111,7 +113,7 @@ void DelpiLpSolver::Dump() {
             << problem_ << "}\n";
 }
 #endif
-LpResult DelpiLpSolver::SolveCore(mpq_class& delta, bool store_solution) {
+LpResult DelpiLpSolver::SolveCore([[maybe_unused]] mpq_class& delta, [[maybe_unused]] bool store_solution) {
   DELPI_DEBUG_FMT("DelpiLpSolver::SolveCore({}, {})", delta, store_solution);
   delta_ = delta;
   Matrix<mpq_class> slack_A;

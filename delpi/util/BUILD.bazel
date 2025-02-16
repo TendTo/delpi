@@ -85,7 +85,10 @@ delpi_cc_library(
     hdrs = ["Stats.h"],
     implementation_deps = ["@fmt"],
     tags = ["no-dwyu"],
-    deps = [":timer"],
+    deps = [
+        ":logging",
+        ":timer",
+    ],
 )
 
 delpi_cc_library(

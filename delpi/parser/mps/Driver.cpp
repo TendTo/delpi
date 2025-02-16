@@ -202,7 +202,7 @@ void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, c
 
   DELPI_TRACE_FMT("Updated bound {}", column);
 }
-void MpsDriver::SetMarker(const std::string &name, const std::string &keyword) {
+void MpsDriver::SetMarker([[maybe_unused]] const std::string &name, const std::string &keyword) {
   DELPI_TRACE_FMT("Driver::SetMarker({} {})", name, keyword);
   if (keyword == "INTORG") {
     DELPI_DEBUG("Integers start");
