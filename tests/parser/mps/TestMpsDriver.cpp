@@ -381,3 +381,43 @@ TEST_F(TestMpsDriver, BoundsImplicit) {
                                                            x3 >= 0,  //
                                                            x1 + x2 + x3 + x4 + x5 == 0));
 }
+
+TEST_F(TestMpsDriver, BoundsIntegerImplicit) {
+  MpsDriver driver{*lp_solver_};
+  ASSERT_TRUE(
+      driver.ParseString("ROWS\n"
+                         " E  R1\n"
+                         " N  Ob\n"
+                         "COLUMNS\n"
+                         " X1 R1 1 \n"
+                         " Mark 'MARKER' 'INTORG'\n"
+                         " X2 R1 1 \n"
+                         " X3 R1 1 \n"
+                         " X4 R1 1 \n"
+                         " X5 R1 1 \n"
+                         " Mark 'MARKER' 'INTEND'\n"
+                         " X6 R1 1 \n"
+                         "BOUNDS\n"
+                         " LO BND X2 -10\n"
+                         " UP BND X4 10\n"
+                         " UP BND X5 -1\n"
+                         "ENDATA"));
+  ASSERT_EQ(lp_solver_->variables().size(), 6u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const Variable& x4 = lp_solver_->variables().at(3);
+  const Variable& x5 = lp_solver_->variables().at(4);
+  const Variable& x6 = lp_solver_->variables().at(5);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 >= 0,    //
+                                                           x2 >= -10,  //
+                                                           x2 <= 1,    //
+                                                           x3 >= 0,    //
+                                                           x3 <= 1,    //
+                                                           x4 >= 0,    //
+                                                           x4 <= 10,   //
+                                                           x5 <= -1,   //
+                                                           x6 >= 0,    //
+                                                           x1 + x2 + x3 + x4 + x5 + x6 == 0));
+}

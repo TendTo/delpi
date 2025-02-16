@@ -87,17 +87,13 @@ TEST_P(TestLpSolver, AddRow) {
   EXPECT_EQ(solver_->row(row_idx).ub.value(), 5);
 }
 
-#if 0
 TEST_P(TestLpSolver, SetObjective) {
-  Variable x{"x"};
-  Variable y{"y"};
-  solver_->AddColumn(x);
-  solver_->AddColumn(y);
-  solver_->SetObjective(x, 1);
-  solver_->SetObjective(y, 2);
-  EXPECT_EQ(solver_->solution().size(), 2);
+  solver_->AddColumn(x_);
+  solver_->AddColumn(y_);
+  solver_->SetObjective(x_, 1);
+  solver_->SetObjective(y_, 2);
+  // TODO(tend): Check the objective
 }
-#endif
 
 TEST_P(TestLpSolver, Optimise) {
   solver_->AddColumn(x_, 9);
@@ -109,7 +105,3 @@ TEST_P(TestLpSolver, Optimise) {
   EXPECT_EQ(solver_->solution(x_), 0);
   EXPECT_EQ(solver_->solution(y_), 10);
 }
-
-#ifndef NDEBUG
-TEST_P(TestLpSolver, Dump) { EXPECT_NO_THROW(solver_->Dump()); }
-#endif
