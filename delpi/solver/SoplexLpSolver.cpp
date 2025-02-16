@@ -25,11 +25,11 @@ SoplexLpSolver::SoplexLpSolver(Config config, const std::string& class_name)
       rninfinity_{-soplex::infinity},
       rinfinity_{soplex::infinity} {
   // Default SoPlex parameters
-  spx_.setRealParam(soplex::SoPlex::FEASTOL, config_.precision());
+  spx_.setRealParam(soplex::SoPlex::OPTTOL, config_.precision());
+  spx_.setRealParam(soplex::SoPlex::FEASTOL, 0);
   spx_.setBoolParam(soplex::SoPlex::RATREC, false);
   spx_.setIntParam(soplex::SoPlex::READMODE, soplex::SoPlex::READMODE_RATIONAL);
   spx_.setIntParam(soplex::SoPlex::SOLVEMODE, soplex::SoPlex::SOLVEMODE_RATIONAL);
-  spx_.setIntParam(soplex::SoPlex::CHECKMODE, soplex::SoPlex::CHECKMODE_RATIONAL);
   spx_.setIntParam(soplex::SoPlex::SYNCMODE, soplex::SoPlex::SYNCMODE_AUTO);
   spx_.setIntParam(soplex::SoPlex::SIMPLIFIER, soplex::SoPlex::SIMPLIFIER_INTERNAL);
   spx_.setIntParam(soplex::SoPlex::VERBOSITY, config_.verbose_simplex());
@@ -259,7 +259,7 @@ void SoplexLpSolver::UpdateInfeasible() {
 
 template <TypedIterable<std::pair<const Variable, mpq_class>> T>
 soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(const T& literal_monomials) {
-  soplex::DSVectorRational coeffs;
+  soplex::DSVectorRational coeffs{static_cast<int>(literal_monomials.size())};
   for (const auto& [var, coeff] : literal_monomials) SetVarCoeff(coeffs, var, coeff);
   return coeffs;
 }
