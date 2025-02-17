@@ -8,6 +8,7 @@
 
 #include <iosfwd>
 #include <memory>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -261,6 +262,13 @@ class LpSolver {
   void SetOption(const std::string& key, const std::string& value);
 
   /**
+   * Add a vector of `columns` to the LP problem.
+   * @warning The objective coefficient is set with respect to a minimisation problem.
+   * @param columns vector of columns to add to the LP problem
+   * @see AddColumn(const Column&)
+   */
+  virtual void AddColumns(const std::span<Column>& columns);
+  /**
    * Add a new `column` to the LP problem.
    * Not indicating a `column.lb` or `column.ub` will result in an unbounded variable in that direction.
    * @warning The objective coefficient is set with respect to a minimisation problem.
@@ -303,6 +311,12 @@ class LpSolver {
   virtual ColumnIndex AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb,
                                 const mpq_class& ub) = 0;
 
+  /**
+   * Add a vector of `rows` to the LP problem.
+   * @param rows vector of rows to add to the LP problem
+   * @see AddRow(const Row&)
+   */
+  virtual void AddRows(const std::span<Row>& rows);
   /**
    * Add a new row to the LP problem with the given `row`.
    * Not indicating a `row.lb` or `row.ub` will result in an unbounded row in that direction.

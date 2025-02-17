@@ -99,6 +99,10 @@ LpSolver::ColumnIndex LpSolver::AddColumn(const Variable& var, const mpq_class& 
   return AddColumn(var, 0, lb, ub);
 }
 
+void LpSolver::AddRows(const std::span<Row>& rows) {
+  ReserveRows(num_rows() + rows.size());
+  for (const Row& row : rows) AddRow(row);
+}
 LpSolver::RowIndex LpSolver::AddRow(const Row& row) {
   return AddRow(row.addends, row.lb.value_or(ninfinity_), row.ub.value_or(infinity_));
 }
@@ -199,6 +203,11 @@ LpResult LpSolver::Solve(mpq_class& delta, const bool store_solution) {
 void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetObjective(var_to_col_.at(var), value); }
 
 void LpSolver::Maximise(const Expression& objective_function) { Maximise(objective_function.addends()); }
+void LpSolver::AddColumns(const std::span<Column>& columns) {
+  DELPI_DEBUG_FMT("LpSolver::AddColumns({})", columns.size());
+  ReserveColumns(num_columns() + columns.size());
+  for (const Column& column : columns) AddColumn(column);
+}
 template <TypedIterable<std::pair<const Variable, mpq_class>> T>
 void LpSolver::Maximise(const T& objective_function) {
   DELPI_TRACE_FMT("LpSolver::Maximise({})", objective_function);
