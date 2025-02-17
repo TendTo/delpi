@@ -160,8 +160,8 @@ inline bool IsDigitOrSign(const char c) { return std::isdigit(c) || c == '+' || 
  * @endcode
  * @note Only a single leading + or - sign is allowed.
  * @warning If the string is not a valid rational number, the result is undefined.
- * @param str The string to convert.
- * @return The mpq_class instance.
+ * @param str string to convert
+ * @return equivalent mpq_class instance
  */
 inline mpq_class StringToMpq(std::string_view str) {
   // Remove leading + and - sign
@@ -204,7 +204,7 @@ inline mpq_class StringToMpq(std::string_view str) {
     if (str.empty()) return is_exp_positive ? mpq_class{mult} : is_negative ? mpq_class{-1, -mult} : mpq_class{1, mult};
   }
 
-  const size_t &len = str.length();
+  const size_t len = str.length();
 
   // case 3b: string does not contain a . , only an exponent E
   if (str[symbol_pos] == 'e' || str[symbol_pos] == 'E') {
@@ -215,9 +215,9 @@ inline mpq_class StringToMpq(std::string_view str) {
     char *const str_number = new char[len - plus_pos + 1];
     memcpy(str_number, str.data() + plus_pos, len - plus_pos);
     str_number[len - plus_pos] = '\0';
-    mpq_class res{str_number, 10};
+    const mpq_class res{str_number, 10};
     delete[] str_number;
-    return res * mult;
+    return is_exp_positive ? mpq_class{res * mult} : mpq_class{res / mult};
   }
 
   const size_t &dot_pos = symbol_pos;

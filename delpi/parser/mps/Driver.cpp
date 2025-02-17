@@ -80,8 +80,7 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
     DELPI_TRACE_FMT("Added column {}", column);
     // Integer columns are added with an implicit lower bound of 0 and upper bound of 1.
     // Non integer columns are added with an implicit lower bound of 0 and no upper bound.
-    auto [insert_it, val] =
-        columns_.emplace(column, integer_columns_ ? Column{Variable{column}, 1} : Column{Variable{column}});
+    auto [insert_it, val] = columns_.emplace(column, Column{Variable{column}, integer_columns_});
     it = insert_it;
   }
   if (row == obj_row_) {
@@ -156,12 +155,17 @@ void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, c
   if (!VerifyStrictBound(bound)) return;
   try {
     switch (Column &column_data = columns_.at(column); bound_type) {
-      case BoundType::UP:
       case BoundType::UI:
+        column_data.is_integer = true;
+        [[fallthrough]];
+      case BoundType::UP:
         column_data.ub = value;
         break;
-      case BoundType::LO:
       case BoundType::LI:
+        column_data.is_integer = true;
+        column_data.is_infinite_ub_integer = true;
+        [[fallthrough]];
+      case BoundType::LO:
         column_data.lb = value;
         break;
       case BoundType::FX:
@@ -191,7 +195,7 @@ void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, c
         column_data.is_infinite_lb = true;
         break;
       case BoundType::PL:
-        DELPI_DEBUG("Infinity bound, no action to take");
+        column_data.is_infinite_ub_integer = true;
         break;
       default:
         DELPI_UNREACHABLE();
@@ -220,6 +224,7 @@ void MpsDriver::SetMarker([[maybe_unused]] const std::string &name, const std::s
 void MpsDriver::End() {
   DELPI_DEBUG_FMT("Driver::EndData reached end of file {}", problem_name_);
   DELPI_DEBUG_FMT("Found {} variables and {} constraints", columns_.size(), rows_.size());
+  static const mpq_class one{1};
   for (const auto &[name, column_data] : columns_) {
     // The lower bound is either
     // - set explicitly
@@ -228,7 +233,15 @@ void MpsDriver::End() {
     const mpq_class &lb = column_data.lb.has_value()                                     ? column_data.lb.value()
                           : column_data.is_infinite_lb || column_data.ub.value_or(0) < 0 ? lp_solver_.ninfinity()
                                                                                          : 0;
-    lp_solver_.AddColumn(column_data.var, lb, column_data.ub.value_or(lp_solver_.infinity()));
+    // The upper bound is either
+    // - set explicitly
+    // - positive infinity if no explicit upper bound has been set and the variable is not an integer
+    // - positive infinity if no explicit upper bound has been set and an explicit lower bound has been set via LI
+    // - 1 if no explicit upper bound has been set and the variable is an integer
+    const mpq_class &ub = column_data.ub.has_value()                                      ? column_data.ub.value()
+                          : !column_data.is_integer || column_data.is_infinite_ub_integer ? lp_solver_.infinity()
+                                                                                          : one;
+    lp_solver_.AddColumn(column_data.var, lb, ub);
   }
   for (const auto &[row, row_data] : rows_) {
     if (row_data.addends.empty()) continue;  // No point in adding empty rows
