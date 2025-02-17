@@ -95,9 +95,9 @@ github_archive(
 github_archive(
     name = "qsopt_ex",
     build_file = "//third_party:qsopt_ex.BUILD.bazel",
-    commit = "c4d160298ca9c0aff3cb667a3de76511dd6aee8a",
+    commit = "0647e7bff4b6bad388b1e41afa52e608248b3f51",
     repository = "TendTo/qsopt-ex",
-    sha256 = "aff4de208494ca8cd207b64788801fcd25ee63879231df3ed3d8e21a82d982c4",
+    sha256 = "0144fb5fea742219f907781611c284b2cfbc7951f8de63b63e37430f04c014be",
 )
 
 ## HTTP repositories

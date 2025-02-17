@@ -42,7 +42,7 @@ void OnSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, con
       fmt::println("{}", result);
   }
   if (lp_solver.config().with_timings()) {
-    fmt::println(" after {} seconds\n{}\b{}", global_timer.seconds(), lp_solver.parser_stats(), lp_solver.stats());
+    fmt::println("\tafter {} seconds\n{}\n{}", global_timer.seconds(), lp_solver.parser_stats(), lp_solver.stats());
   }
   if (lp_solver.config().produce_models()) fmt::println("Model: {}", lp_solver.model(x));
   std::cout << std::flush;
@@ -64,7 +64,7 @@ bool OnPartialSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult resu
   fmt::println("PARTIAL: {} with delta = {} ( = {}), range = [{}, {}]", result, actual_delta.get_d(), actual_delta,
                obj_lb, obj_ub);
   if (lp_solver.config().with_timings()) {
-    fmt::println(" after {} seconds\n{}\n{}", global_timer.seconds(), lp_solver.parser_stats(), lp_solver.stats());
+    fmt::println("\tafter {} seconds\n{}\n{}", global_timer.seconds(), lp_solver.parser_stats(), lp_solver.stats());
   }
   if (lp_solver.config().produce_models()) fmt::println("Model: {}", lp_solver.model(x));
   std::cout << std::flush;

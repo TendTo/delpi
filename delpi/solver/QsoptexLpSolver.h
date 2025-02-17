@@ -50,6 +50,8 @@ class QsoptexLpSolver final : public LpSolver {
  private:
   LpResult SolveCore(mpq_class& delta, bool store_solution) override;
 
+  template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+  int AddRow(const T& addends, char sense, const mpq_class& rhs);
   /**
    * Parse a sequence of `literal_monomials` and set the coefficient for each decisional variable appearing in it.
    * @tparam T generic iterable containing pairs (Variable, coeff) (i.e. std::vector, std::set, std::span)
@@ -89,7 +91,6 @@ class QsoptexLpSolver final : public LpSolver {
   void UpdateInfeasible();
 #endif
 
- private:
   mpq_QSprob qsx_;  ///< QSopt_ex LP solver
 
   qsopt_ex::MpqArray ray_;  ///< Ray of the last infeasible solution

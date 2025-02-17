@@ -37,8 +37,8 @@ classDiagram
         #AddRowCore(Expression row, LpRowSense sense, mpq_class rhs) int
     }
 
-    class SoplexLpSolver { }
     class QsoptexLpSolver { }
+    class SoplexLpSolver { }
 
 
     LpSolver <|-- SoplexLpSolver

@@ -33,7 +33,7 @@ namespace delpi::mps {
  * Furthermore, the driver object is available in the grammar rules as a parameter.
  * Therefore, the driver class contains a reference to the structure into which the parsed data is saved.
  */
-class MpsDriver : public Driver {
+class MpsDriver final : public Driver {
  public:
   explicit MpsDriver(LpSolver &lp_solver);
 

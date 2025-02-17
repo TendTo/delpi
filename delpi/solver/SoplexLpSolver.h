@@ -89,7 +89,6 @@ class SoplexLpSolver final : public LpSolver {
   void UpdateInfeasible();
 #endif
 
- private:
   bool consolidated_;  ///< Whether the LP problem has been consolidated
 
   soplex::SoPlex spx_;  ///< SoPlex LP solver

@@ -125,23 +125,11 @@ LpSolver::ColumnIndex QsoptexLpSolver::AddColumn(const Variable& var, const mpq_
 LpSolver::RowIndex QsoptexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
                                            const mpq_class& ub) {
   // Add the row to the LP. If the row is bounded both ways with an equality, we can add it in one go.
-  if (lb == ub) {
-    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, lb.get_mpq_t(), 'E', nullptr);
-    DELPI_ASSERT(!status, "Invalid status");
-    SetRowCoeff(num_rows() - 1, addends);
-    return num_rows() - 1;
-  }
-  // Else, add the two bounds separately. Note that this introduces 2 new rows.
-  if (!mpq_equal(lb.get_mpq_t(), mpq_NINFTY)) {
-    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, lb.get_mpq_t(), 'G', nullptr);
-    DELPI_ASSERT(!status, "Invalid status");
-    SetRowCoeff(num_rows() - 1, addends);
-  }
-  if (!mpq_equal(ub.get_mpq_t(), mpq_INFTY)) {
-    [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, ub.get_mpq_t(), 'L', nullptr);
-    DELPI_ASSERT(!status, "Invalid status");
-    SetRowCoeff(num_rows() - 1, addends);
-  }
+  if (lb == ub) return AddRow(addends, 'E', lb);
+
+  // Else, add the two bounds separately
+  if (!mpq_equal(lb.get_mpq_t(), mpq_NINFTY)) AddRow(addends, 'G', lb);
+  if (!mpq_equal(ub.get_mpq_t(), mpq_INFTY)) AddRow(addends, 'L', ub);
   return num_rows() - 1;
 }
 
@@ -161,11 +149,8 @@ LpSolver::RowIndex QsoptexLpSolver::AddRow(const Expression::Addends& lhs, const
     default:
       DELPI_UNREACHABLE();
   }
-  [[maybe_unused]] const int status = mpq_QSnew_row(qsx_, rhs.get_mpq_t(), qsoptex_sense, nullptr);
-  DELPI_ASSERT(!status, "Invalid status");
-  const int row_idx = num_rows() - 1;
-  SetRowCoeff(row_idx, lhs);
-  return row_idx;
+
+  return AddRow(lhs, qsoptex_sense, rhs);
 }
 void QsoptexLpSolver::SetBound(const Variable var, const mpq_class& lb, const mpq_class& ub) {
   if (lb == ub) {
@@ -276,18 +261,38 @@ void QsoptexLpSolver::SetRowCoeff(int row, const T& literal_monomials) {
   for (const auto& [var, coeff] : literal_monomials) SetVarCoeff(row, var, coeff);
 }
 
+template <TypedIterable<std::pair<const Variable, mpq_class>> T>
+int QsoptexLpSolver::AddRow(const T& lhs, const char sense, const mpq_class& rhs) {
+  DELPI_TRACE_FMT("QsoptexLpSolver::AddRow(#{}, {}, {})", lhs.size(), sense, rhs);
+  DELPI_ASSERT(sense == 'L' || sense == 'G' || sense == 'E', "Invalid sense");
+  std::vector<int> row_indices;
+  row_indices.reserve(lhs.size());
+  qsopt_ex::MpqArray values{lhs.size()};
+  for (auto& [var, coeff] : lhs) {
+    const int column_idx = var_to_col_.at(var);
+    mpq_set(values[row_indices.size()], coeff.get_mpq_t());
+    row_indices.emplace_back(column_idx);
+  }
+  mpq_t c_rhs;
+  mpq_init(c_rhs);
+  mpq_set(c_rhs, rhs.get_mpq_t());
+
+  [[maybe_unused]] const int status =
+      mpq_QSadd_row(qsx_, static_cast<int>(lhs.size()), row_indices.data(), values, &c_rhs, sense, nullptr);
+  DELPI_ASSERT(!status, "Invalid status");
+
+  mpq_clear(c_rhs);
+  return num_rows() - 1;
+}
+
 void QsoptexLpSolver::SetVarCoeff(const int row, const Variable& var, const mpq_class& value) const {
   DELPI_ASSERT_FMT(var_to_col_.contains(var), "Variable {} not found in the LP. Did you add it before?", var);
   const int column = var_to_col_.at(var);
   // Variable has the coefficients too large
   if (value <= ninfinity_ || value >= infinity_) DELPI_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
 
-  mpq_t c_value;
-  mpq_init(c_value);
-  mpq_set(c_value, value.get_mpq_t());
-  [[maybe_unused]] const int status = mpq_QSchange_coef(qsx_, row, column, c_value);
+  [[maybe_unused]] const int status = mpq_QSchange_coef(qsx_, row, column, mpq_class{value}.get_mpq_t());
   DELPI_ASSERT(!status, "Invalid status");
-  mpq_clear(c_value);
 }
 
 #ifndef NDEBUG
@@ -313,5 +318,13 @@ template void QsoptexLpSolver::SetRowCoeff(int, const std::unordered_set<std::pa
 template void QsoptexLpSolver::SetRowCoeff(int, const std::span<std::pair<const Variable, mpq_class>>&);
 template void QsoptexLpSolver::SetRowCoeff(int, const std::map<Variable, mpq_class>&);
 template void QsoptexLpSolver::SetRowCoeff(int, const std::unordered_map<Variable, mpq_class>&);
+
+template int QsoptexLpSolver::AddRow(const std::vector<std::pair<const Variable, mpq_class>>&, char, const mpq_class&);
+template int QsoptexLpSolver::AddRow(const std::set<std::pair<const Variable, mpq_class>>&, char, const mpq_class&);
+template int QsoptexLpSolver::AddRow(const std::unordered_set<std::pair<const Variable, mpq_class>>&, char,
+                                     const mpq_class&);
+template int QsoptexLpSolver::AddRow(const std::span<std::pair<const Variable, mpq_class>>&, char, const mpq_class&);
+template int QsoptexLpSolver::AddRow(const std::map<Variable, mpq_class>&, char, const mpq_class&);
+template int QsoptexLpSolver::AddRow(const std::unordered_map<Variable, mpq_class>&, char, const mpq_class&);
 
 }  // namespace delpi
