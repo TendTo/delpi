@@ -48,7 +48,7 @@ class QsoptexLpSolver final : public LpSolver {
 #endif
 
  private:
-  LpResult SolveCore(mpq_class& precision, bool store_solution) override;
+  LpResult SolveCore(mpq_class& delta, bool store_solution) override;
 
   /**
    * Parse a sequence of `literal_monomials` and set the coefficient for each decisional variable appearing in it.

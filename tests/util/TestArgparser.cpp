@@ -34,7 +34,7 @@ TEST_F(TestArgParser, Contructor) { EXPECT_NO_THROW(ArgParser parser{}); }
 TEST_F(TestArgParser, DefaultValues) {
   const char *argv[] = {"delpi", filename_mps_.c_str()};
   parser_.Parse(sizeof(argv) / sizeof(argv[0]), argv);
-  EXPECT_DOUBLE_EQ(parser_.get<double>("precision"), 9.999999999999996e-4);
+  EXPECT_DOUBLE_EQ(parser_.get<double>("delta"), 0);
   EXPECT_FALSE(parser_.get<bool>("produce-models"));
   EXPECT_EQ(parser_.get<uint>("random-seed"), 0u);
   //  EXPECT_EQ(parser_.get<uint>("jobs"), 1u);
@@ -85,15 +85,15 @@ TEST_F(TestArgParser, ParseVerbosityDecreaseMin) {
   EXPECT_EQ(parser_.ToConfig().verbose_delpi(), 0);
 }
 
-TEST_F(TestArgParser, ParsePrecision) {
-  const char *argv[] = {"delpi", filename_mps_.c_str(), "--precision", "2.1"};
+TEST_F(TestArgParser, ParseDelta) {
+  const char *argv[] = {"delpi", filename_mps_.c_str(), "--delta", "2.1"};
   parser_.Parse(sizeof(argv) / sizeof(argv[0]), argv);
-  EXPECT_DOUBLE_EQ(parser_.get<double>("precision"), 2.1);
+  EXPECT_DOUBLE_EQ(parser_.get<double>("delta"), 2.1);
 }
 
-TEST_F(TestArgParser, ParseInvalidPrecision) {
-  const char *argv[] = {"delpi", filename_mps_.c_str(), "--precision", "-1"};
-  EXPECT_DEATH(parser_.Parse(sizeof(argv) / sizeof(argv[0]), argv), "Invalid argument for --precision");
+TEST_F(TestArgParser, ParseInvalidDelta) {
+  const char *argv[] = {"delpi", filename_mps_.c_str(), "--delta", "-1"};
+  EXPECT_DEATH(parser_.Parse(sizeof(argv) / sizeof(argv[0]), argv), "Invalid argument for --delta");
 }
 
 // TEST_F(TestArgParser, ParseJobs) {
@@ -172,10 +172,10 @@ TEST_F(TestArgParser, WrongFormat) {
 }
 
 TEST_F(TestArgParser, Exhaustive) {
-  const char *argv[] = {"delpi", filename_mps_.c_str(), "--precision", "0"};
+  const char *argv[] = {"delpi", filename_mps_.c_str(), "--delta", "0"};
   parser_.Parse(sizeof(argv) / sizeof(argv[0]), argv);
   auto config = parser_.ToConfig();
-  EXPECT_DOUBLE_EQ(config.precision(), 0.0);
+  EXPECT_DOUBLE_EQ(config.delta(), 0.0);
 }
 
 TEST_F(TestArgParser, Silent) {

@@ -241,7 +241,7 @@ class LpSolver {
    * - `:csv` (bool): whether to output in CSV format
    * - `:silent` (bool): whether to output nothing
    * - `:with-timings` (bool): whether to output timings
-   * - `:precision` (double): precision of the solver
+   * - `:delta` (double): delta parameter of the solver
    * - `:continuous-output` (bool): whether to output continuously (at each delta-satisfying point)
    * - `:verbosity` (int): verbosity level
    * - `:simplex-verbosity` (int): verbosity level of the simplex solver
@@ -250,7 +250,7 @@ class LpSolver {
    *
    * Note that the spacing before the '*' is mandatory.
    * ```
-   *  * @set-option :precision 0.505
+   *  * @set-option :delta 0.505
    *  * @set-option :produce-models false
    *  ENDATA
    *  ```
@@ -397,20 +397,20 @@ class LpSolver {
   virtual void SetBound(Variable var, const mpq_class& lb, const mpq_class& ub) = 0;
 
   /**
-   * Optimise the LP problem with the given `precision`.
+   * Optimise the LP problem with the given `delta`.
    *
    * The result of the computation will be stored in @ref solution_ and @ref dual_solution_ if the problem is feasible.
    * If `store_solution` is false, the solution will not be stored, but the LpResult will still be returned.
-   * The actual precision will be returned in the `precision` parameter.
-   * @param[in,out] precision desired precision for the optimisation that becomes the actual precision achieved
+   * The actual delta will be returned in the `delta` parameter.
+   * @param[in,out] delta desired delta for the optimisation that becomes the actual delta achieved
    * @param store_solution whether the solution and dual solution should be stored
-   * @return OPTIMAL if an optimal solution has been found and the return value of `precision` is @f$ = 0 @f$
-   * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of `precision` @f$\ge 0 @f$
+   * @return OPTIMAL if an optimal solution has been found and the return value of `delta` is @f$ = 0 @f$
+   * @return DELTA_OPTIMAL if an delta-optimal solution has been found and the return value of `delta` @f$\ge 0 @f$
    * @return UNBOUNDED if the problem is unbounded
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred
    */
-  LpResult Solve(mpq_class& precision, bool store_solution = true);
+  LpResult Solve(mpq_class& delta, bool store_solution = true);
 
   /**
    * Set the `objective_function` to maximise while being subject to all the constraints.
@@ -466,16 +466,16 @@ class LpSolver {
 
  protected:
   /**
-   * Internal method that optimises the LP problem with the given `precision`.
-   * @param precision desired precision for the optimisation
+   * Internal method that optimises the LP problem with the given `delta`.
+   * @param delta desired delta for the optimisation
    * @param store_solution whether the solution and dual solution should be stored
-   * @return OPTIMAL if an optimal solution has been found and the return value of `precision` is @f$ = 0 @f$
-   * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of `precision` @f$\ge 0 @f$
+   * @return OPTIMAL if an optimal solution has been found and the return value of `delta` is @f$ = 0 @f$
+   * @return DELTA_OPTIMAL if a delta-optimal solution has been found and the return value of `delta` @f$\ge 0 @f$
    * @return UNBOUNDED if the problem is unbounded
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred
    */
-  virtual LpResult SolveCore(mpq_class& precision, bool store_solution) = 0;
+  virtual LpResult SolveCore(mpq_class& delta, bool store_solution) = 0;
 
   /**
    * Check whether the row that is about to be added is a simple bound.

@@ -59,7 +59,10 @@ delpi_cc_library(
 delpi_cc_binary(
     name = "delpi",
     srcs = ["main.cpp"],
-    deps = [":delpi_hdr"],
+    deps = [
+        ":delpi_hdr",
+        "//delpi/util:error",
+    ],
 )
 
 cc_shared_library(

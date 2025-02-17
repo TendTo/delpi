@@ -161,8 +161,8 @@ void LpSolver::SetOption(const std::string& key, const std::string& value) {
     config_.m_silent().SetFromFile(IsYes(value));
   } else if (key == ":with-timings") {
     config_.m_with_timings().SetFromFile(IsYes(value));
-  } else if (key == ":precision") {
-    config_.m_precision().SetFromFile(std::stod(value));
+  } else if (key == ":delta") {
+    config_.m_delta().SetFromFile(std::stod(value));
   } else if (key == ":continuous-output") {
     config_.m_continuous_output().SetFromFile(IsYes(value));
   } else if (key == ":verbosity") {
@@ -184,16 +184,16 @@ void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective)
 void LpSolver::SetObjective(const std::vector<mpq_class>& objective) {
   for (int i = 0; i < static_cast<int>(objective.size()); ++i) SetObjective(i, objective.at(i));
 }
-LpResult LpSolver::Solve(mpq_class& precision, const bool store_solution) {
+LpResult LpSolver::Solve(mpq_class& delta, const bool store_solution) {
   DELPI_ASSERT(num_rows() > 0, "Cannot optimise without rows.");
   DELPI_ASSERT(num_columns() > 0, "Cannot optimise without columns.");
-  DELPI_DEBUG_FMT("LpSolver::Solve({}, {})", precision, store_solution);
+  DELPI_DEBUG_FMT("LpSolver::Solve({}, {})", delta, store_solution);
   const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
   solution_.clear();
   dual_solution_.clear();
-  const LpResult result = SolveCore(precision, store_solution);
-  if (solve_cb_) solve_cb_(*this, result, solution_, dual_solution_, obj_lb_, obj_ub_, precision);
+  const LpResult result = SolveCore(delta, store_solution);
+  if (solve_cb_) solve_cb_(*this, result, solution_, dual_solution_, obj_lb_, obj_ub_, delta);
   return result;
 }
 void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetObjective(var_to_col_.at(var), value); }

@@ -29,7 +29,7 @@ class TestLpSolverMps : public ::testing::TestWithParam<std::tuple<Config::LpSol
     config_.m_format() = Config::Format::MPS;
     config_.m_lp_solver() = solver;
     config_.m_filename() = filename;
-    config_.m_precision() = precision;
+    config_.m_delta() = precision;
     solver_ = LpSolver::GetInstance(config_);
   }
 };
@@ -39,7 +39,7 @@ INSTANTIATE_TEST_SUITE_P(TestDeltaMps, TestLpSolverMps,
                                             ::testing::Values(0.1)));
 
 TEST_P(TestLpSolverMps, MpsInputAgainstExpectedOutput) {
-  mpq_class precision = config_.precision();
+  mpq_class precision = config_.delta();
   solver_->Parse();
   const LpResult result = solver_->Solve(precision);
 

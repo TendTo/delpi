@@ -25,7 +25,7 @@ SoplexLpSolver::SoplexLpSolver(Config config, const std::string& class_name)
       rninfinity_{-soplex::infinity},
       rinfinity_{soplex::infinity} {
   // Default SoPlex parameters
-  spx_.setRealParam(soplex::SoPlex::OPTTOL, config_.precision());
+  spx_.setRealParam(soplex::SoPlex::OPTTOL, config_.delta());
   spx_.setRealParam(soplex::SoPlex::FEASTOL, 0);
   spx_.setBoolParam(soplex::SoPlex::RATREC, false);
   spx_.setIntParam(soplex::SoPlex::READMODE, soplex::SoPlex::READMODE_RATIONAL);
@@ -45,7 +45,7 @@ SoplexLpSolver::SoplexLpSolver(Config config, const std::string& class_name)
   spx_.setBoolParam(soplex::SoPlex::ITERATIVE_REFINEMENT, enable_iterative_refinement);
   DELPI_DEBUG_FMT(
       "SoplexTheorySolver::SoplexTheorySolver: precision = {}, precision_boosting = {}, iterative_refinement = {}",
-      config_.precision(), enable_precision_boosting, enable_iterative_refinement);
+      config_.delta(), enable_precision_boosting, enable_iterative_refinement);
 }
 
 int SoplexLpSolver::num_columns() const { return consolidated_ ? spx_.numColsRational() : spx_cols_.num(); }
@@ -161,7 +161,7 @@ void SoplexLpSolver::SetObjective(const int column, const mpq_class& value) {
     spx_cols_.maxObj_w(column) = value.get_mpq_t();
 }
 
-LpResult SoplexLpSolver::SolveCore(mpq_class& precision, const bool store_solution) {
+LpResult SoplexLpSolver::SolveCore(mpq_class& delta, const bool store_solution) {
   if (!consolidated_) {
     spx_.addColsRational(spx_cols_);
     spx_.addRowsRational(spx_rows_);
@@ -177,8 +177,8 @@ LpResult SoplexLpSolver::SolveCore(mpq_class& precision, const bool store_soluti
     DELPI_ERROR_FMT("SoplexLpSolver::Optimise: Unexpected SoPlex return -> {}", status);
     return LpResult::ERROR;
   } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
-    precision = gmp::ToMpqClass(max_violation.backend().data());
-    DELPI_DEBUG_FMT("SoplexLpSolver::Optimise: SoPlex returned {}, precision = {}", status, precision);
+    delta = gmp::ToMpqClass(max_violation.backend().data());
+    DELPI_DEBUG_FMT("SoplexLpSolver::Optimise: SoPlex returned {}, precision = {}", status, delta);
   } else {
     DELPI_DEBUG_FMT("SoplexLpSolver::Optimise: SoPlex has returned {}", status);
   }

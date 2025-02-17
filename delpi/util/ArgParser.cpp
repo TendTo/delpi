@@ -105,7 +105,7 @@ void ArgParser::AddOptions() {
   DELPI_PARSE_PARAM_BOOL(parser_, verify, "--verify");
 
   //  DELPI_PARSE_PARAM_SCAN(parser_, number_of_jobs, 'i', unsigned int, "-j", "--jobs");
-  DELPI_PARSE_PARAM_SCAN(parser_, precision, 'g', double, "-p", "--precision");
+  DELPI_PARSE_PARAM_SCAN(parser_, delta, 'g', double, "-d", "--delta");
   DELPI_PARSE_PARAM_SCAN(parser_, random_seed, 'i', unsigned int, "-r", "--random-seed");
   DELPI_PARSE_PARAM_SCAN(parser_, timeout, 'i', unsigned int, "--timeout");
   DELPI_PARSE_PARAM_SCAN(parser_, verbose_simplex, 'i', int, "--verbose-simplex");
@@ -152,13 +152,13 @@ Config ArgParser::ToConfig() const {
   DELPI_PARAM_TO_CONFIG("continuous-output", continuous_output, bool);
   DELPI_PARAM_TO_CONFIG("debug-parsing", debug_parsing, bool);
   DELPI_PARAM_TO_CONFIG("debug-scanning", debug_scanning, bool);
+  DELPI_PARAM_TO_CONFIG("delta", delta, double);
   config.m_filename().SetFromCommandLine(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
   DELPI_PARAM_TO_CONFIG("format", format, Config::Format);
   DELPI_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LpMode);
   DELPI_PARAM_TO_CONFIG("lp-solver", lp_solver, Config::LpSolver);
   // DELPI_PARAM_TO_CONFIG("jobs", number_of_jobs, unsigned int);
   DELPI_PARAM_TO_CONFIG("skip-optimise", skip_optimise, bool);
-  DELPI_PARAM_TO_CONFIG("precision", precision, double);
   DELPI_PARAM_TO_CONFIG("produce-models", produce_models, bool);
   DELPI_PARAM_TO_CONFIG("random-seed", random_seed, unsigned int);
   DELPI_PARAM_TO_CONFIG("in", read_from_stdin, bool);
@@ -191,7 +191,7 @@ void ArgParser::ValidateOptions() {
     if (!std::filesystem::is_regular_file(parser_.get<std::string>("file")))
       DELPI_INVALID_ARGUMENT("file", "cannot find file or the file is not a regular file");
   }
-  if (parser_.get<double>("precision") < 0) DELPI_INVALID_ARGUMENT("--precision", "cannot be negative");
+  if (parser_.get<double>("delta") < 0) DELPI_INVALID_ARGUMENT("--delta", "cannot be negative");
   if (parser_.is_used("verbose") && parser_.is_used("silent"))
     DELPI_INVALID_ARGUMENT("--verbose", "verbosity is forcefully set to 0 if --silent is provided");
   if (parser_.is_used("quiet") && parser_.is_used("silent"))

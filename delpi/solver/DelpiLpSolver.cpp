@@ -361,7 +361,7 @@ LpResult DelpiLpSolver::OptimalityCheck(const Matrix<mpq_class>& slack_A, const 
   obj_lb_ = slack_b.transpose() * y;
   obj_ub_ = slack_c(basis.basis_idxs()).transpose() * zb;
   delta_ = obj_ub_ - obj_lb_;
-  if (delta_ > config_.precision()) return LpResult::ERROR;
+  if (delta_ > config_.delta()) return LpResult::ERROR;
 
   // Compute the original problem solution
   x_ = Vector<mpq_class>::Zero(slack_A.cols());

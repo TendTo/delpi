@@ -40,8 +40,8 @@ void Driver::Error(const std::string& m) { std::cerr << m << std::endl; }
 void Driver::CheckSat() {
   // Don't consider the time spent checking sat in the time spent parsing.
   stats_.m_timer().Pause();
-  mpq_class precision = lp_solver_.config().precision();
-  lp_solver_.Solve(precision);
+  mpq_class delta = lp_solver_.config().delta();
+  lp_solver_.Solve(delta);
   stats_.m_timer().Resume();
 }
 

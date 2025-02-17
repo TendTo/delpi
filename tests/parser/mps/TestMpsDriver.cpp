@@ -28,20 +28,20 @@ class TestMpsDriver : public ::testing::Test {
 TEST_F(TestMpsDriver, SetConfigOptions1) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
-      driver.ParseString("* @set-option :precision 1\n"
+      driver.ParseString("* @set-option :delta 1\n"
                          "* @set-option :produce-models true\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.config().precision(), 1);
+  EXPECT_EQ(driver.config().delta(), 1);
   EXPECT_TRUE(driver.config().produce_models());
 }
 
 TEST_F(TestMpsDriver, SetConfigOptions2) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
-      driver.ParseString("* @set-option :precision 0.505\n"
+      driver.ParseString("* @set-option :delta 0.505\n"
                          "* @set-option :produce-models false\n"
                          "ENDATA"));
-  EXPECT_EQ(driver.config().precision(), 0.505);
+  EXPECT_EQ(driver.config().delta(), 0.505);
   EXPECT_FALSE(driver.config().produce_models());
 }
 

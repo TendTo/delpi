@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "delpi/delpi.h"
+#include "delpi/util/error.h"
 
 #define CSV_HEADER "file,solver,result,delta,actual_delta,obj_lb,obj_ub,time_unit,parser_time,solver_time,total_time"
 #define CSV_FORMAT "{},{},{},{},{},{},{},s,{},{},{}"
@@ -18,21 +19,24 @@ delpi::Timer global_timer{};
 void OnSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, const std::vector<mpq_class>& x,
              const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub, const mpq_class& delta) {
   if (lp_solver.config().silent()) return;
+  const mpq_class actual_delta = obj_ub - obj_lb;
+  DELPI_ASSERT(actual_delta <= delta, "Expected actual delta to be <= delta");
 
   if (lp_solver.config().csv()) {
-    fmt::println(CSV_FORMAT, lp_solver.config().filename(), lp_solver.config().lp_solver(), result,
-                 lp_solver.config().precision(), delta.get_d(), obj_lb.get_d(), obj_ub.get_d(),
-                 lp_solver.parser_stats().timer().seconds(), lp_solver.stats().timer().seconds(),
-                 global_timer.seconds());
+    fmt::println(CSV_FORMAT, lp_solver.config().filename(), lp_solver.config().lp_solver(), result, delta.get_d(),
+                 actual_delta.get_d(), obj_lb.get_d(), obj_ub.get_d(), lp_solver.parser_stats().timer().seconds(),
+                 lp_solver.stats().timer().seconds(), global_timer.seconds());
     return;
   }
   switch (result) {
     case delpi::LpResult::OPTIMAL:
+      DELPI_ASSERT(actual_delta == 0, "Expected actual delta to be 0");
       fmt::println("{}, objective value = {} ( = {})", result, obj_lb, obj_lb.get_d());
       break;
     case delpi::LpResult::DELTA_OPTIMAL:
-      fmt::println("{} with delta = {} ( = {}), range = [{}, {}] ( = [{}, {}])", result, delta.get_d(), delta, obj_lb,
-                   obj_ub, obj_lb.get_d(), obj_ub.get_d());
+      DELPI_ASSERT(actual_delta > 0, "Expected actual delta to be > 0");
+      fmt::println("{} with delta = {} ( = {}), range = [{}, {}] ( = [{}, {}])", result, actual_delta.get_d(),
+                   actual_delta, obj_lb, obj_ub, obj_lb.get_d(), obj_ub.get_d());
       break;
     default:
       fmt::println("{}", result);
@@ -46,17 +50,19 @@ void OnSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, con
 
 bool OnPartialSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, const std::vector<mpq_class>& x,
                     const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub,
-                    const mpq_class& diff, const mpq_class&) {
+                    const mpq_class& actual_delta, const mpq_class&) {
   if (lp_solver.config().silent()) return true;
+  DELPI_ASSERT(actual_delta > lp_solver.config().delta(), "Expected diff to be > delta");
 
   if (lp_solver.config().csv()) {
     fmt::println(CSV_PARTIAL_FORMAT, lp_solver.config().filename(), lp_solver.config().lp_solver(), result,
-                 lp_solver.config().precision(), diff.get_d(), obj_lb.get_d(), obj_ub.get_d(),
+                 lp_solver.config().delta(), actual_delta.get_d(), obj_lb.get_d(), obj_ub.get_d(),
                  lp_solver.parser_stats().timer().seconds(), lp_solver.stats().timer().seconds(),
                  global_timer.seconds());
     return true;
   }
-  fmt::println("PARTIAL: {} with delta = {} ( = {}), range = [{}, {}]", result, diff.get_d(), diff, obj_lb, obj_ub);
+  fmt::println("PARTIAL: {} with delta = {} ( = {}), range = [{}, {}]", result, actual_delta.get_d(), actual_delta,
+               obj_lb, obj_ub);
   if (lp_solver.config().with_timings()) {
     fmt::println(" after {} seconds\n{}\n{}", global_timer.seconds(), lp_solver.parser_stats(), lp_solver.stats());
   }
@@ -89,8 +95,8 @@ int main(const int argc, const char* argv[]) {
   if (config.csv()) std::cout << CSV_HEADER << std::endl;
 
   // Run the solver
-  mpq_class precision{config.precision()};
-  const delpi::LpResult result = lp_solver->Solve(precision);
+  mpq_class delta{config.delta()};
+  const delpi::LpResult result = lp_solver->Solve(delta);
 
   if (config.silent()) return ExitCode(result);
 

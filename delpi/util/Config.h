@@ -95,15 +95,19 @@ class Config {
  private:
   OptionValue<std::string> filename_{""};
 
-  DELPI_PARAMETER(continuous_output, bool, false, "Continuous output")
+  DELPI_PARAMETER(continuous_output, bool, false,
+                  "Continuous output.\n"
+                  "\t\tIf a delta-optimal solution with actual_delta > delta is found, output it and continue")
   DELPI_PARAMETER(csv, bool, false, "Produce CSV output. Must also specify --with-timings to get the time stats")
   DELPI_PARAMETER(debug_parsing, bool, false, "Debug parsing")
   DELPI_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
+  DELPI_PARAMETER(delta, double, 0, "Delta used by the LP solver solver")
   DELPI_PARAMETER(format, Format, delpi::Config::Format::AUTO,
                   "Input file format\n"
                   "\t\tOne of: auto (1), mps (2)")
   DELPI_PARAMETER(lp_mode, LpMode, delpi::Config::LpMode::AUTO,
                   "LP mode used by the LP solver.\n"
+                  "\t\tNot all solvers may support all modes\n"
                   "\t\tOne of: auto (1), pure-precision-boosting (2), pure-iterative-refinement (3), hybrid (4)")
   DELPI_PARAMETER(lp_solver, LpSolver, delpi::Config::LpSolver::SOPLEX,
                   "Underlying LP solver used by the theory solver.\n"
@@ -112,14 +116,9 @@ class Config {
   DELPI_PARAMETER(skip_optimise, bool, false,
                   "Whether to skip the objective function, turning the optimisation in a feasibility problem. "
                   "Only affects the MPS format")
-  DELPI_PARAMETER(precision, double, 9.999999999999996e-4,
-                  "Delta precision used by the LP solver solver.\n"
-                  "\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"
-                  "\t\tWhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
-                  "\t\tUse the --complete flag if you are looking for a complete solution")
   DELPI_PARAMETER(produce_models, bool, false,
                   "Produce models, showing a valid assignment.\n"
-                  "\t\tOnly applicable if the result is sat or delta-sat")
+                  "\t\tOnly applicable if the problem is feasible")
   DELPI_PARAMETER(random_seed, unsigned int, 0u,
                   "Set the random seed. 0 means that the seed will be generated on the fly")
   DELPI_PARAMETER(read_from_stdin, bool, false, "Read the input from the standard input")
@@ -129,7 +128,8 @@ class Config {
       "Timeout in milliseconds for the main routine, without accounting for input parsing. 0 means no timeout")
   DELPI_PARAMETER(verbose_delpi, int, 2, "Verbosity level for delpi. In the range [0, 5]")
   DELPI_PARAMETER(verbose_simplex, int, 0, "Verbosity level for simplex. In the range [0, 5]")
-  DELPI_PARAMETER(verify, bool, false, "If the input produces a SAT output, verify the assignment against the input")
+  DELPI_PARAMETER(verify, bool, false,
+                  "If the input produces a feasible output, verify the assignment against the input")
   DELPI_PARAMETER(with_timings, bool, false, "Report timings alongside results")
 };
 

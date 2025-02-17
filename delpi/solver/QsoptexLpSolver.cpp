@@ -5,8 +5,8 @@
  */
 #include "delpi/solver/QsoptexLpSolver.h"
 
-#include <ostream>
 #include <map>
+#include <ostream>
 #include <set>
 #include <span>  // NOLINT(build/include_order): c++20 header
 #include <unordered_map>
@@ -44,7 +44,7 @@ QsoptexLpSolver::QsoptexLpSolver(Config config, const std::string& class_name)
   }
   [[maybe_unused]] const int status = mpq_QSset_param(qsx_, QS_PARAM_SIMPLEX_DISPLAY, config_.verbose_simplex());
   DELPI_ASSERT(!status, "Invalid status");
-  DELPI_DEBUG_FMT("QsoptexTheorySolver::QsoptexTheorySolver: precision = {}", config_.precision());
+  DELPI_DEBUG_FMT("QsoptexTheorySolver::QsoptexTheorySolver: delta = {}", config_.delta());
 }
 
 QsoptexLpSolver::~QsoptexLpSolver() {
@@ -185,22 +185,22 @@ void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
   DELPI_ASSERT(!status, "Invalid status");
 }
 
-LpResult QsoptexLpSolver::SolveCore(mpq_class& precision, const bool store_solution) {
+LpResult QsoptexLpSolver::SolveCore(mpq_class& delta, const bool store_solution) {
   // x: must be allocated/deallocated using QSopt_ex.
   // Should have room for the (rowcount) "logical" variables, which come after the (colcount) "structural" variables.
   x_.Resize(num_columns());
   ray_.Resize(num_rows());
 
   int lp_status = -1;
-  const int status = QSdelta_full_solver(qsx_, precision.get_mpq_t(), x_, ray_, obj_lb_.get_mpq_t(),
-                                         obj_ub_.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status,
+  const int status = QSdelta_full_solver(qsx_, delta.get_mpq_t(), x_, ray_, obj_lb_.get_mpq_t(), obj_ub_.get_mpq_t(),
+                                         nullptr, PRIMAL_SIMPLEX, &lp_status,
                                          config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
   if (status) {
     DELPI_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
     return LpResult::ERROR;
   }
 
-  DELPI_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex has returned with precision = {}", precision);
+  DELPI_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex has returned with precision = {}", delta);
 
   switch (lp_status) {
     case QS_LP_OPTIMAL:
