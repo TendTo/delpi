@@ -98,13 +98,13 @@ void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class
   try {
     switch (Row &row_data = rows_.at(row); row_data.sense) {
       case SenseType::L:
-        row_data.ub = value;
+        row_data.ub = std::move(value);
         break;
       case SenseType::G:
-        row_data.lb = value;
+        row_data.lb = std::move(value);
         break;
       case SenseType::E:
-        row_data.lb = row_data.ub = value;
+        row_data.lb = row_data.ub = std::move(value);
         break;
       case SenseType::N:
         DELPI_WARN("SenseType N is used only for objective function. No action to take");
@@ -159,17 +159,17 @@ void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, c
         column_data.is_integer = true;
         [[fallthrough]];
       case BoundType::UP:
-        column_data.ub = value;
+        column_data.ub = std::move(value);
         break;
       case BoundType::LI:
         column_data.is_integer = true;
         column_data.is_infinite_ub_integer = true;
         [[fallthrough]];
       case BoundType::LO:
-        column_data.lb = value;
+        column_data.lb = std::move(value);
         break;
       case BoundType::FX:
-        column_data.lb = column_data.ub = value;
+        column_data.lb = column_data.ub = std::move(value);
         break;
       default:
         DELPI_UNREACHABLE();
@@ -224,7 +224,10 @@ void MpsDriver::SetMarker([[maybe_unused]] const std::string &name, const std::s
 void MpsDriver::End() {
   DELPI_DEBUG_FMT("Driver::EndData reached end of file {}", problem_name_);
   DELPI_DEBUG_FMT("Found {} variables and {} constraints", columns_.size(), rows_.size());
-  static const mpq_class one{1};
+  static const mpq_class zero{0};
+  static const mpq_class one{0};
+
+  lp_solver_.ReserveColumns(columns_.size());
   for (const auto &[name, column_data] : columns_) {
     // The lower bound is either
     // - set explicitly
@@ -232,7 +235,7 @@ void MpsDriver::End() {
     // - 0 otherwise
     const mpq_class &lb = column_data.lb.has_value()                                     ? column_data.lb.value()
                           : column_data.is_infinite_lb || column_data.ub.value_or(0) < 0 ? lp_solver_.ninfinity()
-                                                                                         : 0;
+                                                                                         : zero;
     // The upper bound is either
     // - set explicitly
     // - positive infinity if no explicit upper bound has been set and the variable is not an integer
@@ -243,6 +246,8 @@ void MpsDriver::End() {
                                                                                           : one;
     lp_solver_.AddColumn(column_data.var, lb, ub);
   }
+
+  lp_solver_.ReserveRows(rows_.size());
   for (const auto &[row, row_data] : rows_) {
     if (row_data.addends.empty()) continue;  // No point in adding empty rows
     if (row_data.sense != SenseType::N && !row_data.lb.has_value() && !row_data.ub.has_value()) {
