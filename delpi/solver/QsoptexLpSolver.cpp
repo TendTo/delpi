@@ -32,7 +32,7 @@ extern "C" void QsoptexPartialSolutionCb(mpq_QSdata const* /*prob*/, const mpq_t
 }
 
 QsoptexLpSolver::QsoptexLpSolver(Config config, const std::string& class_name)
-    : LpSolver{0, 0, std::move(config), class_name}, qsx_{nullptr}, ray_{0}, x_{0} {
+    : LpSolver{0, 0, std::move(config), class_name}, consolidated_{false}, qsx_{nullptr}, ray_{0}, x_{0} {
   qsopt_ex::QSXStart();
   ninfinity_ = mpq_class{mpq_NINFTY};
   infinity_ = mpq_class{mpq_INFTY};
@@ -53,7 +53,18 @@ QsoptexLpSolver::~QsoptexLpSolver() {
 }
 
 int QsoptexLpSolver::num_columns() const { return mpq_QSget_colcount(qsx_); }
-int QsoptexLpSolver::num_rows() const { return mpq_QSget_rowcount(qsx_); }
+int QsoptexLpSolver::num_rows() const {
+  return consolidated_ ? mpq_QSget_rowcount(qsx_) : static_cast<int>(senses_.size());
+}
+void QsoptexLpSolver::ReserveRows(const int size) {
+  non_zero_count_.reserve(size);
+  row_indices_.reserve(size);
+  senses_.reserve(size);
+  rhss_.reserve(size);
+
+  coeffs_.reserve(size);
+  coeffs_.reserve(size);
+}
 
 Column QsoptexLpSolver::column(ColumnIndex column_idx) const {
   DELPI_ASSERT(column_idx < num_columns(), "Column index out of bounds");
@@ -74,13 +85,26 @@ Column QsoptexLpSolver::column(ColumnIndex column_idx) const {
 }
 Row QsoptexLpSolver::row(RowIndex row_idx) const {
   DELPI_ASSERT(row_idx < num_rows(), "Row index out of bounds");
+
   qsopt_ex::MpqArray row_val, rhs;
   int *row_cnt = nullptr, *row_ind = nullptr;
   char* sense = nullptr;
 
-  [[maybe_unused]] const int status =
-      mpq_QSget_rows_list(qsx_, 1, &row_idx, &row_cnt, nullptr, &row_ind, row_val, rhs, &sense, nullptr);
-  DELPI_ASSERT(!status, "Invalid status");
+  if (!consolidated_) {
+    row_ind = new int[1];
+    row_ind[0] = row_idx;
+    sense = new char[1];
+    sense[0] = senses_[row_idx];
+    rhs.Resize(1);
+    mpq_set(rhs[0], rhss_[row_idx].get_mpq_t());
+    row_val.Resize(non_zero_count_[row_idx]);
+    for (int i = 0; i < non_zero_count_[row_idx]; i++)
+      mpq_set(row_val[i], coeffs_[row_indices_[row_idx] + i].get_mpq_t());
+  } else {
+    [[maybe_unused]] const int status =
+        mpq_QSget_rows_list(qsx_, 1, &row_idx, &row_cnt, nullptr, &row_ind, row_val, rhs, &sense, nullptr);
+    DELPI_ASSERT(!status, "Invalid status");
+  }
 
   Row row{};
   const int non_zero_coefficient_count = row_cnt[0];
@@ -124,6 +148,14 @@ LpSolver::ColumnIndex QsoptexLpSolver::AddColumn(const Variable& var, const mpq_
 }
 LpSolver::RowIndex QsoptexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
                                            const mpq_class& ub) {
+  // If the problem is not consolidated, add the row to the list of rows
+  if (!consolidated_) {
+    DELPI_ASSERT(lb <= ub, "Invalid bounds");
+    if (lb == ub) return AddRow(addends, 'E', lb);
+    if (lb != ninfinity_) AddRow(addends, 'G', lb);
+    if (ub != infinity_) AddRow(addends, 'L', ub);
+    return num_rows() - 1;
+  }
   // Add the row to the LP. If the row is bounded both ways with an equality, we can add it in one go.
   if (lb == ub) return AddRow(addends, 'E', lb);
 
@@ -135,6 +167,8 @@ LpSolver::RowIndex QsoptexLpSolver::AddRow(const std::vector<Expression::Addend>
 
 LpSolver::RowIndex QsoptexLpSolver::AddRow(const Expression::Addends& lhs, const FormulaKind sense,
                                            const mpq_class& rhs) {
+  // This kind of row addition needs to first consolidate the problem
+  Consolidate();
   char qsoptex_sense;
   switch (sense) {
     case FormulaKind::Leq:
@@ -151,6 +185,18 @@ LpSolver::RowIndex QsoptexLpSolver::AddRow(const Expression::Addends& lhs, const
   }
 
   return AddRow(lhs, qsoptex_sense, rhs);
+}
+LpSolver::RowIndex QsoptexLpSolver::AddRow(const std::vector<Expression::Addend>& addends, char sense,
+                                           const mpq_class& rhs) {
+  rhss_.emplace_back(rhs);
+  senses_.emplace_back(sense);
+  non_zero_count_.emplace_back(addends.size());
+  row_indices_.emplace_back(coeffs_.size());
+  for (const auto& [var, coeff] : addends) {
+    col_indices_.emplace_back(var_to_col_.at(var));
+    coeffs_.emplace_back(coeff);
+  }
+  return num_rows() - 1;
 }
 void QsoptexLpSolver::SetBound(const Variable var, const mpq_class& lb, const mpq_class& ub) {
   if (lb == ub) {
@@ -175,6 +221,7 @@ LpResult QsoptexLpSolver::SolveCore(mpq_class& delta, const bool store_solution)
   // Should have room for the (rowcount) "logical" variables, which come after the (colcount) "structural" variables.
   x_.Resize(num_columns());
   ray_.Resize(num_rows());
+  Consolidate();
 
   int lp_status = -1;
   const int status = QSdelta_full_solver(qsx_, delta.get_mpq_t(), x_, ray_, obj_lb_.get_mpq_t(), obj_ub_.get_mpq_t(),
@@ -222,6 +269,29 @@ void QsoptexLpSolver::UpdateFeasible() {
 
   for (int i = 0; i < colcount; i++) solution_.emplace_back(x_[i]);
   for (int i = 0; i < rowcount; i++) dual_solution_.emplace_back(ray_[i]);
+}
+
+void QsoptexLpSolver::Consolidate() {
+  DELPI_DEBUG("QsoptexLpSolver::Consolidate()");
+  if (consolidated_) return;
+
+  mpq_ptr* const c_coeffs = new mpq_ptr[coeffs_.size()];
+  mpq_ptr* const c_rhss = new mpq_ptr[rhss_.size()];
+  for (std::size_t i = 0; i < coeffs_.size(); i++) c_coeffs[i] = coeffs_[i].get_mpq_t();
+  for (std::size_t i = 0; i < rhss_.size(); i++) c_rhss[i] = rhss_[i].get_mpq_t();
+
+  [[maybe_unused]] const int status =
+      mpq_QSadd_rows(qsx_, num_rows(), non_zero_count_.data(), row_indices_.data(), col_indices_.data(),
+                     reinterpret_cast<mpq_t*>(c_coeffs), reinterpret_cast<mpq_t*>(c_rhss), senses_.data(), nullptr);
+  DELPI_ASSERT(!status, "Invalid status");
+  non_zero_count_.clear();
+  row_indices_.clear();
+  col_indices_.clear();
+  senses_.clear();
+  rhss_.clear();
+  coeffs_.clear();
+  delete[] c_coeffs;
+  delete[] c_rhss;
 }
 #if 0
 void QsoptexLpSolver::UpdateInfeasible() {

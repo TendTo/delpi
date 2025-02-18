@@ -34,11 +34,14 @@ class QsoptexLpSolver final : public LpSolver {
   [[nodiscard]] int num_columns() const override;
   [[nodiscard]] int num_rows() const override;
 
+  void ReserveRows(int size) override;
+
   [[nodiscard]] Column column(int column_idx) const override;
   [[nodiscard]] Row row(int row_idx) const override;
   ColumnIndex AddColumn(const Variable& var, const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) override;
   RowIndex AddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb, const mpq_class& ub) override;
   RowIndex AddRow(const Expression::Addends& lhs, FormulaKind sense, const mpq_class& rhs) override;
+  RowIndex AddRow(const std::vector<Expression::Addend>& addends, char sense, const mpq_class& rhs);
   void SetBound(Variable var, const mpq_class& lb, const mpq_class& ub) override;
   void SetCoefficient(RowIndex row, ColumnIndex column, const mpq_class& value) override;
   void SetObjective(int column, const mpq_class& value) override;
@@ -75,6 +78,13 @@ class QsoptexLpSolver final : public LpSolver {
    * The useful information will be stored in @ref solution_.
    */
   void UpdateFeasible();
+
+  /**
+   * Add all the rows that have been added to the LP problem to the QSopt_ex solver.
+   * It can only be called once per object, afterwards it will be a no-op.
+   * Adding rows this way is usually faster than adding them one by one since it leverages the internal data structures.
+   */
+  void Consolidate();
 #if 0
   /**
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.
@@ -90,8 +100,15 @@ class QsoptexLpSolver final : public LpSolver {
    */
   void UpdateInfeasible();
 #endif
+  bool consolidated_;  ///< Whether the LP problem has been consolidated
 
   mpq_QSprob qsx_;  ///< QSopt_ex LP solver
+  std::vector<int> non_zero_count_;
+  std::vector<int> row_indices_;
+  std::vector<char> senses_;
+  std::vector<int> col_indices_;
+  std::vector<mpq_class> coeffs_;
+  std::vector<mpq_class> rhss_;
 
   qsopt_ex::MpqArray ray_;  ///< Ray of the last infeasible solution
   qsopt_ex::MpqArray x_;    ///< Solution vector
