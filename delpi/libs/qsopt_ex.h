@@ -101,8 +101,9 @@ class MpqArray {
   operator mpq_t *() { return array_; }
 
   mpq_t &operator[](const int idx) { return array_[idx]; }
-
   const mpq_t &operator[](const int idx) const { return array_[idx]; }
+  mpq_t &operator[](const std::size_t idx) { return array_[idx]; }
+  const mpq_t &operator[](const std::size_t idx) const { return array_[idx]; }
 
   /** @getter{size, array} */
   [[nodiscard]] size_t size() const { return array_ ? reinterpret_cast<size_t *>(array_)[-1] : 0; }
