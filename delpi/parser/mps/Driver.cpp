@@ -225,7 +225,7 @@ void MpsDriver::End() {
   DELPI_DEBUG_FMT("Driver::EndData reached end of file {}", problem_name_);
   DELPI_DEBUG_FMT("Found {} variables and {} constraints", columns_.size(), rows_.size());
   static const mpq_class zero{0};
-  static const mpq_class one{0};
+  static const mpq_class one{1};
 
   lp_solver_.ReserveColumns(columns_.size());
   for (const auto &[name, column_data] : columns_) {

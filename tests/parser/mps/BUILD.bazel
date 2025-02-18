@@ -15,5 +15,8 @@ delpi_cc_googletest(
 delpi_cc_googletest(
     name = "test_mps_driver",
     tags = ["mps"],
-    deps = ["//delpi/parser/mps"],
+    deps = [
+        "//delpi/parser/mps",
+        "//tests:test_utils",
+    ],
 )

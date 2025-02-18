@@ -1,25 +1,13 @@
 """Tests for the solver submodule."""
 
-load("//tools:rules_cc.bzl", "delpi_cc_googletest", "delpi_cc_library")
-
-delpi_cc_library(
-    name = "test_solver_utils",
-    hdrs = ["SolverUtils.h"],
-    tags = ["solver"],
-    deps = [
-        "//delpi/parser",
-        "//delpi/util:config",
-        "//delpi/util:filesystem",
-        "@googletest//:gtest",
-    ],
-)
+load("//tools:rules_cc.bzl", "delpi_cc_googletest")
 
 delpi_cc_googletest(
     name = "test_lp_solver",
     tags = ["solver"],
     deps = [
-        ":test_solver_utils",
         "//delpi/solver:lp_solver",
+        "//tests:test_utils",
     ],
 )
 
@@ -28,8 +16,8 @@ delpi_cc_googletest(
     data = glob(["mps/*.mps"]),
     tags = ["solver"],
     deps = [
-        ":test_solver_utils",
         "//delpi/solver:lp_solver",
+        "//tests:test_utils",
     ],
 )
 

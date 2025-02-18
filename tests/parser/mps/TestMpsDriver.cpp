@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "delpi/parser/mps/Driver.h"
+#include "tests/TestUtils.h"
 
 using delpi::Config;
 using delpi::Formula;
@@ -14,18 +15,20 @@ using delpi::LpSolver;
 using delpi::Variable;
 using delpi::mps::MpsDriver;
 
-class TestMpsDriver : public ::testing::Test {
+class TestMpsDriver : public ::testing::TestWithParam<Config::LpSolver> {
  protected:
   Config config_{Config::Format::MPS};
   std::unique_ptr<LpSolver> lp_solver_;
 
   TestMpsDriver() {
-    config_.m_lp_solver() = Config::LpSolver::SOPLEX;
+    config_.m_lp_solver() = GetParam();
     lp_solver_ = LpSolver::GetInstance(config_);
   }
 };
 
-TEST_F(TestMpsDriver, SetConfigOptions1) {
+INSTANTIATE_TEST_SUITE_P(TestMpsDriver, TestMpsDriver, enabled_test_solvers);
+
+TEST_P(TestMpsDriver, SetConfigOptions1) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("* @set-option :delta 1\n"
@@ -35,7 +38,7 @@ TEST_F(TestMpsDriver, SetConfigOptions1) {
   EXPECT_TRUE(driver.config().produce_models());
 }
 
-TEST_F(TestMpsDriver, SetConfigOptions2) {
+TEST_P(TestMpsDriver, SetConfigOptions2) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("* @set-option :delta 0.505\n"
@@ -45,7 +48,7 @@ TEST_F(TestMpsDriver, SetConfigOptions2) {
   EXPECT_FALSE(driver.config().produce_models());
 }
 
-TEST_F(TestMpsDriver, Name) {
+TEST_P(TestMpsDriver, Name) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("NAME best name ever\n"
@@ -53,7 +56,7 @@ TEST_F(TestMpsDriver, Name) {
   EXPECT_EQ(driver.problem_name(), "best name ever");
 }
 
-TEST_F(TestMpsDriver, Rows) {
+TEST_P(TestMpsDriver, Rows) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -84,7 +87,7 @@ TEST_F(TestMpsDriver, Rows) {
                                                            x4 >= 0));
 }
 
-TEST_F(TestMpsDriver, SimpleBoundsPositive) {
+TEST_P(TestMpsDriver, SimpleBoundsPositive) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -115,7 +118,7 @@ TEST_F(TestMpsDriver, SimpleBoundsPositive) {
                                                            3 * x3 == 33));
 }
 
-TEST_F(TestMpsDriver, SimpleBoundsNegative) {
+TEST_P(TestMpsDriver, SimpleBoundsNegative) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -146,7 +149,7 @@ TEST_F(TestMpsDriver, SimpleBoundsNegative) {
                                                            -3 * x3 == 33));
 }
 
-TEST_F(TestMpsDriver, Columns) {
+TEST_P(TestMpsDriver, Columns) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -175,7 +178,7 @@ TEST_F(TestMpsDriver, Columns) {
                                               33 * x3 == 0));
 }
 
-TEST_F(TestMpsDriver, Rhs) {
+TEST_P(TestMpsDriver, Rhs) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -207,7 +210,7 @@ TEST_F(TestMpsDriver, Rhs) {
                                               33 * x3 == 3));
 }
 
-TEST_F(TestMpsDriver, RangePositive) {
+TEST_P(TestMpsDriver, RangePositive) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -245,7 +248,7 @@ TEST_F(TestMpsDriver, RangePositive) {
                                               33 * x3 <= 3 + 53));
 }
 
-TEST_F(TestMpsDriver, RangeNegative) {
+TEST_P(TestMpsDriver, RangeNegative) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -283,7 +286,7 @@ TEST_F(TestMpsDriver, RangeNegative) {
                                               33 * x3 <= 3));
 }
 
-TEST_F(TestMpsDriver, BoundsPositive) {
+TEST_P(TestMpsDriver, BoundsPositive) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -318,7 +321,7 @@ TEST_F(TestMpsDriver, BoundsPositive) {
                                               x1 + x2 + x3 + x4 + x5 == 0));
 }
 
-TEST_F(TestMpsDriver, BoundsNegative) {
+TEST_P(TestMpsDriver, BoundsNegative) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -352,7 +355,7 @@ TEST_F(TestMpsDriver, BoundsNegative) {
                                               x1 + x2 + x3 + x4 + x5 == 0));
 }
 
-TEST_F(TestMpsDriver, BoundsImplicit) {
+TEST_P(TestMpsDriver, BoundsImplicit) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -382,7 +385,7 @@ TEST_F(TestMpsDriver, BoundsImplicit) {
                                                            x1 + x2 + x3 + x4 + x5 == 0));
 }
 
-TEST_F(TestMpsDriver, BoundsIntegerImplicit) {
+TEST_P(TestMpsDriver, BoundsIntegerImplicit) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -422,7 +425,7 @@ TEST_F(TestMpsDriver, BoundsIntegerImplicit) {
                                                            x1 + x2 + x3 + x4 + x5 + x6 == 0));
 }
 
-TEST_F(TestMpsDriver, BoundsIntegerImplicitOnBounds) {
+TEST_P(TestMpsDriver, BoundsIntegerImplicitOnBounds) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -461,7 +464,7 @@ TEST_F(TestMpsDriver, BoundsIntegerImplicitOnBounds) {
                                                            x1 + x2 + x3 + x4 + x5 + x6 == 0));
 }
 
-TEST_F(TestMpsDriver, BoundsLower) {
+TEST_P(TestMpsDriver, BoundsLower) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"
@@ -510,7 +513,7 @@ TEST_F(TestMpsDriver, BoundsLower) {
                                                            x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 == 0));
 }
 
-TEST_F(TestMpsDriver, BoundsUpper) {
+TEST_P(TestMpsDriver, BoundsUpper) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
       driver.ParseString("ROWS\n"

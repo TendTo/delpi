@@ -1,1 +1,14 @@
-"""Empty file to mark the tests directory as a submodule."""
+load("//tools:rules_cc.bzl", "delpi_cc_library")
+
+delpi_cc_library(
+    name = "test_utils",
+    hdrs = ["TestUtils.h"],
+    tags = ["solver"],
+    visibility = ["//tests:__subpackages__"],
+    deps = [
+        "//delpi/parser",
+        "//delpi/util:config",
+        "//delpi/util:filesystem",
+        "@googletest//:gtest",
+    ],
+)

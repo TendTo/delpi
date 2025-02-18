@@ -7,7 +7,7 @@
 
 #include "delpi/solver/LpSolver.h"
 #include "delpi/util/filesystem.h"
-#include "tests/solver/SolverUtils.h"
+#include "tests/TestUtils.h"
 
 using delpi::Config;
 using delpi::Expression;
