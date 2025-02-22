@@ -126,16 +126,20 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
       case SenseType::L:
         mpq_abs(value.get_mpq_t(), value.get_mpq_t());
         row_data.lb = row_data.ub.value_or(0) - value;
+        if (!row_data.ub.has_value()) row_data.ub = 0;  // If there was no upper bound, set it to 0
         break;
       case SenseType::G:
         mpq_abs(value.get_mpq_t(), value.get_mpq_t());
         row_data.ub = row_data.lb.value_or(0) + value;
+        if (!row_data.lb.has_value()) row_data.lb = 0;  // If there was no lower bound, set it to 0
         break;
       case SenseType::E:
         if (value > 0) {
-          *row_data.ub += value;
+          row_data.ub = row_data.ub.value_or(0) + value;
+          if (!row_data.lb.has_value()) row_data.lb = 0;  // If there was no lower bound, set it to 0
         } else {
-          *row_data.lb += value;
+          row_data.lb = row_data.lb.value_or(0) + value;
+          if (!row_data.ub.has_value()) row_data.ub = 0;  // If there was no upper bound, set it to 0
         }
         break;
       case SenseType::N:

@@ -564,3 +564,39 @@ TEST_P(TestMpsDriver, BoundsUpper) {
                                                            x8 >= 0,   //
                                                            x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 == 0));
 }
+
+TEST_P(TestMpsDriver, RangesDefaultRhs) {
+  MpsDriver driver{*lp_solver_};
+  ASSERT_TRUE(
+      driver.ParseString("ROWS\n"
+                         " L  R1\n"
+                         " E  R2\n"
+                         " E  R3\n"
+                         " G  R4\n"
+                         " N  Ob\n"
+                         "COLUMNS\n"
+                         " X1 R1 1 \n"
+                         " X1 R2 1 \n"
+                         " X1 R3 1 \n"
+                         " X1 R4 1 \n"
+                         " X1 Ob 1 \n"
+                         "BOUNDS\n"
+                         " FR BND X1\n"
+                         "RANGES\n"
+                         " RNG R1 1\n"
+                         " RNG R2 2\n"
+                         " RNG R3 -3\n"
+                         " RNG R4 4\n"
+                         "ENDATA"));
+  ASSERT_EQ(lp_solver_->variables().size(), 1u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 <= 0,   //
+                                                           x1 >= -1,  //
+                                                           x1 <= 2,   //
+                                                           x1 >= 0,   //
+                                                           x1 >= -3,  //
+                                                           x1 <= 0,   //
+                                                           x1 >= 0,   //
+                                                           x1 <= 4));
+}
