@@ -4,5 +4,4 @@ bazel-delpi
 bazel-out
 bazel-testlogs
 bazel-win-bazel
-.clwb
 .vscode
