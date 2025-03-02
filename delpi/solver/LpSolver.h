@@ -18,6 +18,7 @@
 #include "delpi/solver/Column.h"
 #include "delpi/solver/LpResult.h"
 #include "delpi/solver/LpRowSense.h"
+#include "delpi/solver/LpStats.h"
 #include "delpi/solver/Row.h"
 #include "delpi/symbolic/Expression.h"
 #include "delpi/symbolic/Formula.h"
@@ -69,12 +70,13 @@ class LpSolver {
    * @param obj_lb lower bound of the objective
    * @param obj_ub upper bound of the objective
    * @param delta delta value
+   * @param precision precision (bits) used to obtain the solution
    * @return true if the solver should continue
    * @return false if the solver should stop
    */
-  using SolveCallback = std::function<void(const LpSolver& lp_solver, LpResult result, const std::vector<mpq_class>& x,
-                                           const std::vector<mpq_class>& y, const mpq_class& obj_lb,
-                                           const mpq_class& obj_ub, const mpq_class& delta)>;
+  using SolveCallback =
+      std::function<void(const LpSolver& lp_solver, LpResult result, const std::vector<mpq_class>& x,
+                         const std::vector<mpq_class>& y, const mpq_class& obj_lb, const mpq_class& obj_ub)>;
   /**
    * Callback invoked by the LP solver when a solution (or delta solution) is found.
    * @param lp_solver LP solver that invoked the callback
@@ -85,12 +87,13 @@ class LpSolver {
    * @param obj_ub upper bound of the objective
    * @param diff difference between the lower and upper bounds
    * @param delta delta value
+   * @param precision precision (bits) used to obtain the solution
    * @return true if the solver should continue
    * @return false if the solver should stop
    */
-  using PartialSolveCallback = std::function<bool(
-      const LpSolver& lp_solver, LpResult result, const std::vector<mpq_class>& x, const std::vector<mpq_class>& y,
-      const mpq_class& obj_lb, const mpq_class& obj_ub, const mpq_class& diff, const mpq_class& delta)>;
+  using PartialSolveCallback =
+      std::function<bool(const LpSolver& lp_solver, LpResult result, const std::vector<mpq_class>& x,
+                         const std::vector<mpq_class>& y, const mpq_class& obj_lb, const mpq_class& obj_ub)>;
 
   static std::unique_ptr<LpSolver> GetInstance(const Config& config);
 
@@ -146,9 +149,7 @@ class LpSolver {
   /** @getter{infinity threshold value, lp solver} */
   [[nodiscard]] const mpq_class& infinity() const { return infinity_; }
   /** @getter{statistics, lp solver} */
-  [[nodiscard]] const IterationStats& stats() const { return stats_; }
-  /** @getter{statistics, parser} */
-  [[nodiscard]] const Stats& parser_stats() const { return parser_stats_; }
+  [[nodiscard]] const LpStats& stats() const { return stats_; }
   /** @getter{configuration, lp solver} */
   [[nodiscard]] const Config& config() const { return config_; }
   /** @getter{primal solution\, if the lp is feasible\,, lp solver} */
@@ -173,6 +174,9 @@ class LpSolver {
   [[nodiscard]] const PartialSolveCallback& partial_solve_cb() const { return partial_solve_cb_; }
   /** @getsetter{callback function invoked upon finding a partial solution to the problem, lp solver} */
   [[nodiscard]] PartialSolveCallback& m_partial_solve_cb() { return partial_solve_cb_; }
+  /** @getter{information stored in the LP solver} */
+  [[nodiscard]] const std::unordered_map<std::string, std::string>& info() const { return info_; }
+
   /**
    * Get a mapping between the variables and their values in the solution vector `x`.
    * @param x solution vector
@@ -416,15 +420,13 @@ class LpSolver {
    * The result of the computation will be stored in @ref solution_ and @ref dual_solution_ if the problem is feasible.
    * If `store_solution` is false, the solution will not be stored, but the LpResult will still be returned.
    * The actual delta will be returned in the `delta` parameter.
-   * @param[in,out] delta desired delta for the optimisation that becomes the actual delta achieved
-   * @param store_solution whether the solution and dual solution should be stored
    * @return OPTIMAL if an optimal solution has been found and the return value of `delta` is @f$ = 0 @f$
    * @return DELTA_OPTIMAL if an delta-optimal solution has been found and the return value of `delta` @f$\ge 0 @f$
    * @return UNBOUNDED if the problem is unbounded
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred
    */
-  LpResult Solve(mpq_class& delta, bool store_solution = true);
+  LpResult Solve();
 
   /**
    * Set the `objective_function` to maximise while being subject to all the constraints.
@@ -481,15 +483,13 @@ class LpSolver {
  protected:
   /**
    * Internal method that optimises the LP problem with the given `delta`.
-   * @param delta desired delta for the optimisation
-   * @param store_solution whether the solution and dual solution should be stored
    * @return OPTIMAL if an optimal solution has been found and the return value of `delta` is @f$ = 0 @f$
    * @return DELTA_OPTIMAL if a delta-optimal solution has been found and the return value of `delta` @f$\ge 0 @f$
    * @return UNBOUNDED if the problem is unbounded
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred
    */
-  virtual LpResult SolveCore(mpq_class& delta, bool store_solution) = 0;
+  virtual LpResult SolveCore() = 0;
 
   /**
    * Check whether the row that is about to be added is a simple bound.
@@ -507,8 +507,7 @@ class LpSolver {
                                      const mpq_class& ub);
 
   Config config_;                                      ///< Configuration to use
-  IterationStats stats_;                               ///< Statistics of the solver
-  Stats parser_stats_;                                 ///< Statistics of the parser
+  LpStats stats_;                                      ///< Statistics of the solver
   std::unordered_map<std::string, std::string> info_;  ///< Generic information map. Generally collected from the file
 
   std::unordered_map<Variable, int> var_to_col_;  ///< Theory column ⇔ Variable.

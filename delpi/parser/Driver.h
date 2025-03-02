@@ -57,7 +57,7 @@ class Driver {
   static void Error(const std::string &m);
 
   /** Call context_.CheckSat() and print proper output messages to the standard output. */
-  void CheckSat();
+  void Solve();
   /**
    * @smtcommand{get-info, Print information about the solver or the current context.
      @param key key of the information to print}

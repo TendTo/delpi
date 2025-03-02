@@ -10,22 +10,27 @@
 #include "delpi/delpi.h"
 #include "delpi/util/error.h"
 
-#define CSV_HEADER "file,solver,result,delta,actual_delta,obj_lb,obj_ub,time_unit,parser_time,solver_time,total_time"
-#define CSV_FORMAT "{},{},{},{},{},{},{},s,{},{},{}"
-#define CSV_PARTIAL_FORMAT "{},{},partial-{},{},{},{},{},s,{},{},{}"
+#define CSV_HEADER                                                                                                     \
+  "file,solver,result,delta,actual_delta,precision,iterations,refinements,obj_lb,obj_ub,time_unit,parser_time,solver_" \
+  "time,total_time"
+#define CSV_FORMAT "{},{},{},{},{},{},{},{},{},{},s,{},{},{}"
+#define CSV_PARTIAL_FORMAT "{},{},partial-{},{},{},{},{},{},{},{},s,{},{},{}"
 
 delpi::Timer global_timer{};
 
 void OnSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, const std::vector<mpq_class>& x,
-             const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub, const mpq_class& delta) {
+             const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub) {
   if (lp_solver.config().silent()) return;
-  const mpq_class actual_delta = obj_ub - obj_lb;
-  DELPI_ASSERT(actual_delta <= delta, "Expected actual delta to be <= delta");
 
-  if (lp_solver.config().csv()) {
-    fmt::println(CSV_FORMAT, lp_solver.config().filename(), lp_solver.config().lp_solver(), result, delta.get_d(),
-                 actual_delta.get_d(), obj_lb.get_d(), obj_ub.get_d(), lp_solver.parser_stats().timer().seconds(),
-                 lp_solver.stats().timer().seconds(), global_timer.seconds());
+  const mpq_class actual_delta = obj_ub - obj_lb;
+  const delpi::Config& config = lp_solver.config();
+  const delpi::LpStats& stats = lp_solver.stats();
+  DELPI_ASSERT(actual_delta <= config.delta(), "Expected actual delta to be <= delta");
+
+  if (config.csv()) {
+    fmt::println(CSV_FORMAT, config.filename(), config.lp_solver(), result, config.delta(), actual_delta.get_d(),
+                 stats.precision, stats.solver_stats.iterations(), stats.refinements, obj_lb.get_d(), obj_ub.get_d(),
+                 stats.parser_stats.timer().seconds(), stats.solver_stats.timer().seconds(), global_timer.seconds());
     return;
   }
   switch (result) {
@@ -41,32 +46,35 @@ void OnSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, con
     default:
       fmt::println("{}", result);
   }
-  if (lp_solver.config().with_timings()) {
-    fmt::println("\tafter {} seconds\n{}\n{}", global_timer.seconds(), lp_solver.parser_stats(), lp_solver.stats());
+  if (config.with_timings()) {
+    fmt::println("\tafter {} seconds\n{}\n{}", global_timer.seconds(), stats.parser_stats, stats.solver_stats);
   }
-  if (lp_solver.config().produce_models()) fmt::println("Model: {}", lp_solver.model(x));
+  if (config.produce_models()) fmt::println("Model: {}", lp_solver.model(x));
   std::cout << std::flush;
 }
 
 bool OnPartialSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult result, const std::vector<mpq_class>& x,
-                    const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub,
-                    const mpq_class& actual_delta, const mpq_class&) {
+                    const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub) {
   if (lp_solver.config().silent()) return true;
+
+  const mpq_class actual_delta = obj_ub - obj_lb;
+  const delpi::Config& config = lp_solver.config();
+  const delpi::LpStats& stats = lp_solver.stats();
   DELPI_ASSERT(actual_delta > lp_solver.config().delta(), "Expected diff to be > delta");
 
-  if (lp_solver.config().csv()) {
-    fmt::println(CSV_PARTIAL_FORMAT, lp_solver.config().filename(), lp_solver.config().lp_solver(), result,
-                 lp_solver.config().delta(), actual_delta.get_d(), obj_lb.get_d(), obj_ub.get_d(),
-                 lp_solver.parser_stats().timer().seconds(), lp_solver.stats().timer().seconds(),
-                 global_timer.seconds());
+  if (config.csv()) {
+    fmt::println(CSV_PARTIAL_FORMAT, config.filename(), config.lp_solver(), result, actual_delta.get_d(),
+                 actual_delta.get_d(), stats.precision, stats.solver_stats.iterations(), stats.refinements,
+                 obj_lb.get_d(), obj_ub.get_d(), stats.parser_stats.timer().seconds(),
+                 stats.solver_stats.timer().seconds(), global_timer.seconds());
     return true;
   }
   fmt::println("PARTIAL: {} with delta = {} ( = {}), range = [{}, {}]", result, actual_delta.get_d(), actual_delta,
                obj_lb, obj_ub);
-  if (lp_solver.config().with_timings()) {
-    fmt::println("\tafter {} seconds\n{}\n{}", global_timer.seconds(), lp_solver.parser_stats(), lp_solver.stats());
+  if (config.with_timings()) {
+    fmt::println("\tafter {} seconds\n{}\n{}", global_timer.seconds(), stats.parser_stats, stats.solver_stats);
   }
-  if (lp_solver.config().produce_models()) fmt::println("Model: {}", lp_solver.model(x));
+  if (config.produce_models()) fmt::println("Model: {}", lp_solver.model(x));
   std::cout << std::flush;
   return true;
 }
@@ -96,7 +104,7 @@ int main(const int argc, const char* argv[]) {
 
   // Run the solver
   mpq_class delta{config.delta()};
-  const delpi::LpResult result = lp_solver->Solve(delta);
+  const delpi::LpResult result = lp_solver->Solve();
 
   if (config.silent()) return ExitCode(result);
 

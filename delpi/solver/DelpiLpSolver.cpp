@@ -113,9 +113,8 @@ void DelpiLpSolver::Dump() {
             << problem_ << "}\n";
 }
 #endif
-LpResult DelpiLpSolver::SolveCore([[maybe_unused]] mpq_class& delta, [[maybe_unused]] bool store_solution) {
-  DELPI_DEBUG_FMT("DelpiLpSolver::SolveCore({}, {})", delta, store_solution);
-  delta_ = delta;
+LpResult DelpiLpSolver::SolveCore() {
+  DELPI_DEBUG("DelpiLpSolver::SolveCore()");
   Matrix<mpq_class> slack_A;
   Vector<mpq_class> slack_c;
   Vector<mpq_class> slack_b;
@@ -133,7 +132,6 @@ LpResult DelpiLpSolver::SolveCore([[maybe_unused]] mpq_class& delta, [[maybe_unu
 
   DELPI_DEV_FMT("Result: {}. x: {}, c: {}", optimality_check, x_, problem_.c());
   solution_ = std::vector<mpq_class>{x_.data(), x_.data() + x_.size()};
-  delta = delta_;
   return optimality_check;
 }
 

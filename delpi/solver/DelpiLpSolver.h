@@ -48,7 +48,7 @@ class DelpiLpSolver final : public LpSolver {
 #endif
 
  private:
-  LpResult SolveCore(mpq_class& delta, bool store_solution) override;
+  LpResult SolveCore() override;
   /**
    * Solve the LP problem using the Simplex algorithm.
    * The input is assumed to be in standard form, i.e.

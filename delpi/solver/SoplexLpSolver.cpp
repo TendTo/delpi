@@ -161,7 +161,7 @@ void SoplexLpSolver::SetObjective(const int column, const mpq_class& value) {
     spx_cols_.maxObj_w(column) = value.get_mpq_t();
 }
 
-LpResult SoplexLpSolver::SolveCore(mpq_class& delta, const bool store_solution) {
+LpResult SoplexLpSolver::SolveCore() {
   if (!consolidated_) {
     spx_.addColsRational(spx_cols_);
     spx_.addRowsRational(spx_rows_);
@@ -176,19 +176,25 @@ LpResult SoplexLpSolver::SolveCore(mpq_class& delta, const bool store_solution) 
   if (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE) {
     DELPI_ERROR_FMT("SoplexLpSolver::Optimise: Unexpected SoPlex return -> {}", status);
     return LpResult::ERROR;
-  } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
-    delta = gmp::ToMpqClass(max_violation.backend().data());
-    DELPI_DEBUG_FMT("SoplexLpSolver::Optimise: SoPlex returned {}, precision = {}", status, delta);
+  } else if (spx_.getRedCostViolationRational(max_violation, sum_violation)) {
+    DELPI_DEBUG_FMT("SoplexLpSolver::Optimise: SoPlex returned {}, violation = {}", status, max_violation);
   } else {
     DELPI_DEBUG_FMT("SoplexLpSolver::Optimise: SoPlex has returned {}", status);
   }
 
+  stats_.refinements = spx_.numRefinements();
+  stats_.precision = spx_.numPrecisionBoosts() == 0 ? sizeof(double) * 8 : 167;
+  for (int i = 1; i < spx_.numPrecisionBoosts(); i++) {
+    stats_.precision =
+        static_cast<std::size_t>(stats_.precision * spx_.realParam(soplex::SoPlex::PRECISION_BOOSTING_FACTOR));
+  }
+
   switch (status) {
     case SoplexStatus::OPTIMAL:
-      if (store_solution) UpdateFeasible();
+      UpdateFeasible(max_violation);
       return max_violation.is_zero() ? LpResult::OPTIMAL : LpResult::DELTA_OPTIMAL;
     case SoplexStatus::UNBOUNDED:
-      if (store_solution) UpdateFeasible();
+      UpdateFeasible(max_violation);
       return LpResult::UNBOUNDED;
     case SoplexStatus::INFEASIBLE:
       // if (store_solution) UpdateInFeasible();
@@ -198,7 +204,7 @@ LpResult SoplexLpSolver::SolveCore(mpq_class& delta, const bool store_solution) 
   }
 }
 
-void SoplexLpSolver::UpdateFeasible() {
+void SoplexLpSolver::UpdateFeasible(const soplex::Rational& max_violation) {
   DELPI_ASSERT(solution_.empty(), "solution_ must be empty");
   DELPI_ASSERT(dual_solution_.empty(), "dual_solution_ must be empty");
   // Set the feasible information
@@ -218,7 +224,8 @@ void SoplexLpSolver::UpdateFeasible() {
   DELPI_ASSERT(has_dual, "has_dual must be true");
   for (int i = 0; i < rowcount; i++) dual_solution_.emplace_back(gmp::ToMpqClass(dual[i].backend().data()));
 
-  obj_lb_ = obj_ub_ = gmp::ToMpqClass(spx_.objValueRational().backend().data());
+  obj_lb_ = gmp::ToMpqClass((spx_.objValueRational() - max_violation).backend().data());
+  obj_ub_ = gmp::ToMpqClass((spx_.objValueRational() + max_violation).backend().data());
 }
 
 #if 0

@@ -101,6 +101,11 @@ class IterationStats : public Stats {
 
   /** @getter{iterations, stats} */
   [[nodiscard]] unsigned int iterations() const { return iterations_.load(); }
+  /**
+   * Set the total number of iterations.
+   * @param iterations total number of iterations
+   */
+  void SetIterations(const unsigned int iterations) { iterations_ = iterations; }
 
   void operator++();
   void operator++(int);

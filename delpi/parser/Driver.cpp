@@ -37,11 +37,10 @@ bool Driver::ParseFile(const std::string& filename) {
 
 void Driver::Error(const std::string& m) { std::cerr << m << std::endl; }
 
-void Driver::CheckSat() {
-  // Don't consider the time spent checking sat in the time spent parsing.
+void Driver::Solve() {
+  // Don't consider the time spent solving the LP problem in the time spent parsing.
   stats_.m_timer().Pause();
-  mpq_class delta = lp_solver_.config().delta();
-  lp_solver_.Solve(delta);
+  lp_solver_.Solve();
   stats_.m_timer().Resume();
 }
 

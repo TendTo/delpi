@@ -43,12 +43,19 @@ class QsoptexLpSolver final : public LpSolver {
   void SetCoefficient(RowIndex row, ColumnIndex column, const mpq_class& value) override;
   void SetObjective(int column, const mpq_class& value) override;
 
+  /**
+   * Update the lp stats from the QSopt_ex solver.
+   * The precision must be captured before calling this method.
+   * @param precision precision used to obtain the solution
+   */
+  void UpdateStats(unsigned int precision);
+
 #ifndef NDEBUG
   void Dump() final;
 #endif
 
  private:
-  LpResult SolveCore(mpq_class& delta, bool store_solution) override;
+  LpResult SolveCore() override;
 
   template <TypedIterable<std::pair<const Variable, mpq_class>> T>
   int AddRow(const T& addends, char sense, const mpq_class& rhs);

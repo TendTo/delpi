@@ -23,7 +23,7 @@ bool LpSolver::ParseStream(std::istream& stream, const std::string& stream_name)
   const std::unique_ptr parser{GetDriverInstance(*this)};
   DELPI_ASSERT(parser, "Parser not found");
   const bool res = parser->ParseStream(stream, stream_name);
-  parser_stats_ = parser->stats();
+  stats_.parser_stats = parser->stats();
   return res;
 }
 bool LpSolver::ParseString(const std::string& string) { return GetDriverInstance(*this)->ParseString(string); }

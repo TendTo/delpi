@@ -49,7 +49,7 @@ class SoplexLpSolver final : public LpSolver {
 #endif
 
  private:
-  LpResult SolveCore(mpq_class& delta, bool store_solution) override;
+  LpResult SolveCore() override;
   /**
    * Parse a sequence of `literal_monomials` and set the coefficient for each decisional variable appearing in it.
    * @tparam T generic iterable containing pairs (Variable, coeff) (i.e. std::vector, std::set, std::span)
@@ -72,8 +72,9 @@ class SoplexLpSolver final : public LpSolver {
    *
    * The lp solver was able to find a feasible solution to the problem.
    * The useful information will be stored in @ref solution_ and @ref dual_solution_.
+   * @param max_violation maximum distance of the solution from the optimal value
    */
-  void UpdateFeasible();
+  void UpdateFeasible(const soplex::Rational& max_violation);
 #if 0
   /**
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.

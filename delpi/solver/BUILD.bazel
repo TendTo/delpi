@@ -26,6 +26,16 @@ delpi_cc_library(
 )
 
 delpi_cc_library(
+    name = "lp_stats",
+    srcs = ["LpStats.cpp"],
+    hdrs = ["LpStats.h"],
+    deps = [
+        "//delpi/util:logging",
+        "//delpi/util:stats",
+    ],
+)
+
+delpi_cc_library(
     name = "lp_row_sense",
     srcs = ["LpRowSense.cpp"],
     hdrs = ["LpRowSense.h"],
@@ -92,6 +102,7 @@ delpi_cc_library(
         ":column",
         ":lp_result",
         ":lp_row_sense",
+        ":lp_stats",
         ":row",
         "//delpi/libs:gmp",
         "//delpi/symbolic:expression",

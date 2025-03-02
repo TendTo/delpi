@@ -35,8 +35,7 @@ bool IsYes(std::string value) {
 
 LpSolver::LpSolver(mpq_class ninfinity, mpq_class infinity, Config config, const std::string& class_name)
     : config_{std::move(config)},
-      stats_{config.with_timings(), class_name, "Total time spent in Optimise", "Total # of Optimise"},
-      parser_stats_{config.with_timings(), class_name, "Total time spent in Parsing"},
+      stats_{config.with_timings(), class_name},
       var_to_col_{},
       col_to_var_{},
       solution_{},
@@ -188,16 +187,16 @@ void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective)
 void LpSolver::SetObjective(const std::vector<mpq_class>& objective) {
   for (int i = 0; i < static_cast<int>(objective.size()); ++i) SetObjective(i, objective.at(i));
 }
-LpResult LpSolver::Solve(mpq_class& delta, const bool store_solution) {
+LpResult LpSolver::Solve() {
   DELPI_ASSERT(num_rows() > 0, "Cannot optimise without rows.");
   DELPI_ASSERT(num_columns() > 0, "Cannot optimise without columns.");
-  DELPI_DEBUG_FMT("LpSolver::Solve({}, {})", delta, store_solution);
-  const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
-  stats_.Increase();
+  DELPI_DEBUG("LpSolver::Solve()");
+  const TimerGuard timer_guard(&stats_.solver_stats.m_timer(), stats_.solver_stats.enabled());
+  stats_.solver_stats.Increase();
   solution_.clear();
   dual_solution_.clear();
-  const LpResult result = SolveCore(delta, store_solution);
-  if (solve_cb_) solve_cb_(*this, result, solution_, dual_solution_, obj_lb_, obj_ub_, delta);
+  const LpResult result = SolveCore();
+  if (solve_cb_) solve_cb_(*this, result, solution_, dual_solution_, obj_lb_, obj_ub_);
   return result;
 }
 void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetObjective(var_to_col_.at(var), value); }
@@ -267,7 +266,7 @@ bool LpSolver::SetSimpleBoundInsteadOfAddRow(const std::vector<Expression::Adden
 }
 
 std::ostream& operator<<(std::ostream& os, const LpSolver& solver) {
-  os << solver.stats().class_name() << " {";
+  os << solver.stats().solver_stats.class_name() << " {";
   os << "num_columns: " << solver.num_columns() << ", ";
   os << "num_rows: " << solver.num_rows() << ", ";
   os << "ninfinity: " << solver.ninfinity() << ", ";

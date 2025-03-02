@@ -20,15 +20,15 @@ namespace delpi {
 namespace {}  // namespace
 
 extern "C" void QsoptexPartialSolutionCb(mpq_QSdata const* /*prob*/, const mpq_t* x, const mpq_t* const y,
-                                         const mpq_t obj_lb, const mpq_t obj_up, const mpq_t diff, const mpq_t delta,
-                                         void* data) {
+                                         const mpq_t obj_lb, const mpq_t obj_up, const mpq_t /* diff */,
+                                         const mpq_t /* delta */, const unsigned int precision, void* data) {
   DELPI_DEBUG_FMT("QsoptexLpSolver::QsoptexPartialSolutionCb called with objective value in [{}, {}]",
                   mpq_class{obj_lb}, mpq_class{obj_up});
-  const QsoptexLpSolver& lp_solver = *static_cast<QsoptexLpSolver*>(data);
+  QsoptexLpSolver& lp_solver = *static_cast<QsoptexLpSolver*>(data);
+  lp_solver.UpdateStats(precision);
   if (lp_solver.partial_solve_cb())
     lp_solver.partial_solve_cb()(lp_solver, LpResult::DELTA_OPTIMAL, gmp::ToMpqVector(x, lp_solver.num_columns()),
-                                 gmp::ToMpqVector(y, lp_solver.num_rows()), mpq_class{obj_lb}, mpq_class{obj_up},
-                                 mpq_class{diff}, mpq_class{delta});
+                                 gmp::ToMpqVector(y, lp_solver.num_rows()), mpq_class{obj_lb}, mpq_class{obj_up});
 }
 
 QsoptexLpSolver::QsoptexLpSolver(Config config, const std::string& class_name)
@@ -170,30 +170,33 @@ void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
   DELPI_ASSERT(!status, "Invalid status");
 }
 
-LpResult QsoptexLpSolver::SolveCore(mpq_class& delta, const bool store_solution) {
+LpResult QsoptexLpSolver::SolveCore() {
   // x: must be allocated/deallocated using QSopt_ex.
   // Should have room for the (rowcount) "logical" variables, which come after the (colcount) "structural" variables.
   x_.Resize(num_columns());
   ray_.Resize(num_rows());
 
+  unsigned int precision;
   int lp_status = -1;
-  const int status = QSdelta_full_solver(qsx_, delta.get_mpq_t(), x_, ray_, obj_lb_.get_mpq_t(), obj_ub_.get_mpq_t(),
-                                         nullptr, PRIMAL_SIMPLEX, &lp_status,
+  const int status = QSdelta_full_solver(qsx_, mpq_class{config_.delta()}.get_mpq_t(), x_, ray_, obj_lb_.get_mpq_t(),
+                                         obj_ub_.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status, &precision,
                                          config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
+
   if (status) {
     DELPI_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
     return LpResult::ERROR;
   }
 
-  DELPI_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex has returned with precision = {}", delta);
+  DELPI_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex has returned with precision = {}", precision);
 
+  UpdateStats(precision);
   switch (lp_status) {
     case QS_LP_OPTIMAL:
     case QS_LP_DELTA_OPTIMAL:
-      if (store_solution) UpdateFeasible();
+      UpdateFeasible();
       return lp_status == QS_LP_OPTIMAL ? LpResult::OPTIMAL : LpResult::DELTA_OPTIMAL;
     case QS_LP_UNBOUNDED:
-      if (store_solution) UpdateFeasible();
+      UpdateFeasible();
       return LpResult::UNBOUNDED;
     case QS_LP_INFEASIBLE:
 #if 0
@@ -222,6 +225,11 @@ void QsoptexLpSolver::UpdateFeasible() {
 
   for (int i = 0; i < colcount; i++) solution_.emplace_back(x_[i]);
   for (int i = 0; i < rowcount; i++) dual_solution_.emplace_back(ray_[i]);
+}
+
+void QsoptexLpSolver::UpdateStats(unsigned int precision) {
+  stats_.precision = precision;
+  stats_.refinements = 0;
 }
 #if 0
 void QsoptexLpSolver::UpdateInfeasible() {
