@@ -35,14 +35,14 @@ SoplexLpSolver::SoplexLpSolver(Config config, const std::string& class_name)
   spx_.setIntParam(soplex::SoPlex::VERBOSITY, config_.verbose_simplex());
   // Default is maximise.
   spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MINIMIZE);
+  // Enable iterative refinement
+  bool enable_iterative_refinement = config_.lp_mode() != Config::LpMode::PURE_PRECISION_BOOSTING;
+  spx_.setBoolParam(soplex::SoPlex::ITERATIVE_REFINEMENT, enable_iterative_refinement);
   // Enable precision boosting
   bool enable_precision_boosting = config_.lp_mode() != Config::LpMode::PURE_ITERATIVE_REFINEMENT;
   spx_.setBoolParam(soplex::SoPlex::ADAPT_TOLS_TO_MULTIPRECISION, enable_precision_boosting);
   spx_.setBoolParam(soplex::SoPlex::PRECISION_BOOSTING, enable_precision_boosting);
-  spx_.setIntParam(soplex::SoPlex::RATFAC_MINSTALLS, enable_precision_boosting ? 0 : 2);
-  // Enable iterative refinement
-  bool enable_iterative_refinement = config_.lp_mode() != Config::LpMode::PURE_PRECISION_BOOSTING;
-  spx_.setBoolParam(soplex::SoPlex::ITERATIVE_REFINEMENT, enable_iterative_refinement);
+  spx_.setIntParam(soplex::SoPlex::RATFAC_MINSTALLS, !enable_iterative_refinement ? 0 : 2);
   DELPI_DEBUG_FMT(
       "SoplexTheorySolver::SoplexTheorySolver: precision = {}, precision_boosting = {}, iterative_refinement = {}",
       config_.delta(), enable_precision_boosting, enable_iterative_refinement);
