@@ -6,3 +6,5 @@
 *.{cmd,[cC][mM][dD]} text eol=crlf
 *.{bat,[bB][aA][tT]} text eol=crlf
 
+# Ignore language of test files
+tests/solver/mps/* linguist-vendored
