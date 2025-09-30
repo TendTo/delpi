@@ -19,8 +19,8 @@ class TestBasis : public ::testing::Test {
   }
 };
 
-using types = ::testing::Types<double, mpq_class>;
-TYPED_TEST_SUITE(TestBasis, types);
+using Types = ::testing::Types<double, mpq_class>;
+TYPED_TEST_SUITE(TestBasis, Types);
 
 TYPED_TEST(TestBasis, Constructor) {
   const std::vector basis_idxs{1l, 2l, 4l, 19l};

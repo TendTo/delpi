@@ -36,16 +36,15 @@ TEST_F(TestDelpiLpSolver, Feasible) {
   solver_->AddColumn(x4_, 1);
   solver_->AddRow(x1_ + x2_ + x3_ + x4_ <= 1);
   solver_->AddRow(x1_ + x2_ + x3_ + x4_ >= 1);
-  solver_->m_solve_cb() = [&](const LpSolver&, const LpResult, const std::vector<mpq_class>& x,
-                              const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub,
-                              const mpq_class& delta) {
+
+  solver_->m_solve_cb() = [&](const LpSolver&, LpResult, const std::vector<mpq_class>& x, const std::vector<mpq_class>&,
+                              const mpq_class& obj_lb, const mpq_class& obj_ub) {
     EXPECT_EQ(obj_lb, 0);
     EXPECT_EQ(obj_ub, 0);
     EXPECT_EQ(x.size(), 4u);
     EXPECT_THAT(x, ::testing::Each(::testing::AllOf(::testing::Eq(0))));
-    EXPECT_LE(delta, delta_);
   };
-  const LpResult result = solver_->Solve(delta_);
+  const LpResult result = solver_->Solve();
   EXPECT_EQ(result, LpResult::OPTIMAL);
 }
 
@@ -56,7 +55,7 @@ TEST_F(TestDelpiLpSolver, Infeasible) {
   solver_->AddColumn(x4_, 1);
   solver_->AddRow(x1_ + x2_ + x3_ + x4_ <= -1);
   solver_->AddRow(x1_ + x2_ + x3_ + x4_ >= -10);
-  const LpResult result = solver_->Solve(delta_);
+  const LpResult result = solver_->Solve();
   EXPECT_EQ(result, LpResult::INFEASIBLE);
 }
 
@@ -68,15 +67,13 @@ TEST_F(TestDelpiLpSolver, EqualityOptimalExample) {
   solver_->AddRow(4 * x1_ + 2 * x2_ + 3 * x3_ == 28);
   solver_->AddRow(2 * x1_ + 5 * x2_ + 5 * x3_ == 30);
   solver_->m_solve_cb() = [&](const LpSolver&, const LpResult, const std::vector<mpq_class>& x,
-                              const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub,
-                              const mpq_class& delta) {
+                              const std::vector<mpq_class>&, const mpq_class& obj_lb, const mpq_class& obj_ub) {
     EXPECT_EQ(obj_lb, -13);
     EXPECT_EQ(obj_ub, -13);
     EXPECT_EQ(x.size(), 3u);
     EXPECT_THAT(x, ::testing::Each(::testing::AllOf(::testing::Ge(0))));
-    EXPECT_LE(delta, delta_);
   };
-  const LpResult result = solver_->Solve(delta_);
+  const LpResult result = solver_->Solve();
   EXPECT_EQ(result, LpResult::OPTIMAL);
 }
 
@@ -87,7 +84,7 @@ TEST_F(TestDelpiLpSolver, UnboundedExample) {
   solver_->AddRow(2 * x1_ + x2_ + x3_ >= 14);
   solver_->AddRow(4 * x1_ + 2 * x2_ + 3 * x3_ >= 28);
   solver_->AddRow(2 * x1_ + 5 * x2_ + 5 * x3_ >= 30);
-  const LpResult result = solver_->Solve(delta_);
+  const LpResult result = solver_->Solve();
   EXPECT_EQ(result, LpResult::UNBOUNDED);
 }
 
@@ -98,7 +95,7 @@ TEST_F(TestDelpiLpSolver, InfeasibleExample) {
   solver_->AddRow(2 * x1_ + x2_ + x3_ == -14);
   solver_->AddRow(4 * x1_ + 2 * x2_ + 3 * x3_ == 28);
   solver_->AddRow(2 * x1_ + 5 * x2_ + 5 * x3_ == 30);
-  const LpResult result = solver_->Solve(delta_);
+  const LpResult result = solver_->Solve();
   EXPECT_EQ(result, LpResult::INFEASIBLE);
 }
 
@@ -119,6 +116,6 @@ TEST_F(TestDelpiLpSolver, ContraintSignSensesCombination) {
   solver_->AddRow(2 * x1_ + x2_ + x3_ >= -14);
   solver_->AddRow(4 * x5_ + 2 * x6_ + 3 * x3_ <= 28);
   solver_->AddRow(2 * x1_ + 5 * x2_ - 5 * x9_ <= -5);
-  const LpResult result = solver_->Solve(delta_);
+  const LpResult result = solver_->Solve();
   EXPECT_EQ(result, LpResult::UNBOUNDED);
 }

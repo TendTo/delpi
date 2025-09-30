@@ -39,9 +39,9 @@ INSTANTIATE_TEST_SUITE_P(TestDeltaMps, TestLpSolverMps,
                                             ::testing::Values(0.1)));
 
 TEST_P(TestLpSolverMps, MpsInputAgainstExpectedOutput) {
-  mpq_class precision = config_.delta();
+  const mpq_class precision = config_.delta();
   solver_->Parse();
-  const LpResult result = solver_->Solve(precision);
+  const LpResult result = solver_->Solve();
 
   // Ignore the test if the solver is not supported or if it's too slow
   // if (result == LpResult::ERROR || result == LpResult::TIMEOUT) GTEST_SKIP();

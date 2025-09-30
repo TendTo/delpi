@@ -37,8 +37,8 @@ class TestRetriangularisationFactor : public ::testing::Test {
   }
 };
 
-using types = ::testing::Types<double, mpq_class>;
-TYPED_TEST_SUITE(TestRetriangularisationFactor, types);
+using Types = ::testing::Types<double, mpq_class>;
+TYPED_TEST_SUITE(TestRetriangularisationFactor, Types);
 
 TYPED_TEST(TestRetriangularisationFactor, LowerTriangularTimesFactor) {
   for (int pivot_row = 0; pivot_row < this->L_.cols() - 1; ++pivot_row) {
