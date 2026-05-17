@@ -46,7 +46,7 @@ class Basis {
   friend Basis<double>;
 
  public:
-  using BasisVectors = decltype(Eigen::MatrixX<T>(Eigen::all, std::declval<std::vector<Index>>()));
+  using BasisVectors = decltype(Eigen::MatrixX<T>(Eigen::placeholders::all, std::declval<std::vector<Index>>()));
   explicit Basis(const Eigen::MatrixX<T>& A);
   Basis(const Eigen::MatrixX<T>& A, std::vector<Index> basis_idxs);
   Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<Index>>& basis_idxs);

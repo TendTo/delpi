@@ -5,7 +5,10 @@
  */
 #include "delpi/symbolic/Expression.h"
 
+#include <map>
 #include <sstream>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 

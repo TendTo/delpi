@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 #ifdef DELPI_ENABLED_QSOPTEX
 #include "delpi/libs/qsopt_ex.h"

@@ -6,6 +6,7 @@
  * Use the `-h` flag to show the help tooltip.
  */
 #include <iostream>
+#include <vector>
 
 #include "delpi/delpi.h"
 #include "delpi/util/error.h"

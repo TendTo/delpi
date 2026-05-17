@@ -6,6 +6,8 @@
 #include "delpi/parser/parser.h"
 
 #include <fstream>
+#include <iostream>
+#include <memory>
 #include <string>
 
 #include "delpi/parser/mps/Driver.h"

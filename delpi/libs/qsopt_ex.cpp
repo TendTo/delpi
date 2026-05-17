@@ -6,7 +6,9 @@
 
 #include "delpi/libs/qsopt_ex.h"
 
+#include <cstdlib>
 #include <ostream>
+#include <string>
 
 namespace delpi::qsopt_ex {
 

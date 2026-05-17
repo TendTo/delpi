@@ -8,6 +8,8 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <string>
+#include <vector>
 
 #include "delpi/util/logging.h"
 

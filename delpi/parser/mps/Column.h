@@ -16,7 +16,7 @@ namespace delpi::mps {
 
 /**
  * Data structure representing a column in the LP solver as it gets parsed from an MPS file.
- * Missing bounds are represented by `std::nullopt` and may have different menings.
+ * Missing bounds are represented by `std::nullopt` and may have different meanings.
  * If any of the bounds is set, the variable is bounded from that direction.
  * A missing upper bound on a non-integer variable means that the variable is unbounded in the positive direction.
  * A missing upper bound on an integer variable means that the variable is bounded by 1.

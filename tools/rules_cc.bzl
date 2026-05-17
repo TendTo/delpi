@@ -353,9 +353,9 @@ def delpi_srcs(name, srcs = None, hdrs = None, deps = [], subfolder = "", visibi
     else:
         srcs_name, hdrs_name, all_srcs_name = "srcs_%s" % name, "hdrs_%s" % name, "all_srcs_%s" % name
     if srcs == None:
-        srcs = native.glob(["*.cpp", "*.cc", "*.cxx", "*.c"])
+        srcs = native.glob(["*.cpp", "*.cc", "*.cxx", "*.c"], allow_empty = True)
     if hdrs == None:
-        hdrs = native.glob(["*.h", "*.hpp"])
+        hdrs = native.glob(["*.h", "*.hpp"], allow_empty = True)
     native.filegroup(
         name = srcs_name,
         srcs = srcs + hdrs,
@@ -386,7 +386,7 @@ def delpi_hdrs_tar(name, hdrs = None, deps = [], subfolder = "", visibility = ["
         visibility: A list of visibility labels to apply to the filegroups.
     """
     if hdrs == None:
-        hdrs = native.glob(["*.h", "*.hpp"])
+        hdrs = native.glob(["*.h", "*.hpp"], allow_empty = True)
     pkg_tar(
         name = name,
         srcs = hdrs,

@@ -5,6 +5,7 @@
  */
 #include "delpi/solver/DelpiLpSolver.h"
 
+#include <iostream>
 #include <ostream>
 #include <string>
 #include <unordered_map>

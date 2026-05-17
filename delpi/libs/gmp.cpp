@@ -7,6 +7,8 @@
 
 #include "delpi/libs/gmp.h"
 
+#include <vector>
+
 namespace {
 /**
  * Hash a gmp unsigned int.

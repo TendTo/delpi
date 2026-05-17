@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>  // IWYU pragma: keep for std::stringstream
+#include <string>
 
 #include "delpi/libs/gmp.h"
 #include "delpi/util/Config.h"

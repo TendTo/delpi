@@ -6,6 +6,7 @@
 #include "delpi/util/Config.h"
 
 #include <ostream>
+#include <string>
 #include <utility>
 
 #include "delpi/util/error.h"

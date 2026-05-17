@@ -32,7 +32,7 @@ Basis<T>::Basis(const Eigen::MatrixX<T>& A, std::vector<Index> basis_idxs)
 template <IsAnyOf<mpq_class, double> T>
 Basis<T>::Basis(const Eigen::MatrixX<T>& A, const std::shared_ptr<std::vector<Index>>& basis_idxs)
     : A_{A},
-      basis_vectors_{A(Eigen::all, *basis_idxs)},
+      basis_vectors_{A(Eigen::placeholders::all, *basis_idxs)},
       basis_idxs_{basis_idxs},
       last_basis_entering_{-1},
       last_basis_leaving_{-1},
@@ -70,7 +70,7 @@ Basis<T>& Basis<T>::FromBasis(const Basis<M>& basis, const std::vector<std::size
                "All indices must be valid");
   DELPI_ASSERT(std::unordered_set(basis_idxs_->begin(), basis_idxs_->end()).size() == basis_idxs_->size(),
                "All indices must be unique");
-  basis_vectors_ = A_(Eigen::all, *basis_idxs_);
+  basis_vectors_ = A_(Eigen::placeholders::all, *basis_idxs_);
   return *this;
 }
 template <IsAnyOf<mpq_class, double> T>
@@ -82,7 +82,7 @@ Basis<T>& Basis<T>::operator=(const Basis<T>& basis) {
       std::unordered_set(basis.basis_idxs().begin(), basis.basis_idxs().end()).size() == basis.basis_idxs().size(),
       "All indices must be unique");
   basis_idxs_ = basis.basis_idxs_;
-  basis_vectors_ = A_(Eigen::all, *basis_idxs_);
+  basis_vectors_ = A_(Eigen::placeholders::all, *basis_idxs_);
   return *this;
 }
 
@@ -105,14 +105,14 @@ void Basis<T>::Update(const Index leaving, const Index entering) {
   std::rotate(basis_idxs_->begin() + leaving, basis_idxs_->begin() + leaving + 1, basis_idxs_->end());
   // Set the last basis column to the entering column
   basis_idxs_->back() = entering;
-  basis_vectors_ = A_(Eigen::all, *basis_idxs_);
+  basis_vectors_ = A_(Eigen::placeholders::all, *basis_idxs_);
 }
 template <IsAnyOf<mpq_class, double> T>
 void Basis<T>::OffsetIndexes(const Index offset) {
   // Ensure that no other instance sharing the same basis indexes is affected
   if (basis_idxs_.use_count() > 1) basis_idxs_ = std::make_shared<std::vector<Index>>(*basis_idxs_);
   for (auto& idx : *basis_idxs_) idx += offset;
-  basis_vectors_ = A_(Eigen::all, *basis_idxs_);
+  basis_vectors_ = A_(Eigen::placeholders::all, *basis_idxs_);
 }
 
 template <IsAnyOf<mpq_class, double> T>

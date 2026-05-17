@@ -6,7 +6,9 @@
 
 #include "delpi/symbolic/VariableSet.h"
 
+#include <limits>
 #include <ostream>
+#include <vector>
 
 #include "delpi/util/error.h"
 

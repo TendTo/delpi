@@ -9,8 +9,11 @@
 #include <ostream>
 #include <set>
 #include <span>  // NOLINT(build/include_order): c++20 header
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "delpi/util/error.h"
 #include "delpi/util/logging.h"

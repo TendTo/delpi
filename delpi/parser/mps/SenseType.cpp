@@ -8,6 +8,7 @@
 #include <cctype>
 #include <cstddef>
 #include <ostream>
+#include <string>
 
 #include "delpi/util/error.h"
 

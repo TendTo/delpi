@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <ostream>
+#include <string>
 #include <utility>
 
 #define DELPI_STATS_FMT "{:<35} @ {:<26} = {:>15} sec"

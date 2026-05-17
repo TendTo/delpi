@@ -14,11 +14,16 @@
 #if DELPI_ENABLED_SOPLEX
 #include "delpi/solver/SoplexLpSolver.h"
 #endif
+
 #include <map>
+#include <memory>
 #include <ranges>  // NOLINT(build/include_order): c++20 header
 #include <set>
 #include <span>  // NOLINT(build/include_order): c++20 header
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "delpi/solver/DelpiLpSolver.h"
 #include "delpi/util/error.h"

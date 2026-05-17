@@ -8,7 +8,9 @@
 #include <atomic>
 #include <limits>
 #include <ostream>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "delpi/util/error.h"
 
