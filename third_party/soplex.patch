@@ -1,0 +1,70 @@
+--- BUILD.bazel
++++ BUILD.bazel
+@@ -6,32 +6,38 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+ cc_library(
+     name = "soplex",
+-    srcs = glob(
+-        ["src/soplex/*.cpp"],
+-        exclude = ["src/git_hash.cpp"],
+-    ),
+-    hdrs = glob(
+-        [
+-            "src/soplex/*.h",
+-            "src/soplex/*.hpp",
+-        ],
+-    ) + [
+-        "src/soplex.h",
+-        "src/soplex.hpp",
+-        "src/soplex/git_hash.cpp",
+-    ],
++    srcs = glob(["src/**/*.cpp"], exclude = ["src/example.cpp", "src/soplexmain.cpp", "src/git_hash.cpp"]),
++    hdrs = glob(["src/**/*.h", "src/**/*.hpp"]) + ["src/soplex/git_hash.cpp"],
+     copts = select({
+         "@platforms//os:windows": ["/utf-8"],
+         "//conditions:default": [],
+     }),
++    defines = [
++        "NDEBUG",
++        'CMAKE_BUILD_TYPE="Release"',
++        "SOPLEX_WITH_GMP",
++        "SOPLEX_EXTERNAL_FMT",
++        "SOPLEX_WITH_MPFR",
++        "SOPLEX_WITH_BOOST",
++        "SOPLEX_WITH_ZLIB",
++        "SOPLEX_NO_CONFIG_HEADER",
++        'SPX_GITHASH=\\"8.0.0.0\\"',
++        "SOPLEX_VERSION_MAJOR=7",
++        "SOPLEX_VERSION_MINOR=1",
++        "SOPLEX_VERSION_PATCH=4",
++        "SOPLEX_VERSION_SUB=0",
++    ],
+     includes = ["src"],
+     visibility = ["//visibility:public"],
+     deps = [
+         "@boost.multiprecision",
+         "@boost.serialization",
++        "@gmp//:gmpxx",
+         "@fmt",
+         "@zstr",
++        "@mpfr",
+     ],
++    include_prefix = "soplex",
+ )
+
+ cc_binary(
+
+--- MODULE.bazel
++++ MODULE.bazel
+@@ -33,3 +33,11 @@ bazel_dep(
+     name = "zstr",
+     version = "1.1.0",
+ )
++bazel_dep(
++    name = "mpfr",
++    version = "4.2.2"
++)
++bazel_dep(
++    name = "gmp",
++    version = "6.3.0.bcr.1"
++)

@@ -16,9 +16,7 @@
 
 #pragma GCC system_header
 
-#include <soplex/soplex.h>  // IWYU pragma: export
-
-extern template class soplex::SoPlexBase<soplex::Real>;
+#include <soplex.h>  // IWYU pragma: export
 
 #ifdef DELPI_INCLUDE_FMT
 

@@ -5,5 +5,3 @@
  */
 
 #include "delpi/libs/soplex.h"
-
-template class soplex::SoPlexBase<soplex::Real>;
