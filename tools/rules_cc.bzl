@@ -120,6 +120,30 @@ def _get_copts(rule_copts, cc_test = False):
         "//tools:msvc_cl_build": MSVC_CL_FLAGS + (MSVC_CL_TEST_FLAGS if cc_test else []) + rule_copts,
         "//tools:clang_cl_build": CLANG_CL_FLAGS + (CLANG_CL_TEST_FLAGS if cc_test else []) + rule_copts,
         "//conditions:default": CXX_FLAGS + rule_copts,
+    }) + select({
+        "//tools:gcc_omp_build": ["-fopenmp"],
+        "//tools:clang_omp_build": [],  # ["-fopenmp"],
+        "//tools:msvc_cl_omp_build": ["/openmp"],
+        "//tools:clang_cl_omp_build": [],  # ["-fopenmp"],
+        "//conditions:default": [],
+    })
+
+def _get_linkopts(rule_linkopts, cc_test = False):
+    """Alter the provided rule specific linkopts, adding the platform-specific ones.
+
+    When cc_test is True, the corresponding test flags will be added.
+    It should only be set on cc_test rules or rules that are boil down to cc_test rules.
+
+    Args:
+        rule_linkopts: The linkopts passed to the rule.
+        cc_test: Whether the rule is a cc_test rule.
+
+    Returns:
+        A list of linkopts.
+    """
+    return rule_linkopts + select({
+        "//tools:gcc_omp_build": ["-lgomp"],
+        "//conditions:default": [],
     })
 
 def _get_defines(rule_defines):
@@ -145,6 +169,9 @@ def _get_defines(rule_defines):
         "//conditions:default": [],
     }) + select({
         "//tools:thread_safe_build": ["DELPI_THREAD_SAFE"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:omp_build": ["DELPI_OMP_BUILD"],
         "//conditions:default": [],
     })
 
@@ -188,6 +215,7 @@ def delpi_cc_library(
         srcs = None,
         deps = None,
         copts = [],
+        linkopts = [],
         linkstatic = None,
         defines = [],
         implementation_deps = [],
@@ -201,6 +229,7 @@ def delpi_cc_library(
         deps: A list of dependencies. Will be inherited by dependents.
         implementation_deps: A list of dependencies that are only needed for this target.
         copts: A list of compiler options.
+        linkopts: A list of linker options.
         linkstatic: Whether to link statically.
         defines: A list of compiler defines used when compiling this target and its dependents.
         **kwargs: Additional arguments to pass to cc_library.
@@ -212,6 +241,7 @@ def delpi_cc_library(
         deps = deps,
         implementation_deps = implementation_deps,
         copts = _get_copts(copts),
+        linkopts = _get_linkopts(linkopts),
         linkstatic = _get_static(linkstatic),
         defines = _get_defines(defines),
         **kwargs
@@ -222,6 +252,7 @@ def delpi_cc_binary(
         srcs = None,
         deps = None,
         copts = [],
+        linkopts = [],
         linkstatic = None,
         defines = [],
         features = [],
@@ -233,6 +264,7 @@ def delpi_cc_binary(
         srcs: A list of source files to compile.
         deps: A list of dependencies.
         copts: A list of compiler options.
+        linkopts: A list of linker options.
         linkstatic: Whether to link statically.
         defines: A list of compiler defines used when compiling this target.
         features: A list of features to add to the binary.
@@ -243,6 +275,7 @@ def delpi_cc_binary(
         srcs = srcs,
         deps = deps,
         copts = _get_copts(copts),
+        linkopts = _get_linkopts(linkopts),
         linkstatic = _get_static(linkstatic),
         defines = _get_defines(defines),
         features = _get_features(features),
@@ -253,6 +286,7 @@ def delpi_cc_test(
         name,
         srcs = None,
         copts = [],
+        linkopts = [],
         tags = [],
         defines = [],
         **kwargs):
@@ -269,6 +303,7 @@ def delpi_cc_test(
         name: The name of the test.
         srcs: A list of source files to compile.
         copts: A list of compiler options.
+        linkopts: A list of linker options.
         tags: A list of tags to add to the test. Allows for test filtering.
         defines: A list of compiler defines used when compiling this target.
         **kwargs: Additional arguments to pass to cc_test.
@@ -279,6 +314,7 @@ def delpi_cc_test(
         name = name,
         srcs = srcs,
         copts = _get_copts(copts, cc_test = True),
+        linkopts = _get_linkopts(linkopts, cc_test = True),
         linkstatic = True,
         tags = tags + ["delpi", "".join([word.lower() for word in name.split("_")][1:])],
         defines = _get_defines(defines),
@@ -333,6 +369,101 @@ def delpi_cc_googletest(
         deps = deps,
         size = size,
         tags = tags + ["googletest"],
+        defines = _get_defines(defines),
+        **kwargs
+    )
+
+def delpi_cc_benchmark(
+        name,
+        srcs = None,
+        data = [],
+        deps = None,
+        copts = [],
+        linkopts = [],
+        tags = [],
+        defines = [],
+        **kwargs):
+    """Creates a rule to declare a C++ benchmark.
+
+    Note that for almost all cases, delpi_cc_googlebenchmark should be used instead of this rule.
+
+    If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .cpp.
+    For example, delpi_cc_benchmark(name = "bench_foo_bar") will look for BenchFooBar.cpp.
+    Furthermore, a tag will be added for the rule, based on the name, by converting the name to lowercase and removing the "bench_" prefix.
+
+    Args:
+        name: The name of the test.
+        srcs: A list of source files to compile.
+        data: A list of data files to include in the test. Can be used to provide input files.
+        deps: A list of dependencies.
+        copts: A list of compiler options.
+        linkopts: A list of linker options.
+        tags: A list of tags to add to the test. Allows for test filtering.
+        defines: A list of compiler defines used when compiling this target.
+        **kwargs: Additional arguments to pass to cc_test.
+    """
+    if srcs == None:
+        srcs = ["".join([word.capitalize() for word in name.split("_")]) + ".cpp"]
+    if deps == None:
+        deps = []
+    if data:
+        deps.append("@rules_cc//cc/runfiles")
+    cc_binary(
+        name = name,
+        srcs = srcs,
+        data = data,
+        deps = deps,
+        copts = _get_copts(copts, cc_test = True),
+        linkopts = _get_linkopts(linkopts, cc_test = True),
+        linkstatic = True,
+        tags = tags + ["delpi", "".join([word.lower() for word in name.split("_")][1:])],
+        defines = _get_defines(defines),
+        **kwargs
+    )
+
+def delpi_cc_googlebenchmark(
+        name,
+        srcs = None,
+        deps = None,
+        tags = [],
+        use_default_main = True,
+        defines = [],
+        **kwargs):
+    """Creates a rule to declare a C++ unit test using google benchmark.
+
+    Always adds a deps= entry to the google benchmark main (@google_benchmark//:benchmark_main).
+
+    By default, it uses use_default_main=True to use GTest's main, via @google_benchmark//:benchmark_main.
+    If use_default_main is False, it will depend on @google_benchmark//:benchmark instead.
+    If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .cpp.
+    For example, delpi_cc_googlebenchmark(name = "bench_foo_bar") will look for BenchFooBar.cpp.
+    Furthermore, a tag will be added for the test, based on the name, by converting the name to lowercase and removing the "bench_" prefix.
+
+    Args:
+        name: The name of the test.
+        srcs: A list of source files to compile.
+        deps: A list of dependencies.
+        tags: A list of tags to add to the test. Allows for test filtering.
+        use_default_main: Whether to use googletest's main.
+        defines: A list of compiler defines used when compiling this target.
+        **kwargs: Additional arguments to pass to delpi_cc_test.
+    """
+    if deps == None:
+        deps = []
+    if type(deps) == "select":
+        if use_default_main:
+            deps += select({"//conditions:default": ["@google_benchmark//:benchmark_main"]})
+        else:
+            deps += select({"//conditions:default": ["@google_benchmark//:benchmark"]})
+    elif use_default_main:
+        deps.append("@google_benchmark//:benchmark_main")
+    else:
+        deps.append("@google_benchmark//:benchmark")
+    delpi_cc_benchmark(
+        name = name,
+        srcs = srcs,
+        deps = deps,
+        tags = tags + ["google_benchmark"],
         defines = _get_defines(defines),
         **kwargs
     )

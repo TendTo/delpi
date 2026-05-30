@@ -2,6 +2,7 @@ load("//tools:cpplint.bzl", "cpplint")
 load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
 
 package(default_visibility = [
+    "//benchmarks:__subpackages__",
     "//delpi:__subpackages__",
     "//pydelpi:__subpackages__",
     "//tests:__subpackages__",

@@ -1,0 +1,14 @@
+"""Tests for the util submodule."""
+
+load("//tools:rules_cc.bzl", "delpi_cc_googlebenchmark")
+
+delpi_cc_googlebenchmark(
+    name = "bench_eigen_operations",
+    linkopts = ["-ltbb"],
+    deps = ["//delpi/libs:eigen"],
+)
+
+delpi_cc_googlebenchmark(
+    name = "bench_string_to_gmp",
+    deps = ["//delpi/libs:gmp"],
+)

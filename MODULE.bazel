@@ -42,6 +42,20 @@ bazel_dep(name = "eigen", version = "5.0.1.bcr.1")
 # MIT | c++ library for arbitrary precision arithmetic
 bazel_dep(name = "mpfr", version = "4.2.2")
 
+# Apache License 2.0 | Integration of Boost into Bazel
+bazel_dep(name = "boost.multiprecision", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.interprocess", version = "1.90.0.bcr.1")
+
+# GNU Lesser General Public License v3.0 | arbitrary precision arithmetic library
+bazel_dep(name = "gmp", version = "6.3.0.bcr.1")
+
+# Apache License 2.0 | exact linear programming solver
+bazel_dep(name = "soplex", version = "7.1.4.bcr.4")
+single_version_override(
+    module_name = "soplex",
+    patches = ["third_party/soplex.patch"],
+)
+
 # BSD | lexical analyser generator
 bazel_dep(name = "rules_flex", version = "0.4")
 
@@ -60,21 +74,11 @@ bazel_dep(name = "cpplint", version = "2.0.2", dev_dependency = True)
 # BSD-3-Clause license | C++ test suite by Google
 bazel_dep(name = "googletest", version = "1.17.0", dev_dependency = True)
 
+# BSD-3-Clause license | Benchmarking library by Google
+bazel_dep(name = "google_benchmark", version = "1.9.5", dev_dependency = True)
+
 # Apache License 2.0 | Doxygen documentation generator
 bazel_dep(name = "rules_doxygen", version = "2.6.3", dev_dependency = True)
-
-# Apache License 2.0 | Integration of Boost into Bazel
-bazel_dep(name = "boost.multiprecision", version = "1.90.0.bcr.1")
-
-# GNU Lesser General Public License v3.0 | arbitrary precision arithmetic library
-bazel_dep(name = "gmp", version = "6.3.0.bcr.1")
-
-# Apache License 2.0 | exact linear programming solver
-bazel_dep(name = "soplex", version = "7.1.4.bcr.4")
-single_version_override(
-    module_name = "soplex",
-    patches = ["third_party/soplex.patch"],
-)
 
 #################################################################################
 # External dependencies not available in the Bazel registry

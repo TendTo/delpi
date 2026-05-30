@@ -75,6 +75,10 @@ using VectorView = Eigen::Map<Eigen::VectorX<T>>;
 template <class T>
 using MatrixView = Eigen::Map<Eigen::MatrixX<T>>;
 using Index = Eigen::Index;
+using VectorD = Vector<double>;
+using VectorQ = Vector<mpq_class>;
+using MatrixD = Matrix<double>;
+using MatrixQ = Matrix<mpq_class>;
 
 }  // namespace delpi
 
