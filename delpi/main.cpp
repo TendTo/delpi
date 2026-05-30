@@ -80,6 +80,25 @@ bool OnPartialSolve(const delpi::LpSolver& lp_solver, const delpi::LpResult resu
   return true;
 }
 
+void OnInterrupt(const delpi::LpSolver& lp_solver, const delpi::LpResult result) {
+  if (lp_solver.config().silent()) return;
+
+  const delpi::Config& config = lp_solver.config();
+  const delpi::LpStats& stats = lp_solver.stats();
+
+  if (config.csv()) {
+    fmt::println(CSV_PARTIAL_FORMAT, config.filename(), config.lp_solver(), result, "", "", stats.precision,
+                 stats.solver_stats.iterations(), stats.refinements, "", "", stats.parser_stats.timer().seconds(),
+                 stats.solver_stats.timer().seconds(), global_timer.seconds());
+    return;
+  }
+  fmt::println("Interrupted: {}", result);
+  if (config.with_timings()) {
+    fmt::println("\tafter {} seconds\n{}\n{}", global_timer.seconds(), stats.parser_stats, stats.solver_stats);
+  }
+  std::cout << std::flush;
+}
+
 int main(const int argc, const char* argv[]) {
   // Initialize the command line parser.
   delpi::ArgParser parser{};
@@ -91,7 +110,7 @@ int main(const int argc, const char* argv[]) {
   delpi::TimerGuard timer_guard{&global_timer, config.with_timings()};
 
   // Setup the infinity values.
-  const auto lp_solver{delpi::LpSolver::GetInstance(config)};
+  const std::unique_ptr lp_solver{delpi::LpSolver::GetInstance(config)};
   lp_solver->m_solve_cb() = &OnSolve;
   lp_solver->m_partial_solve_cb() = &OnPartialSolve;
 
@@ -103,9 +122,15 @@ int main(const int argc, const char* argv[]) {
   // If csv output is enabled, print the header
   if (config.csv()) std::cout << CSV_HEADER << std::endl;
 
+  if (config.dry_run()) {
+    DELPI_INFO("Dry run enabled, skipping solving the LP problem");
+    OnInterrupt(*lp_solver, delpi::LpResult::UNSOLVED);
+    return EXIT_SUCCESS;
+  }
+
   // Run the solver
   mpq_class delta{config.delta()};
-  const delpi::LpResult result = lp_solver->Solve();
+  const delpi::LpResult result = config.dry_run() ? delpi::LpResult::UNSOLVED : lp_solver->Solve();
 
   if (config.silent()) return ExitCode(result);
 

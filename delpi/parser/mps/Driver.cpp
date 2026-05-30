@@ -269,11 +269,6 @@ void MpsDriver::End() {
                       row_data.ub.value_or(lp_solver_.infinity()));
   }
 
-  if (lp_solver_.config().dry_run()) {
-    DELPI_INFO("Dry run, not launching solver");
-    return;
-  }
-
   if (is_min_) {
     lp_solver_.Minimise(obj_);
   } else {
