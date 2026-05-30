@@ -100,7 +100,6 @@ class Config {
                   "\t\tIf a delta-optimal solution with actual_delta > delta is found, output it and continue")
   DELPI_PARAMETER(csv, bool, false, "Produce CSV output. Must also specify --with-timings to get the time stats")
   DELPI_PARAMETER(debug_parsing, bool, false, "Debug parsing")
-  DELPI_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
   DELPI_PARAMETER(delta, double, 0, "Delta used by the LP solver solver")
   DELPI_PARAMETER(format, Format, delpi::Config::Format::AUTO,
                   "Input file format\n"
@@ -116,6 +115,7 @@ class Config {
   DELPI_PARAMETER(skip_optimise, bool, false,
                   "Whether to skip the objective function, turning the optimisation in a feasibility problem. "
                   "Only affects the MPS format")
+  DELPI_PARAMETER(dry_run, bool, false, "Whether to stop the program before running any optimization algorithm")
   DELPI_PARAMETER(produce_models, bool, false,
                   "Produce models, showing a valid assignment.\n"
                   "\t\tOnly applicable if the problem is feasible")

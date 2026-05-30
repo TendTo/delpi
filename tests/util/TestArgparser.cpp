@@ -40,7 +40,6 @@ TEST_F(TestArgParser, DefaultValues) {
   //  EXPECT_EQ(parser_.get<uint>("jobs"), 1u);
   EXPECT_FALSE(parser_.get<bool>("continuous-output"));
   EXPECT_FALSE(parser_.get<bool>("debug-parsing"));
-  EXPECT_FALSE(parser_.get<bool>("debug-scanning"));
   EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::AUTO);
   EXPECT_FALSE(parser_.get<bool>("in"));
   EXPECT_EQ(parser_.get<Config::LpSolver>("lp-solver"), Config::LpSolver::SOPLEX);

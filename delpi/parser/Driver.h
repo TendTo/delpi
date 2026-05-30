@@ -41,7 +41,7 @@ class Driver {
    * @return true if successfully parsed
    * @return false if an error occurred
    */
-  bool ParseString(const std::string &input, const std::string &sname = "string stream");
+  bool ParseString(std::string_view input, const std::string &sname = "string stream");
 
   /**
    * Invoke the scanner and parser on a file.
@@ -84,9 +84,9 @@ class Driver {
   /** @getter{config, Driver} */
   [[nodiscard]] const Config &config() const { return lp_solver_.config(); }
   /** @getter{stream name, input being parsed} */
-  [[nodiscard]] const std::string &stream_name() const { return stream_name_; }
+  [[nodiscard]] const std::string &stream_name() const { return input_name_; }
   /** @getsetter{stream name, input being parsed} */
-  std::string &m_stream_name() { return stream_name_; }
+  std::string &m_stream_name() { return input_name_; }
   /** @getter{stats, driver} */
   [[nodiscard]] const Stats &stats() const { return stats_; }
 
@@ -98,8 +98,22 @@ class Driver {
    * @return false if an error occurred
    */
   virtual bool ParseStreamCore(std::istream &in) = 0;
+  /**
+   * Parse the input file.
+   * @param filename path to the file to parse
+   * @return true if successfully parsed
+   * @return false if an error occurred
+   */
+  virtual bool ParseFileCore(const std::string &filename) = 0;
+  /**
+   * Parse the string.
+   * @param input input string
+   * @return true if successfully parsed
+   * @return false if an error occurred
+   */
+  virtual bool ParseStringCore(std::string_view input) = 0;
 
-  std::string stream_name_;  ///< The name of the stream being parsed.
+  std::string input_name_;  ///< The name of the stream being parsed.
 
   LpSolver &lp_solver_;  ///< LP parser that will store the parsed data.
 

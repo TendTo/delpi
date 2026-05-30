@@ -81,7 +81,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "csv = " << config.csv() << ",\n"
             << "continuous_output = " << config.continuous_output() << ",\n"
             << "debug_parsing = " << config.debug_parsing() << ",\n"
-            << "debug_scanning = " << config.debug_scanning() << ",\n"
+            << "dry_run = " << config.dry_run() << ",\n"
             << "delta = " << config.delta() << ",\n"
             << "filename = '" << config.filename() << "',\n"
             << "format = '" << config.format() << "',\n"

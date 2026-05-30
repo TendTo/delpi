@@ -56,12 +56,6 @@ single_version_override(
     patches = ["third_party/soplex.patch"],
 )
 
-# BSD | lexical analyser generator
-bazel_dep(name = "rules_flex", version = "0.4")
-
-# https://www.gnu.org/software/bison/manual/html_node/Conditions.html | Bison parser generator
-bazel_dep(name = "rules_bison", version = "0.4")
-
 # https://github.com/pybind/pybind11_bazel/blob/master/LICENSE | pybind11 for binding C++ and Python
 bazel_dep(name = "pybind11_bazel", version = "3.0.1")
 
@@ -101,69 +95,44 @@ github_archive(
 # Load module extensions
 #################################################################################
 
-flex = use_extension("@rules_flex//flex/extensions:flex_repository_ext.bzl", "flex_repository_ext")
-flex.repository(
-    name = "flex",
-    extra_copts = ["-O3"],
-    version = "2.6.4",
-)
-use_repo(flex, "flex")
-
-register_toolchains("@flex//:toolchain")
-
-bison = use_extension("@rules_bison//bison/extensions:bison_repository_ext.bzl", "bison_repository_ext")
-bison.repository(
-    name = "bison",
-    extra_copts = ["-O3"],
-    version = "3.3.2",
-)
-use_repo(bison, "bison")
-
-register_toolchains("@bison//:toolchain")
+PYTHON_VERSIONS = [
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12",
+    "3.13",
+    "3.14",
+]
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-python.toolchain(
-    python_version = "3.9",
-)
-python.toolchain(
-    is_default = True,
-    python_version = "3.10",
-)
-python.toolchain(
-    python_version = "3.11",
-)
-python.toolchain(
-    python_version = "3.12",
-)
+
+[
+    python.toolchain(python_version = v)
+    for v in PYTHON_VERSIONS
+]
+
 use_repo(
     python,
+    "python_3_10",
     "python_3_11",
     "python_3_12",
+    "python_3_13",
+    "python_3_14",
     "python_3_9",
     "python_versions",
 )
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
-pip.parse(
-    hub_name = "pypi",
-    python_version = "3.9",
-    requirements_lock = "//tools:requirements.txt",
-)
-pip.parse(
-    hub_name = "pypi",
-    python_version = "3.10",
-    requirements_lock = "//tools:requirements.txt",
-)
-pip.parse(
-    hub_name = "pypi",
-    python_version = "3.11",
-    requirements_lock = "//tools:requirements.txt",
-)
-pip.parse(
-    hub_name = "pypi",
-    python_version = "3.12",
-    requirements_lock = "//tools:requirements.txt",
-)
+
+[
+    pip.parse(
+        hub_name = "pypi",
+        python_version = v,
+        requirements_lock = "//tools:requirements.txt",
+    )
+    for v in PYTHON_VERSIONS
+]
+
 use_repo(pip, "pypi")
 
 doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension")

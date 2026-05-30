@@ -21,7 +21,6 @@
 #include "delpi/parser/mps/Column.h"
 #include "delpi/parser/mps/Row.h"
 #include "delpi/parser/mps/SenseType.h"
-#include "delpi/parser/mps/scanner.h"
 #include "delpi/solver/LpSolver.h"
 
 namespace delpi::mps {
@@ -36,14 +35,6 @@ namespace delpi::mps {
 class MpsDriver final : public Driver {
  public:
   explicit MpsDriver(LpSolver &lp_solver);
-
-  bool ParseStreamCore(std::istream &in) override;
-
-  /**
-   * Error handling with associated line number. This can be modified to
-   * output the error e.g. to a dialog box.
-   */
-  static void error(const location &l, const std::string &m);
 
   /**
    * Set the objective sense of the problem after having encountered the `OBJSENSE` section.
@@ -67,7 +58,7 @@ class MpsDriver final : public Driver {
    * ```
    * @param row name of the objective row
    */
-  void ObjectiveName(const std::string &row);
+  void ObjectiveName(std::string_view row);
 
   /**
    * Add a row to the problem.
@@ -81,7 +72,7 @@ class MpsDriver final : public Driver {
    * @param sense relation between the row and the rhs
    * @param row identifier of the row
    */
-  void AddRow(SenseType sense, const std::string &row);
+  void AddRow(SenseType sense, std::string_view row);
 
   /**
    * Add a column to the problem.
@@ -98,7 +89,7 @@ class MpsDriver final : public Driver {
    * @param row identifier of the row
    * @param value coefficient of the column in the row
    */
-  void AddColumn(const std::string &column, const std::string &row, mpq_class value);
+  void AddColumn(std::string_view column, std::string_view row, mpq_class value);
 
   /**
    * Add the right hand side of the row.
@@ -117,7 +108,7 @@ class MpsDriver final : public Driver {
    * @param row identifier of the row
    * @param value rhs value
    */
-  void AddRhs(const std::string &rhs, const std::string &row, mpq_class value);
+  void AddRhs(std::string_view rhs, std::string_view row, mpq_class value);
 
   /**
    * Add a new row constraint based on the range.
@@ -143,7 +134,7 @@ class MpsDriver final : public Driver {
    * @param row identifier of the row
    * @param value range value
    */
-  void AddRange(const std::string &rhs, const std::string &row, mpq_class value);
+  void AddRange(std::string_view rhs, std::string_view row, mpq_class value);
 
   /**
    * Add a bound to a variable (column).
@@ -160,7 +151,7 @@ class MpsDriver final : public Driver {
    * @param column identifier of the variable (column)
    * @param value bound value
    */
-  void AddBound(BoundType bound_type, const std::string &bound, const std::string &column, mpq_class value);
+  void AddBound(BoundType bound_type, std::string_view bound, std::string_view column, mpq_class value);
 
   /**
    * Add a binary bound to a variable (column).
@@ -177,7 +168,7 @@ class MpsDriver final : public Driver {
    * @param bound identifier of the bound. Used if strict_mps_ is true.
    * @param column identifier of the variable (column)
    */
-  void AddBound(BoundType bound_type, const std::string &bound, const std::string &column);
+  void AddBound(BoundType bound_type, std::string_view bound, std::string_view column);
 
   /**
    * Called when the parser has reached the `MARKER` section.
@@ -193,7 +184,7 @@ class MpsDriver final : public Driver {
    * @param name name of the marker
    * @param keyword keyword of the marker. Usually 'INTORG' or 'INTEND'
    */
-  void SetMarker(const std::string &name, const std::string &keyword);
+  void SetMarker(std::string_view name, std::string_view keyword);
 
   /**
    * Called when the parser has reached the `ENDATA` section.
@@ -202,7 +193,7 @@ class MpsDriver final : public Driver {
   void End();
 
   /** @getter{problem_name, MpsDriver} */
-  [[nodiscard]] const std::string &problem_name() const { return problem_name_; }
+  [[nodiscard]] std::string_view problem_name() const { return problem_name_; }
   /** @getsetter{problem_name, MpsDriver} */
   std::string &m_problem_name() { return problem_name_; }
   /** @checker{enabled, strict mps} */
@@ -217,18 +208,20 @@ class MpsDriver final : public Driver {
   /** @checker{enabled, minimization} */
   [[nodiscard]] bool is_min() const { return is_min_; }
   /** @getter{objective row name, MpsDriver} */
-  [[nodiscard]] const std::string &obj_row() const { return obj_row_; }
-  /** @getter{scanner, MpsDriver} */
-  [[nodiscard]] MpsScanner *scanner() { return scanner_; }
+  [[nodiscard]] std::string_view obj_row() const { return obj_row_; }
 
  private:
+  bool ParseStreamCore(std::istream &in) override;
+  bool ParseFileCore(const std::string &filename) override;
+  bool ParseStringCore(std::string_view input) override;
+
   /**
    * If @ref strict_mps_ is true, keeps track of the name of the first `rhs` found.
    * All the other rhs must have the same name, otherwise they are skipped.
    * @param rhs identifier of the rhs
    * @return whether the rhs should be considered
    */
-  inline bool VerifyStrictRhs(const std::string &rhs);
+  inline bool VerifyStrictRhs(std::string_view rhs);
 
   /**
    * If @ref strict_mps_ is true, keeps track of the name of the first `bound` found.
@@ -236,12 +229,11 @@ class MpsDriver final : public Driver {
    * @param bound identifier of the bound
    * @return whether the bound should be considered
    */
-  inline bool VerifyStrictBound(const std::string &bound);
+  inline bool VerifyStrictBound(std::string_view bound);
 
-  std::string problem_name_;      ///< The name of the problem. Used to name the context.
-  bool is_min_{true};             ///< True if the problem is a minimization problem.
-  std::string obj_row_;           ///< The name of the objective row.
-  MpsScanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
+  std::string problem_name_;     ///< The name of the problem. Used to name the context.
+  bool is_min_{true};            ///< True if the problem is a minimization problem.
+  std::string obj_row_;          ///< The name of the objective row.
   bool strict_mps_{false};       ///< If true, the parser will check that all rhs, ranges and bounds have the same name.
   bool integer_columns_{false};  ///< True if we are in the middle of the integer columns section.
 
@@ -251,9 +243,9 @@ class MpsDriver final : public Driver {
    * The result is then combined with the rhs value and the correct row sense to build the Formula that makes up the
    * assertion.
    */
-  std::map<std::string, Row> rows_;                  ///< The rows of the problem.
-  std::map<std::string, Column> columns_;            ///< The columns of the problem. Contains the variables.
-  std::vector<std::pair<Variable, mpq_class>> obj_;  ///< The objective function.
+  std::map<std::string, Row, std::less<>> rows_;        ///< The rows of the problem.
+  std::map<std::string, Column, std::less<>> columns_;  ///< The columns of the problem. Contains the variables.
+  std::vector<std::pair<Variable, mpq_class>> obj_;     ///< The objective function.
 
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.

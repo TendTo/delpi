@@ -97,7 +97,7 @@ void ArgParser::AddOptions() {
   DELPI_PARSE_PARAM_BOOL(parser_, csv, "--csv");
   DELPI_PARSE_PARAM_BOOL(parser_, continuous_output, "--continuous-output");
   DELPI_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
-  DELPI_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
+  DELPI_PARSE_PARAM_BOOL(parser_, dry_run, "--dry-run");
   DELPI_PARSE_PARAM_BOOL(parser_, skip_optimise, "--skip-optimise");
   DELPI_PARSE_PARAM_BOOL(parser_, produce_models, "-m", "--produce-models");
   DELPI_PARSE_PARAM_BOOL(parser_, silent, "-s", "--silent");
@@ -152,7 +152,7 @@ Config ArgParser::ToConfig() const {
   DELPI_PARAM_TO_CONFIG("csv", csv, bool);
   DELPI_PARAM_TO_CONFIG("continuous-output", continuous_output, bool);
   DELPI_PARAM_TO_CONFIG("debug-parsing", debug_parsing, bool);
-  DELPI_PARAM_TO_CONFIG("debug-scanning", debug_scanning, bool);
+  DELPI_PARAM_TO_CONFIG("dry-run", dry_run, bool);
   DELPI_PARAM_TO_CONFIG("delta", delta, double);
   config.m_filename().SetFromCommandLine(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
   DELPI_PARAM_TO_CONFIG("format", format, Config::Format);

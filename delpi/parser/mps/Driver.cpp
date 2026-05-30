@@ -11,6 +11,7 @@
 #include <string>
 #include <utility>
 
+#include "delpi/parser/mps/Scanner.h"
 #include "delpi/util/error.h"
 #include "delpi/util/logging.h"
 
@@ -19,18 +20,23 @@ namespace delpi::mps {
 MpsDriver::MpsDriver(LpSolver &lp_solver) : Driver{lp_solver, "MpsDriver"} {}
 
 bool MpsDriver::ParseStreamCore(std::istream &in) {
-  MpsScanner scanner(&in);
-  scanner.set_debug(lp_solver_.config().debug_scanning());
-  scanner_ = &scanner;
-
-  MpsParser parser(*this);
-  parser.set_debug_level(lp_solver_.config().debug_parsing());
-  const bool res = parser.parse() == 0;
-  scanner_ = nullptr;
-  return res;
+  // istream to string
+  NewMpsScanner scanner(*this);
+  const std::string input{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+  return scanner.ParseString(input);
 }
 
-bool MpsDriver::VerifyStrictBound(const std::string &bound) {
+bool MpsDriver::ParseFileCore(const std::string &filename) {
+  NewMpsScanner scanner(*this);
+  return scanner.ParseFile(filename);
+}
+
+bool MpsDriver::ParseStringCore(std::string_view input) {
+  NewMpsScanner scanner(*this);
+  return scanner.ParseString(input);
+}
+
+bool MpsDriver::VerifyStrictBound(std::string_view bound) {
   if (strict_mps_) {
     if (bound_name_.empty()) {
       bound_name_ = bound;
@@ -42,7 +48,7 @@ bool MpsDriver::VerifyStrictBound(const std::string &bound) {
   return true;
 }
 
-bool MpsDriver::VerifyStrictRhs(const std::string &rhs) {
+bool MpsDriver::VerifyStrictRhs(std::string_view rhs) {
   if (strict_mps_) {
     if (rhs_name_.empty()) {
       rhs_name_ = rhs;
@@ -54,19 +60,17 @@ bool MpsDriver::VerifyStrictRhs(const std::string &rhs) {
   return true;
 }
 
-void MpsDriver::error(const location &l, const std::string &m) { std::cerr << l << " : " << m << std::endl; }
-
 void MpsDriver::ObjectiveSense(bool is_min) {
   DELPI_TRACE_FMT("Driver::ObjectiveSense {}", is_min);
   is_min_ = is_min;
 }
 
-void MpsDriver::ObjectiveName(const std::string &row) {
+void MpsDriver::ObjectiveName(std::string_view row) {
   DELPI_TRACE_FMT("Driver::ObjectiveName {}", row);
   obj_row_ = row;
 }
 
-void MpsDriver::AddRow(const SenseType sense, const std::string &row) {
+void MpsDriver::AddRow(const SenseType sense, std::string_view row) {
   DELPI_TRACE_FMT("Driver::AddRow {} {}", sense, row);
   if (sense == SenseType::N && obj_row_.empty()) {
     DELPI_DEBUG("Objective row name not found. Adding the first row with sense N as objective row");
@@ -76,14 +80,14 @@ void MpsDriver::AddRow(const SenseType sense, const std::string &row) {
   rows_.emplace(row, Row{sense});
 }
 
-void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq_class value) {
+void MpsDriver::AddColumn(std::string_view column, std::string_view row, mpq_class value) {
   DELPI_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
   auto it = columns_.find(column);
   if (columns_.end() == it) {
     DELPI_TRACE_FMT("Added column {}", column);
     // Integer columns are added with an implicit lower bound of 0 and upper bound of 1.
     // Non integer columns are added with an implicit lower bound of 0 and no upper bound.
-    auto [insert_it, val] = columns_.emplace(column, Column{Variable{column}, integer_columns_});
+    auto [insert_it, val] = columns_.emplace(column, Column{Variable{std::string{column}}, integer_columns_});
     it = insert_it;
   }
   if (row == obj_row_) {
@@ -91,15 +95,15 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
     DELPI_TRACE_FMT("Updated obj function {}", row);
     return;
   }
-  rows_.at(row).addends.emplace_back(it->second.var, std::move(value));
+  rows_.find(row)->second.addends.emplace_back(it->second.var, std::move(value));
   DELPI_TRACE_FMT("Updated row {}", row);
 }
 
-void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class value) {
+void MpsDriver::AddRhs(std::string_view rhs, std::string_view row, mpq_class value) {
   DELPI_TRACE_FMT("Driver::AddRhs {} {} {}", rhs, row, value);
   if (!VerifyStrictRhs(rhs)) return;
   try {
-    switch (Row &row_data = rows_.at(row); row_data.sense) {
+    switch (Row &row_data = rows_.find(row)->second; row_data.sense) {
       case SenseType::L:
         row_data.ub = std::move(value);
         break;
@@ -121,11 +125,11 @@ void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class
   DELPI_TRACE_FMT("Updated rhs {}", row);
 }
 
-void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_class value) {
+void MpsDriver::AddRange(std::string_view rhs, std::string_view row, mpq_class value) {
   DELPI_TRACE_FMT("Driver::AddRange {} {} {}", rhs, row, value);
   if (!VerifyStrictRhs(rhs)) return;
   try {
-    switch (Row &row_data = rows_.at(row); row_data.sense) {
+    switch (Row &row_data = rows_.find(row)->second; row_data.sense) {
       case SenseType::L:
         mpq_abs(value.get_mpq_t(), value.get_mpq_t());
         row_data.lb = row_data.ub.value_or(0) - value;
@@ -156,16 +160,16 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
   }
 }
 
-void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, const std::string &column,
-                         mpq_class value) {
+void MpsDriver::AddBound(const BoundType bound_type, std::string_view bound, std::string_view column, mpq_class value) {
   DELPI_TRACE_FMT("Driver::AddBound {} {} {} {}", bound_type, bound, column, value);
   if (!VerifyStrictBound(bound)) return;
   try {
-    switch (Column &column_data = columns_.at(column); bound_type) {
+    switch (Column &column_data = columns_.find(column)->second; bound_type) {
       case BoundType::UI:
         column_data.is_integer = true;
         [[fallthrough]];
       case BoundType::UP:
+      case BoundType::SC:
         column_data.ub = std::move(value);
         break;
       case BoundType::LI:
@@ -188,11 +192,11 @@ void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, c
   DELPI_TRACE_FMT("Updated bound {}", column);
 }
 
-void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, const std::string &column) {
+void MpsDriver::AddBound(const BoundType bound_type, std::string_view bound, std::string_view column) {
   DELPI_TRACE_FMT("Driver::AddBound {} {} {}", bound_type, bound, column);
   if (!VerifyStrictBound(bound)) return;
   try {
-    switch (Column &column_data = columns_.at(column); bound_type) {
+    switch (Column &column_data = columns_.find(column)->second; bound_type) {
       case BoundType::BV:
         column_data.lb = 0;
         column_data.ub = 1;
@@ -213,14 +217,14 @@ void MpsDriver::AddBound(const BoundType bound_type, const std::string &bound, c
 
   DELPI_TRACE_FMT("Updated bound {}", column);
 }
-void MpsDriver::SetMarker([[maybe_unused]] const std::string &name, const std::string &keyword) {
+void MpsDriver::SetMarker([[maybe_unused]] std::string_view name, std::string_view keyword) {
   DELPI_TRACE_FMT("Driver::SetMarker({} {})", name, keyword);
-  if (keyword == "INTORG") {
+  if (keyword == "INTORG" || keyword == "'INTORG'") {
     DELPI_DEBUG("Integers start");
     integer_columns_ = true;
     return;
   }
-  if (keyword == "INTEND") {
+  if (keyword == "INTEND" || keyword == "'INTEND'") {
     DELPI_DEBUG("Integers end");
     integer_columns_ = false;
     return;
@@ -263,6 +267,11 @@ void MpsDriver::End() {
     }
     lp_solver_.AddRow(row_data.addends, row_data.lb.value_or(lp_solver_.ninfinity()),
                       row_data.ub.value_or(lp_solver_.infinity()));
+  }
+
+  if (lp_solver_.config().dry_run()) {
+    DELPI_INFO("Dry run, not launching solver");
+    return;
   }
 
   if (is_min_) {

@@ -21,19 +21,19 @@ Driver::Driver(LpSolver& lp_solver, const std::string& class_name)
 
 bool Driver::ParseStream(std::istream& in, const std::string& sname) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
-  stream_name_ = sname;
+  input_name_ = sname;
   return ParseStreamCore(in);
 }
 
-bool Driver::ParseString(const std::string& input, const std::string& sname) {
-  std::istringstream iss(input);
-  return ParseStream(iss, sname);
+bool Driver::ParseString(std::string_view input, const std::string& sname) {
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  input_name_ = sname;
+  return ParseStringCore(input);
 }
 
 bool Driver::ParseFile(const std::string& filename) {
-  std::ifstream in(filename.c_str());
-  if (!in.good()) return false;
-  return ParseStream(in, filename);
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  return ParseFileCore(filename);
 }
 
 void Driver::Error(const std::string& m) { std::cerr << m << std::endl; }

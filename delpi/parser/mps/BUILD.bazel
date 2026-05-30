@@ -1,5 +1,4 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:lexyacc.bzl", "gen_lex", "gen_yacc")
 load("//tools:rules_cc.bzl", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
 
 package(default_visibility = [
@@ -16,23 +15,6 @@ delpi_hdrs_tar(
 )
 
 cpplint()
-
-gen_lex(
-    name = "scanner",
-    src = "scanner.ll",
-    hdr = "scanner.h",
-    source_out = "scanner.ll.cpp",
-    visibility = ["//visibility:private"],
-)
-
-gen_yacc(
-    name = "parser",
-    src = "parser.yy",
-    extra_outs = ["location.hh"],
-    header_out = "parser.yy.hpp",
-    source_out = "parser.yy.cpp",
-    visibility = ["//visibility:private"],
-)
 
 delpi_cc_library(
     name = "mps_types",
@@ -71,8 +53,8 @@ delpi_cc_library(
     name = "mps",
     srcs = [
         "Driver.cpp",
-        ":parser",
-        ":scanner",
+        "Scanner.cpp",
+        "Scanner.h",
     ],
     hdrs = ["Driver.h"],
     implementation_deps = [
@@ -88,7 +70,7 @@ delpi_cc_library(
         "//delpi/libs:gmp",
         "//delpi/parser:driver",
         "//delpi/solver:lp_solver",
-        "@rules_flex//flex:current_flex_toolchain",
+        "@boost.interprocess",
     ] + select({
         "//tools:python_build": ["//pydelpi:interrupt"],
         "//conditions:default": [],
