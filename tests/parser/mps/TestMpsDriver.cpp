@@ -118,6 +118,37 @@ TEST_P(TestMpsDriver, SimpleBoundsPositive) {
                                                            3 * x3 == 33));
 }
 
+TEST_P(TestMpsDriver, NamesBoundAndRhs) {
+  MpsDriver driver{*lp_solver_};
+  ASSERT_TRUE(
+      driver.ParseString("ROWS\n"
+                         " L  R1\n"
+                         " G  R2\n"
+                         " E  R3\n"
+                         " E  R4\n"  // ignored row
+                         " N  Ob\n"  // only used for objective
+                         "COLUMNS\n"
+                         " X1 R1 1.\n"
+                         " X2 R2 2.\n"
+                         " X3 R3 3.\n"
+                         "BOUNDS\n"
+                         " FR BND X1\n"
+                         " FR BND X2\n"
+                         " FR BND X3\n"
+                         "RHS\n"
+                         " rhs1 R1 11\n"
+                         " rhs2 R2 22 R3 33\n"
+                         "ENDATA"));
+  ASSERT_EQ(lp_solver_->variables().size(), 3u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 <= 11,      //
+                                                           2 * x2 >= 22,  //
+                                                           3 * x3 == 33));
+}
+
 TEST_P(TestMpsDriver, SimpleBoundsNegative) {
   MpsDriver driver{*lp_solver_};
   ASSERT_TRUE(
@@ -298,6 +329,7 @@ TEST_P(TestMpsDriver, BoundsPositive) {
                          " X3 R1 1 \n"
                          " X4 R1 1 \n"
                          " X5 R1 1 \n"
+                         " X6 R1 1 \n"
                          "BOUNDS\n"
                          " LO BND X1 61\n"
                          " UP BND X2 62\n"
@@ -305,20 +337,24 @@ TEST_P(TestMpsDriver, BoundsPositive) {
                          " FR BND X4 64\n"
                          " MI BND X5 65\n"
                          " PL BND X5 66\n"
+                         " SC BND X6 67\n"
                          "ENDATA"));
-  ASSERT_EQ(lp_solver_->variables().size(), 5u);
+  ASSERT_EQ(lp_solver_->variables().size(), 6u);
   const Variable& x1 = lp_solver_->variables().at(0);
   const Variable& x2 = lp_solver_->variables().at(1);
   const Variable& x3 = lp_solver_->variables().at(2);
   const Variable& x4 = lp_solver_->variables().at(3);
   const Variable& x5 = lp_solver_->variables().at(4);
+  const Variable& x6 = lp_solver_->variables().at(5);
   const std::vector<Formula> constraints = lp_solver_->constraints();
   EXPECT_THAT(constraints,
               ::testing::UnorderedElementsAre(x1 >= 61,  //
                                               x2 >= 0,   //
                                               x2 <= 62,  //
                                               x3 == 63,  //
-                                              x1 + x2 + x3 + x4 + x5 == 0));
+                                              x6 >= 0,   //
+                                              x6 <= 67,  //
+                                              x1 + x2 + x3 + x4 + x5 + x6 == 0));
 }
 
 TEST_P(TestMpsDriver, BoundsNegative) {
@@ -333,6 +369,7 @@ TEST_P(TestMpsDriver, BoundsNegative) {
                          " X3 R1 1 \n"
                          " X4 R1 1 \n"
                          " X5 R1 1 \n"
+                         " X6 R1 1 \n"
                          "BOUNDS\n"
                          " LO BND X1 -61\n"
                          " UP BND X2 -62\n"
@@ -340,19 +377,50 @@ TEST_P(TestMpsDriver, BoundsNegative) {
                          " FR BND X4 -64\n"
                          " MI BND X5 -65\n"
                          " PL BND X5 -66\n"
+                         " SC BND X6 -67\n"
                          "ENDATA"));
-  ASSERT_EQ(lp_solver_->variables().size(), 5u);
+  ASSERT_EQ(lp_solver_->variables().size(), 6u);
   const Variable& x1 = lp_solver_->variables().at(0);
   const Variable& x2 = lp_solver_->variables().at(1);
   const Variable& x3 = lp_solver_->variables().at(2);
   const Variable& x4 = lp_solver_->variables().at(3);
   const Variable& x5 = lp_solver_->variables().at(4);
+  const Variable& x6 = lp_solver_->variables().at(5);
   const std::vector<Formula> constraints = lp_solver_->constraints();
   EXPECT_THAT(constraints,
               ::testing::UnorderedElementsAre(x1 >= -61,  //
                                               x2 <= -62,  //
                                               x3 == -63,  //
-                                              x1 + x2 + x3 + x4 + x5 == 0));
+                                              x6 <= -67,  //
+                                              x1 + x2 + x3 + x4 + x5 + x6 == 0));
+}
+
+TEST_P(TestMpsDriver, BoundsExplicitMissingName) {
+  MpsDriver driver{*lp_solver_};
+  ASSERT_TRUE(
+      driver.ParseString("ROWS\n"
+                         " E  R1\n"
+                         " N  Ob\n"
+                         "COLUMNS\n"
+                         " X1 R1 1 \n"
+                         " X2 R1 1 \n"
+                         " X3 R1 1 \n"
+                         "BOUNDS\n"
+                         " LO X1 61\n"
+                         " UP X2 62\n"
+                         " FX X3 63\n"
+                         "ENDATA"));
+  ASSERT_EQ(lp_solver_->variables().size(), 3u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints,
+              ::testing::UnorderedElementsAre(x1 >= 61,  //
+                                              x2 >= 0,   //
+                                              x2 <= 62,  //
+                                              x3 == 63,  //
+                                              x1 + x2 + x3 == 0));
 }
 
 TEST_P(TestMpsDriver, BoundsImplicit) {
@@ -371,6 +439,36 @@ TEST_P(TestMpsDriver, BoundsImplicit) {
                          " FR BND X4\n"
                          " MI BND X5\n"
                          " PL BND X5\n"
+                         "ENDATA"));
+  ASSERT_EQ(lp_solver_->variables().size(), 5u);
+  const Variable& x1 = lp_solver_->variables().at(0);
+  const Variable& x2 = lp_solver_->variables().at(1);
+  const Variable& x3 = lp_solver_->variables().at(2);
+  const Variable& x4 = lp_solver_->variables().at(3);
+  const Variable& x5 = lp_solver_->variables().at(4);
+  const std::vector<Formula> constraints = lp_solver_->constraints();
+  EXPECT_THAT(constraints, ::testing::UnorderedElementsAre(x1 >= 0,  //
+                                                           x2 >= 0,  //
+                                                           x3 >= 0,  //
+                                                           x1 + x2 + x3 + x4 + x5 == 0));
+}
+
+TEST_P(TestMpsDriver, BoundsImplicitMissignName) {
+  MpsDriver driver{*lp_solver_};
+  ASSERT_TRUE(
+      driver.ParseString("ROWS\n"
+                         " E  R1\n"
+                         " N  Ob\n"
+                         "COLUMNS\n"
+                         " X1 R1 1 \n"
+                         " X2 R1 1 \n"
+                         " X3 R1 1 \n"
+                         " X4 R1 1 \n"
+                         " X5 R1 1 \n"
+                         "BOUNDS\n"
+                         " FR X4\n"
+                         " MI X5\n"
+                         " PL X5\n"
                          "ENDATA"));
   ASSERT_EQ(lp_solver_->variables().size(), 5u);
   const Variable& x1 = lp_solver_->variables().at(0);

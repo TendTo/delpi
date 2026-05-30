@@ -33,6 +33,7 @@ enum class BoundType {
   MI,  // Minus infinity (lower bound is -infinity)
   PL,  // Plus infinity (upper bound is +infinity)
   BV,  // Binary variable (either 0 or 1)
+  SC,  // Semi-continuous variable (an upper bound must be specified)
 };
 
 /**
@@ -55,6 +56,7 @@ enum class BoundType {
  * @return corresponding bound type
  */
 BoundType ParseBoundType(const std::string &bound_type);
+BoundType ParseBoundType(std::string_view bound_type);
 /**
  * Parse a bound type from a C-string.
  * The string must be one of the following:

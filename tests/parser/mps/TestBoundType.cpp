@@ -20,6 +20,7 @@ TEST(TestBoundType, ParseBoundType) {
   EXPECT_EQ(ParseBoundType("MI"), BoundType::MI);
   EXPECT_EQ(ParseBoundType("PL"), BoundType::PL);
   EXPECT_EQ(ParseBoundType("BV"), BoundType::BV);
+  EXPECT_EQ(ParseBoundType("SC"), BoundType::SC);
 }
 
 TEST(TestBoundType, ParseBoundTypeCaseInsensitive) {

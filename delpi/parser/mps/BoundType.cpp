@@ -15,10 +15,10 @@
 namespace delpi::mps {
 
 BoundType ParseBoundType(const std::string& bound_type) { return ParseBoundType(bound_type.c_str()); }
+BoundType ParseBoundType(const std::string_view bound_type) { return ParseBoundType(bound_type.data()); }
 
 BoundType ParseBoundType(const char bound_type[]) {
   while (*bound_type == ' ') ++bound_type;
-  DELPI_ASSERT(strlen(bound_type) == 2, "Bound type must be exactly 2 characters long");
   if (bound_type[2] != '\0' && bound_type[2] != ' ') DELPI_RUNTIME_ERROR_FMT("Invalid bound type: '{}'", bound_type);
   if ((bound_type[0] == 'l' || bound_type[0] == 'L') && (bound_type[1] == 'o' || bound_type[1] == 'O')) {
     return BoundType::LO;
@@ -47,6 +47,9 @@ BoundType ParseBoundType(const char bound_type[]) {
   if ((bound_type[0] == 'b' || bound_type[0] == 'B') && (bound_type[1] == 'v' || bound_type[1] == 'V')) {
     return BoundType::BV;
   }
+  if ((bound_type[0] == 's' || bound_type[0] == 'S') && (bound_type[1] == 'c' || bound_type[1] == 'C')) {
+    return BoundType::SC;
+  }
   DELPI_RUNTIME_ERROR_FMT("Invalid bound type: '{}'", bound_type);
 }
 
@@ -70,6 +73,8 @@ std::ostream& operator<<(std::ostream& os, const BoundType& bound) {
       return os << "PL";
     case BoundType::BV:
       return os << "BV";
+    case BoundType::SC:
+      return os << "SC";
     default:
       DELPI_UNREACHABLE();
   }
