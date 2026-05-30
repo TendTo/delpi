@@ -139,6 +139,7 @@ inline bool IsDigitOrSign(const char c) { return std::isdigit(c) || c == '+' || 
  * The number is converted exactly, without any rounding,
  * by interpreting the string as a base-10 rational number.
  * @code
+ * StringToMpq("") == 0
  * StringToMpq("0") == 0
  * StringToMpq(".") == 0
  * StringToMpq("0.") == 0
@@ -159,25 +160,34 @@ inline bool IsDigitOrSign(const char c) { return std::isdigit(c) || c == '+' || 
  * StringToMpq("-inf") == -1e100
  * @endcode
  * @note Only a single leading + or - sign is allowed.
+ * @note If [this](https://github.com/gbeauchesne/gmp/blob/24dad799862b9858485f498bb9e082260045e56c/mpq/set_str.c#L36)
+ * if ever fixed, make the implementation more efficient avoiding copies altogether.
  * @warning If the string is not a valid rational number, the result is undefined.
- * @param str string to convert
+ * @param input string to convert
  * @return equivalent mpq_class instance
  */
-inline mpq_class StringToMpq(std::string_view str) {
+inline mpq_class StringToMpq(std::string_view input) {
+  if (input.empty()) return mpq_class{0};
   // Remove leading + and - sign
-  const bool is_negative = str[0] == '-';
-  if (is_negative || str[0] == '+') str.remove_prefix(1);
-  if (str == "inf") return {1e100};
-  if (str == "-inf") return {-1e100};
+  const bool is_negative = input[0] == '-';
+  if (is_negative || input[0] == '+') input.remove_prefix(1);
+  if (input == "inf") return {is_negative ? -1e100 : 1e100};
+
+  constexpr std::size_t max_size = 1 << 10;
+  char str_buffer[max_size + 1];
+
+  const std::size_t buffer_size = std::min(input.size(), max_size);
+  std::memcpy(str_buffer, input.data(), buffer_size);
+  str_buffer[buffer_size] = '\0';
+  std::string_view str{str_buffer, buffer_size};
 
   // case 1: string is given in integer format
   const size_t symbol_pos = str.find_first_of("/.Ee");
   if (symbol_pos == std::string::npos) {
-    const size_t start_pos = str.find_first_not_of('0', str[0] == '+' ? 1 : 0);
+    const size_t start_pos = str.find_first_not_of('0');
     if (start_pos == std::string_view::npos) return {0};
-    //    DELPI_ASSERT_FMT(std::all_of(str.cbegin() + start_pos, str.cend(), IsDigitOrSign), "Invalid number: {}",
-    //    str);
-    return is_negative ? -mpq_class{str.data() + start_pos} : mpq_class{str.data() + start_pos};
+    str.remove_prefix(start_pos);
+    return is_negative ? -mpq_class{str.data()} : mpq_class{str.data()};
   }
 
   // case 2: string is given in nom/denom format
@@ -208,15 +218,8 @@ inline mpq_class StringToMpq(std::string_view str) {
 
   // case 3b: string does not contain a . , only an exponent E
   if (str[symbol_pos] == 'e' || str[symbol_pos] == 'E') {
-    int plus_pos = str[0] == '+' ? 1 : 0;
-    //    DELPI_ASSERT_FMT(std::all_of(str.cbegin() + plus_pos, str.cend(), IsDigitOrSign), "Invalid number: {}",
-    //    str);
-
-    char *const str_number = new char[len - plus_pos + 1];
-    memcpy(str_number, str.data() + plus_pos, len - plus_pos);
-    str_number[len - plus_pos] = '\0';
-    const mpq_class res{str_number, 10};
-    delete[] str_number;
+    str_buffer[len] = '\0';
+    const mpq_class res{str.data(), 10};
     return is_exp_positive ? mpq_class{res * mult} : mpq_class{res / mult};
   }
 
@@ -240,11 +243,7 @@ inline mpq_class StringToMpq(std::string_view str) {
   }
 
   const size_t n_decimals = len - dot_pos - 1;
-  //  DELPI_ASSERT_FMT(std::all_of(str.begin() + start_pos, str.begin() + dot_pos, IsDigitOrSign),
-  //                     "Invalid number: {}", str);
-  //  DELPI_ASSERT_FMT(std::all_of(str.begin() + dot_pos + 1, str.cend(), IsDigitOrSign), "Invalid number: {}",
-  //  str);
-  char *const str_number = new char[digits + n_decimals + 3];
+  char str_number[max_size * 2 + 4];
 
   if (digits > n_decimals) {
     memcpy(str_number, str.data() + start_pos, digits - n_decimals);
@@ -259,7 +258,6 @@ inline mpq_class StringToMpq(std::string_view str) {
   str_number[digits + 2 + n_decimals] = '\0';
 
   mpq_class res{str_number, 10};
-  delete[] str_number;
   res.canonicalize();
   return is_exp_positive ? mpq_class{res * mult} : res / mult;
 }
