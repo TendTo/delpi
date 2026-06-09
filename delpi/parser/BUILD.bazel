@@ -18,6 +18,20 @@ delpi_hdrs_tar(
 cpplint()
 
 delpi_cc_library(
+    name = "sources",
+    srcs = [
+        "BufferLineSource.cpp",
+        "MappedFileSource.cpp",
+    ],
+    hdrs = [
+        "BufferLineSource.h",
+        "MappedFileSource.h",
+    ],
+    implementation_deps = ["//delpi/util:error"],
+    deps = ["@boost.interprocess"],
+)
+
+delpi_cc_library(
     name = "driver",
     srcs = ["Driver.cpp"],
     hdrs = ["Driver.h"],

@@ -8,22 +8,23 @@
 
 #include "delpi/parser/mps/Driver.h"
 
-namespace delpi::mps {
+namespace delpi {
 
 // Forward declaration
 class BufferLineSource;
 
+namespace mps {
 /**
- * NewMpsScanner takes care of parsing the MPS file line by line,
+ * MpsScanner takes care of parsing the MPS file line by line,
  * keeping an internal state and invoking the correct method of the MpsDriver.
  */
-class NewMpsScanner {
+class MpsScanner {
  public:
   /**
    * Create a new scanner object.
    * @param driver driver that receives parsing events
    */
-  explicit NewMpsScanner(MpsDriver& driver);
+  explicit MpsScanner(MpsDriver& driver);
 
   /**
    * Parse an MPS file from disk.
@@ -105,4 +106,6 @@ class NewMpsScanner {
   std::size_t line_no_;  ///< Current line number, used for error reporting
 };
 
-}  // namespace delpi::mps
+}  // namespace mps
+
+}  // namespace delpi

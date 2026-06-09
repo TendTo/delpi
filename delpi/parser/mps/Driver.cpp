@@ -21,18 +21,18 @@ MpsDriver::MpsDriver(LpSolver &lp_solver) : Driver{lp_solver, "MpsDriver"} {}
 
 bool MpsDriver::ParseStreamCore(std::istream &in) {
   // istream to string
-  NewMpsScanner scanner(*this);
+  MpsScanner scanner(*this);
   const std::string input{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
   return scanner.ParseString(input);
 }
 
 bool MpsDriver::ParseFileCore(const std::string &filename) {
-  NewMpsScanner scanner(*this);
+  MpsScanner scanner(*this);
   return scanner.ParseFile(filename);
 }
 
 bool MpsDriver::ParseStringCore(std::string_view input) {
-  NewMpsScanner scanner(*this);
+  MpsScanner scanner(*this);
   return scanner.ParseString(input);
 }
 

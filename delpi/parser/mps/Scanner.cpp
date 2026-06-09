@@ -6,23 +6,18 @@
 #include "delpi/parser/mps/Scanner.h"
 
 #include <algorithm>  // std::equal
-#include <boost/interprocess/file_mapping.hpp>
-#include <boost/interprocess/mapped_region.hpp>
-#include <cctype>  // std::tolower
+#include <cctype>     // std::tolower
 #include <utility>
 
+#include "delpi/parser/BufferLineSource.h"
+#include "delpi/parser/MappedFileSource.h"
 #include "delpi/parser/mps/BoundType.h"
 #include "delpi/parser/mps/SenseType.h"
 #include "delpi/util/error.h"
 #include "delpi/util/logging.h"
+#include "delpi/util/strings.hpp"
 
 namespace delpi::mps {
-
-inline bool ichar_equals(const char a, const char b) {
-  return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
-}
-
-inline bool ieq(std::string_view a, std::string_view b) { return std::ranges::equal(a, b, ichar_equals); }
 
 enum class Section {
   NONE,
@@ -35,54 +30,6 @@ enum class Section {
   OBJSENSE,
   OBJNAME,
   ENDATA,
-};
-
-class BufferLineSource {
- public:
-  explicit BufferLineSource(const std::string_view data, std::string name = "buffer")
-      : cur_(data.data()), end_(data.data() + data.size()), name_{std::move(name)} {}
-  BufferLineSource(const char *data, const std::size_t length, std::string name = "buffer")
-      : cur_(data), end_(data + length), name_{std::move(name)} {}
-
-  bool nextLine(std::string_view &out) {
-    if (cur_ >= end_) return false;
-    const char *start = cur_;
-    while (cur_ < end_ && *cur_ != '\n') ++cur_;
-    std::size_t len = static_cast<std::size_t>(cur_ - start);
-    // Strip \r
-    if (len > 0 && start[len - 1] == '\r') --len;
-    if (cur_ < end_) ++cur_;  // skip '\n'
-    out = {start, len};
-    return true;
-  }
-
-  [[nodiscard]] const std::string &name() const { return name_; }
-
- protected:
-  void initialize(const char *data, const std::size_t length) {
-    cur_ = data;
-    end_ = data + length;
-  }
-
- private:
-  const char *cur_;
-  const char *end_;
-  const std::string name_;
-};
-
-class MappedFileSource : public BufferLineSource {
- public:
-  explicit MappedFileSource(const char *const filename)
-      : BufferLineSource(nullptr, 0, filename),
-        file_mapping_{filename, boost::interprocess::read_only},
-        region_{file_mapping_, boost::interprocess::read_only} {
-    region_.advise(boost::interprocess::mapped_region::advice_sequential);
-    initialize(static_cast<const char *>(region_.get_address()), region_.get_size());
-  }
-
- private:
-  const boost::interprocess::file_mapping file_mapping_;
-  boost::interprocess::mapped_region region_;
 };
 
 Section identifySection(const std::string_view word) noexcept {
@@ -98,28 +45,9 @@ Section identifySection(const std::string_view word) noexcept {
   return Section::NONE;
 }
 
-inline std::string_view nextToken(std::string_view &line) noexcept {
-  // Skip leading whitespace
-  std::size_t i = 0;
-  while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
-  if (i == line.size()) {
-    line = {};
-    return {};
-  }
-  line.remove_prefix(i);
+MpsScanner::MpsScanner(MpsDriver &driver) : driver_{driver}, line_no_{0} {}
 
-  // Find end of token
-  std::size_t j = 0;
-  while (j < line.size() && line[j] != ' ' && line[j] != '\t') ++j;
-
-  const std::string_view tok = line.substr(0, j);
-  line.remove_prefix(j);
-  return tok;
-}
-
-NewMpsScanner::NewMpsScanner(MpsDriver &driver) : driver_{driver}, line_no_{0} {}
-
-bool NewMpsScanner::ParseFile(const std::string &filename) {
+bool MpsScanner::ParseFile(const std::string &filename) {
   try {
     MappedFileSource src(filename.c_str());
     ParseLines(src);
@@ -130,13 +58,13 @@ bool NewMpsScanner::ParseFile(const std::string &filename) {
   return true;
 }
 
-bool NewMpsScanner::ParseString(const std::string_view input) {
+bool MpsScanner::ParseString(const std::string_view input) {
   BufferLineSource src{input};
   ParseLines(src);
   return true;
 }
 
-bool NewMpsScanner::ParseLines(BufferLineSource &src) {
+bool MpsScanner::ParseLines(BufferLineSource &src) {
   line_no_ = 0;
   Section current = Section::NONE;
   std::string_view line;
@@ -218,7 +146,7 @@ bool NewMpsScanner::ParseLines(BufferLineSource &src) {
   return false;
 }
 
-inline void NewMpsScanner::HandleComment(std::string_view line) {
+inline void MpsScanner::HandleComment(std::string_view line) {
   // Comments are ignored, but we could parse them for @set-option and @set-info directives in the future.
   const std::string_view word = nextToken(line);
   const std::string key = std::string{nextToken(line)};
@@ -230,7 +158,7 @@ inline void NewMpsScanner::HandleComment(std::string_view line) {
   }
 }
 
-inline void NewMpsScanner::HandleName(std::string_view line) {
+inline void MpsScanner::HandleName(std::string_view line) {
   // rest is everything after "NAME" on the indicator line.
   const std::size_t start = line.find_first_not_of(" \t");
   if (start == std::string_view::npos) return;
@@ -238,7 +166,7 @@ inline void NewMpsScanner::HandleName(std::string_view line) {
   driver_.m_problem_name() = line.substr(start, last_pos + 1);
 }
 
-inline void NewMpsScanner::HandleObjSense(std::string_view line) {
+inline void MpsScanner::HandleObjSense(std::string_view line) {
   const std::string_view tok = nextToken(line);
   if (tok.empty()) return;
 
@@ -251,12 +179,12 @@ inline void NewMpsScanner::HandleObjSense(std::string_view line) {
     DELPI_WARN_FMT("Line {}: Unknown OBJSENSE value '{}'. Expected MIN or MAX. Ignoring", line_no_, tok);
 }
 
-inline void NewMpsScanner::HandleObjName(std::string_view line) {
+inline void MpsScanner::HandleObjName(std::string_view line) {
   std::string_view tok = nextToken(line);
   if (!tok.empty()) driver_.ObjectiveName(tok);
 }
 
-inline void NewMpsScanner::HandleRows(std::string_view line) {
+inline void MpsScanner::HandleRows(std::string_view line) {
   // Format: <sense> <name>
   const std::string_view senseStr = nextToken(line);
   if (senseStr.empty()) return;
@@ -268,7 +196,7 @@ inline void NewMpsScanner::HandleRows(std::string_view line) {
   driver_.AddRow(sense, name);
 }
 
-inline void NewMpsScanner::HandleColumns(std::string_view line) {
+inline void MpsScanner::HandleColumns(std::string_view line) {
   // Check for integer marker: MARKER  'INTORG' / 'INTEND'
   // Format used by many solvers:
   //   <colName>  'MARKER'  'INTORG'
@@ -307,7 +235,7 @@ inline void NewMpsScanner::HandleColumns(std::string_view line) {
   driver_.AddColumn(f2, rowName2, gmp::StringToMpq(valStr2));
 }
 
-inline void NewMpsScanner::HandleRhs(std::string_view line) {
+inline void MpsScanner::HandleRhs(std::string_view line) {
   // Format: [<rhsName>] <rowName> <value>  [<rowName> <value>]
 
   const std::string_view f1 = nextToken(line);
@@ -341,7 +269,7 @@ inline void NewMpsScanner::HandleRhs(std::string_view line) {
   driver_.AddRhs(f1, f4, gmp::StringToMpq(f5));
 }
 
-inline void NewMpsScanner::HandleRanges(std::string_view line) {
+inline void MpsScanner::HandleRanges(std::string_view line) {
   // Format: <rangeName> <rowName> <value>  [<rowName> <value>]
   const std::string_view rangeName = nextToken(line);
   if (rangeName.empty()) return;
@@ -359,7 +287,7 @@ inline void NewMpsScanner::HandleRanges(std::string_view line) {
   driver_.AddRange(rangeName, rowName2, gmp::StringToMpq(valStr2));
 }
 
-inline void NewMpsScanner::HandleBounds(std::string_view line) {
+inline void MpsScanner::HandleBounds(std::string_view line) {
   // Format: <type> [<bndName>] <colName> [<value>]
   std::string_view typeStr = nextToken(line);
   if (typeStr.empty()) return;

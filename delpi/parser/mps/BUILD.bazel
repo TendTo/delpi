@@ -58,19 +58,16 @@ delpi_cc_library(
     ],
     hdrs = ["Driver.h"],
     implementation_deps = [
+        "//delpi/parser:sources",
         "//delpi/util:error",
         "//delpi/util:logging",
-    ],
-    tags = [
-        "no-dwyu",
-        "no-iwyu",
+        "//delpi/util:strings",
     ],
     deps = [
         ":mps_data",
         "//delpi/libs:gmp",
         "//delpi/parser:driver",
         "//delpi/solver:lp_solver",
-        "@boost.interprocess",
     ] + select({
         "//tools:python_build": ["//pydelpi:interrupt"],
         "//conditions:default": [],
