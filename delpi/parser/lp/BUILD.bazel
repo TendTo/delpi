@@ -11,27 +11,30 @@ delpi_srcs(name = "srcs")
 
 delpi_hdrs_tar(
     name = "hdrs_tar",
-    subfolder = "mps",
+    subfolder = "lp",
 )
 
 cpplint()
 
 delpi_cc_library(
-    name = "mps_types",
+    name = "lp_types",
     srcs = [
-        "BoundType.cpp",
+        "OptType.cpp",
         "SenseType.cpp",
     ],
     hdrs = [
-        "BoundType.h",
+        "OptType.h",
         "SenseType.h",
     ],
-    implementation_deps = ["//delpi/util:error"],
+    implementation_deps = [
+        "//delpi/util:error",
+        "//delpi/util:strings",
+    ],
     deps = ["//delpi/util:logging"],
 )
 
 delpi_cc_library(
-    name = "mps_data",
+    name = "lp_data",
     srcs = [
         "Column.cpp",
         "Row.cpp",
@@ -42,7 +45,7 @@ delpi_cc_library(
     ],
     implementation_deps = ["//delpi/util:error"],
     deps = [
-        ":mps_types",
+        ":lp_types",
         "//delpi/libs:gmp",
         "//delpi/symbolic:variable",
         "//delpi/util:logging",
@@ -50,7 +53,7 @@ delpi_cc_library(
 )
 
 delpi_cc_library(
-    name = "mps",
+    name = "lp",
     srcs = [
         "Driver.cpp",
         "Scanner.cpp",
@@ -65,7 +68,7 @@ delpi_cc_library(
         "//delpi/util:strings",
     ],
     deps = [
-        ":mps_data",
+        ":lp_data",
         "//delpi/libs:gmp",
         "//delpi/parser:driver",
         "//delpi/solver:lp_solver",

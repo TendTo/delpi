@@ -27,6 +27,8 @@ Variable::Variable(const Id id) : id_{id} {
   DELPI_ASSERT(id < names_.size(), "The id is out of bounds. Make sure the variable had been created before.");
 }
 
+Variable::Variable(std::string_view name) : Variable{std::string{name}} {}
+
 Variable::Variable(std::string name) : id_{GetNextId()} {
   DELPI_ASSERT(id_ < std::numeric_limits<Id>::max(), "The ID of the variable has reached the maximum value.");
   names_.push_back(std::move(name));

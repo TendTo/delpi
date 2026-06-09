@@ -32,6 +32,16 @@ delpi_cc_library(
 )
 
 delpi_cc_library(
+    name = "scanner",
+    srcs = ["LineScanner.cpp"],
+    hdrs = ["LineScanner.h"],
+    implementation_deps = [
+        ":sources",
+        "//delpi/util:logging",
+    ],
+)
+
+delpi_cc_library(
     name = "driver",
     srcs = ["Driver.cpp"],
     hdrs = ["Driver.h"],
@@ -51,6 +61,7 @@ delpi_cc_library(
     srcs = ["parser.cpp"],
     hdrs = ["parser.h"],
     implementation_deps = [
+        "//delpi/parser/lp",
         "//delpi/parser/mps",
         "//delpi/util:error",
     ],

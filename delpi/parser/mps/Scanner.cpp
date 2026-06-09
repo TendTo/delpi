@@ -45,24 +45,7 @@ Section identifySection(const std::string_view word) noexcept {
   return Section::NONE;
 }
 
-MpsScanner::MpsScanner(MpsDriver &driver) : driver_{driver}, line_no_{0} {}
-
-bool MpsScanner::ParseFile(const std::string &filename) {
-  try {
-    MappedFileSource src(filename.c_str());
-    ParseLines(src);
-  } catch (const boost::interprocess::interprocess_exception &e) {
-    DELPI_ERROR_FMT("Error reading file '{}': {}", filename, e.what());
-    return false;
-  }
-  return true;
-}
-
-bool MpsScanner::ParseString(const std::string_view input) {
-  BufferLineSource src{input};
-  ParseLines(src);
-  return true;
-}
+MpsScanner::MpsScanner(MpsDriver &driver) : driver_{driver} {}
 
 bool MpsScanner::ParseLines(BufferLineSource &src) {
   line_no_ = 0;
@@ -85,9 +68,9 @@ bool MpsScanner::ParseLines(BufferLineSource &src) {
       continue;
     }
 
-    // ── Section indicator: first character is NOT a space/tab ──
+    // Section indicator: first character is NOT a whitespace
     // (Indicator records begin in column 1; data records begin in col 2+)
-    if (line[0] != ' ' && line[0] != '\t') {
+    if (!std::isspace(line[0])) {
       std::string_view word = line;
       // Grab just the first word (section name may be followed by data, e.g.
       // "NAME  myProblem")
@@ -95,7 +78,7 @@ bool MpsScanner::ParseLines(BufferLineSource &src) {
       const Section s = identifySection(tok);
       switch (s) {
         case Section::NONE:
-          DELPI_WARN_FMT("Ignoring unknowns section or record {}:{}, col 1: '{}'", src.name(), line_no_, tok);
+          DELPI_WARN_FMT("Ignoring unknowns section or record {}:{}, col 1: '{}'", filename_, line_no_, tok);
           break;
         case Section::ENDATA:
           driver_.End();
@@ -176,7 +159,7 @@ inline void MpsScanner::HandleObjSense(std::string_view line) {
   else if (ieq(tok, "MAX") || ieq(tok, "MAXIMIZE") || ieq(tok, "MAXIMISE"))
     driver_.ObjectiveSense(false);
   else
-    DELPI_WARN_FMT("Line {}: Unknown OBJSENSE value '{}'. Expected MIN or MAX. Ignoring", line_no_, tok);
+    DELPI_WARN_FMT("{}:{}, Unknown OBJSENSE value '{}'. Expected MIN or MAX. Ignoring", filename_, line_no_, tok);
 }
 
 inline void MpsScanner::HandleObjName(std::string_view line) {
@@ -189,7 +172,7 @@ inline void MpsScanner::HandleRows(std::string_view line) {
   const std::string_view senseStr = nextToken(line);
   if (senseStr.empty()) return;
   std::string_view name = nextToken(line);
-  if (name.empty()) DELPI_ERROR_FMT("Line {}: ROWS record missing row name: '{}'", line_no_, line);
+  if (name.empty()) DELPI_ERROR_FMT("{}:{}, ROWS record missing row name: '{}'", filename_, line_no_, line);
 
   // Dollar-sign comment in field 3+ (not really applicable here, but be safe)
   const SenseType sense = ParseSense(senseStr.size() == 1 ? senseStr[0] : '\0');
@@ -220,7 +203,7 @@ inline void MpsScanner::HandleColumns(std::string_view line) {
   // f2 = col name, f3 = row name, next = value, [optional: row2, value2]
   std::string_view rowName1 = f3;
   std::string_view valStr1 = nextToken(line);
-  if (valStr1.empty()) DELPI_ERROR_FMT("Line {}: COLUMNS record missing coefficient value", line_no_);
+  if (valStr1.empty()) DELPI_ERROR_FMT("{}:{}, COLUMNS record missing coefficient value", filename_, line_no_);
   if (valStr1[0] == '$') return;  // comment
   driver_.AddColumn(f2, rowName1, gmp::StringToMpq(valStr1));
 
@@ -229,7 +212,7 @@ inline void MpsScanner::HandleColumns(std::string_view line) {
   if (rowName2.empty() || rowName2[0] == '$') return;
   std::string_view valStr2 = nextToken(line);
   if (valStr2.empty() || valStr2[0] == '$') {
-    DELPI_WARN_FMT("Line {}: COLUMNS record has field 5 (row name) but no field 6 (value)", line_no_);
+    DELPI_WARN_FMT("{}:{}, COLUMNS record has field 5 (row name) but no field 6 (value)", filename_, line_no_);
     return;
   }
   driver_.AddColumn(f2, rowName2, gmp::StringToMpq(valStr2));
@@ -294,7 +277,7 @@ inline void MpsScanner::HandleBounds(std::string_view line) {
 
   std::string_view bndName = nextToken(line);
   if (bndName.empty()) {
-    DELPI_ERROR_FMT("Line {}: BOUNDS record incomplete", line_no_);
+    DELPI_ERROR_FMT("{}:{} BOUNDS record incomplete", filename_, line_no_);;
     return;
   }
 

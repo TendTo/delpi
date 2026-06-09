@@ -1,0 +1,10 @@
+load("//tools:rules_cc.bzl", "delpi_cc_googletest")
+
+delpi_cc_googletest(
+    name = "test_lp_driver",
+    tags = ["lp"],
+    deps = [
+        "//delpi/parser/lp",
+        "//tests:test_utils",
+    ],
+)

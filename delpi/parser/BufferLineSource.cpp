@@ -9,10 +9,8 @@
 #include "delpi/util/error.h"
 
 namespace delpi {
-
-BufferLineSource::BufferLineSource(const char *data, const std::size_t length, std::string name)
-    : cur_(data), end_(data + length), name_{std::move(name)} {
-  DELPI_ASSERT(data != nullptr, "Data pointer cannot be null");
+BufferLineSource::BufferLineSource(const char *data, const std::size_t length) : cur_{data}, end_{data + length} {
+  DELPI_ASSERT(data != nullptr || length == 0, "Data pointer cannot be null with a positive length");
 }
 
 bool BufferLineSource::nextLine(std::string_view &out) {

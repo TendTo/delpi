@@ -45,6 +45,7 @@ class Config {
   enum class Format {
     AUTO,  ///< Automatically detect the input format based on the file extension. Default option
     MPS,   ///< MPS format
+    LP,    ///< LP format
   };
   /** LP mode used by the LP solver. */
   enum class LpMode {

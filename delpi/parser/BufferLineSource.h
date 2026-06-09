@@ -24,9 +24,8 @@ namespace delpi {
  */
 class BufferLineSource {
  public:
-  explicit BufferLineSource(const std::string_view data, std::string name = "buffer")
-      : cur_(data.data()), end_(data.data() + data.size()), name_{std::move(name)} {}
-  BufferLineSource(const char *data, const std::size_t length, std::string name = "buffer");
+  explicit BufferLineSource(const std::string_view data) : cur_(data.data()), end_(data.data() + data.size()) {}
+  BufferLineSource(const char *data, std::size_t length);
 
   /**
    * Retrieve the next line from the buffer.
@@ -38,9 +37,6 @@ class BufferLineSource {
    */
   bool nextLine(std::string_view &out);
 
-  /** @getter{name, BufferLineSource} */
-  [[nodiscard]] const std::string &name() const { return name_; }
-
  protected:
   /**
    * Force a reinitialization of the object, setting @ref cur_ and @ref end_ to the new values.
@@ -50,9 +46,8 @@ class BufferLineSource {
   void initialize(const char *data, std::size_t length);
 
  private:
-  const char *cur_;         ///< Pointer to the current position in the buffer
-  const char *end_;         ///< Pointer to the end of the buffer
-  const std::string name_;  ///< Name of the source, used for error reporting or debugging
+  const char *cur_;  ///< Pointer to the current position in the buffer
+  const char *end_;  ///< Pointer to the end of the buffer
 };
 
 }  // namespace delpi

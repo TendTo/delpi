@@ -9,7 +9,7 @@
 namespace delpi {
 
 MappedFileSource::MappedFileSource(const char* const filename)
-    : BufferLineSource(nullptr, 0, filename),
+    : BufferLineSource{nullptr, 0},
       file_mapping_{filename, boost::interprocess::read_only},
       region_{file_mapping_, boost::interprocess::read_only} {
   region_.advise(boost::interprocess::mapped_region::advice_sequential);

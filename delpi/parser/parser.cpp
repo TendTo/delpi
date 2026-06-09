@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 
+#include "delpi/parser/lp/Driver.h"
 #include "delpi/parser/mps/Driver.h"
 #include "delpi/util/error.h"
 
@@ -34,6 +35,8 @@ std::unique_ptr<Driver> GetDriverInstance(LpSolver& lp_solver) {
   switch (lp_solver.config().actual_format()) {
     case Config::Format::MPS:
       return std::make_unique<mps::MpsDriver>(lp_solver);
+    case Config::Format::LP:
+      return std::make_unique<lp::LpDriver>(lp_solver);
     default:
       DELPI_UNREACHABLE();
   }

@@ -33,6 +33,9 @@ Config::Format Config::actual_format() const {
       if (filename_extension() == "mps") {
         return Format::MPS;
       }
+      if (filename_extension() == "lp") {
+        return Format::LP;
+      }
       DELPI_RUNTIME_ERROR("Cannot determine format from stdin or unknown file extension");
     default:
       return format_.get();
@@ -56,6 +59,8 @@ std::ostream &operator<<(std::ostream &os, const Config::Format &format) {
       return os << "auto";
     case Config::Format::MPS:
       return os << "mps";
+    case Config::Format::LP:
+      return os << "lp";
     default:
       DELPI_UNREACHABLE();
   }
