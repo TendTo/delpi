@@ -151,16 +151,16 @@ Expression operator+(const Variable& lhs, const Expression& rhs) {
   return temp += lhs;
 }
 Expression operator-(const Variable& lhs, const Expression& rhs) {
-  Expression temp(rhs);
-  return temp -= lhs;
+  Expression temp{lhs};
+  return temp -= rhs;
 }
 Expression operator+(const Expression::Addend& lhs, const Expression& rhs) {
   Expression temp(rhs);
   return temp += lhs;
 }
 Expression operator-(const Expression::Addend& lhs, const Expression& rhs) {
-  Expression temp(rhs);
-  return temp -= lhs;
+  Expression temp{lhs};
+  return temp -= rhs;
 }
 
 std::ostream& operator<<(std::ostream& os, const Expression& e) { return e.Print(os); }
