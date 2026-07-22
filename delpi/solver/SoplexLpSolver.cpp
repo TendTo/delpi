@@ -230,6 +230,10 @@ void SoplexLpSolver::UpdateFeasible(const soplex::Rational& max_violation) {
   obj_lb_ = gmp::ToMpqClass((spx_.objValueRational() - max_violation).backend().data());
   obj_ub_ = gmp::ToMpqClass((spx_.objValueRational() + max_violation).backend().data());
 }
+void SoplexLpSolver::EnsureSenseCore() {
+  spx_.setIntParam(soplex::SoPlex::OBJSENSE,
+                   is_min_ ? soplex::SoPlex::OBJSENSE_MINIMIZE : soplex::SoPlex::OBJSENSE_MAXIMIZE);
+}
 
 #if 0
 void SoplexLpSolver::UpdateInfeasible() {

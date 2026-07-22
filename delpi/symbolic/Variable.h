@@ -40,13 +40,6 @@ class Variable {
    */
   explicit Variable(std::string name);
   /**
-   * Construct a new real variable object, assigning it a `name`.
-   *
-   * It will be given a unique incremental ID.
-   * @param name name of the variable
-   */
-  explicit Variable(std::string_view name);
-  /**
    * Construct a new real variable object, but instead of creating a new one, it will use the given `id`,
    * effectively "connecting" the object to an existing variable.
    * @pre `id` must have benn assigned to a variable before by the @ref GetNextId method.

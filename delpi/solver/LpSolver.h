@@ -160,6 +160,8 @@ class LpSolver {
   [[nodiscard]] const mpq_class& obj_lb() const { return obj_lb_; }
   /** @getter{upper bound of the exact objective function, feasible lp problem} */
   [[nodiscard]] const mpq_class& obj_ub() const { return obj_ub_; }
+  /** @checker{a minimization problem, LP} */
+  [[nodiscard]] bool is_min() const { return is_min_; }
 
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
   [[nodiscard]] const std::unordered_map<Variable, int>& var_to_col() const { return var_to_col_; }
@@ -471,6 +473,9 @@ class LpSolver {
   template <TypedIterable<std::pair<const Variable, mpq_class>> T>
   void Minimise(const T& objective_function);
 
+  /** Set all coefficients in the objective function to zero.*/
+  void ResetObjective();
+
   /**
    * Check whether the result obtained by the solver is compatible with the one collected from the file.
    * @param result result obtained by the solver
@@ -491,6 +496,15 @@ class LpSolver {
 #endif
 
  protected:
+  /**
+   * Make sure the LP solvers are aware of the sense of the LP problem (minimisation or maximisation)
+   * @param is_min new sense
+   */
+  void EnsureSense(bool is_min);
+
+  /** Make sure the LP solvers are aware of the sense of the LP problem (minimisation or maximisation) */
+  virtual void EnsureSenseCore() = 0;
+
   /**
    * Internal method that optimises the LP problem with the given `delta`.
    * @return OPTIMAL if an optimal solution has been found and the return value of `delta` is @f$ = 0 @f$
@@ -534,6 +548,7 @@ class LpSolver {
   SolveCallback solve_cb_;                 ///< Callback to call after solving the LP problem
   PartialSolveCallback partial_solve_cb_;  ///< Callback to call after solving the LP problem with a partial solution
 
+  bool is_min_;          ///< Whether this is a minimization or maximization LP problem
   mpq_class ninfinity_;  ///< Negative infinity threshold value
   mpq_class infinity_;   ///< Infinity threshold value
 };

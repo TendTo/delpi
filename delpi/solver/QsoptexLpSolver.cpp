@@ -167,7 +167,7 @@ void QsoptexLpSolver::SetBound(const Variable var, const mpq_class& lb, const mp
   DELPI_ASSERT(!status2, "Invalid status");
 }
 
-void QsoptexLpSolver::SetObjective(int column, const mpq_class& value) {
+void QsoptexLpSolver::SetObjective(const int column, const mpq_class& value) {
   DELPI_ASSERT_FMT(column < num_columns(), "Column index out of bounds: {} >= {}", column, num_columns());
   [[maybe_unused]] const int status = mpq_QSchange_objcoef(qsx_, column, mpq_class{value}.get_mpq_t());
   DELPI_ASSERT(!status, "Invalid status");
@@ -228,6 +228,9 @@ void QsoptexLpSolver::UpdateFeasible() {
 
   for (int i = 0; i < colcount; i++) solution_.emplace_back(x_[i]);
   for (int i = 0; i < rowcount; i++) dual_solution_.emplace_back(ray_[i]);
+}
+void QsoptexLpSolver::EnsureSenseCore() {
+  mpq_QSchange_objsense(qsx_, is_min_ ? QS_MIN : QS_MAX);
 }
 
 void QsoptexLpSolver::UpdateStats(unsigned int precision) {

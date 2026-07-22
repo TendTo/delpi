@@ -179,6 +179,11 @@ class DelpiLpSolver final : public LpSolver {
    * and the sign of the index is the same as the sign of the coefficient.
    */
   void ComputeSlackAndAuxVariables();
+
+ protected:
+  void EnsureSenseCore() override;
+
+ private:
 #if 0
   /**
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.

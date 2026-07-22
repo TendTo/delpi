@@ -75,6 +75,11 @@ class SoplexLpSolver final : public LpSolver {
    * @param max_violation maximum distance of the solution from the optimal value
    */
   void UpdateFeasible(const soplex::Rational& max_violation);
+
+ protected:
+  void EnsureSenseCore() override;
+
+ private:
 #if 0
   /**
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.

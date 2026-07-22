@@ -484,6 +484,8 @@ internal::Basis<mpq_class> DelpiLpSolver::AuxForm(const Matrix<mpq_class>& slack
   return {aux_A, std::move(aux_basis_idx)};
 }
 
+void DelpiLpSolver::EnsureSenseCore() {}
+
 std::ostream& operator<<(std::ostream& os, const DelpiLpSolver& solver) {
   return os << "DelpiLpSolver{ num_columns: " << solver.num_columns() << ", num_rows: " << solver.num_rows() << "\n"
             << solver.problem() << "}\n";

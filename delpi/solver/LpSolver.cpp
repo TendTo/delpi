@@ -46,6 +46,8 @@ LpSolver::LpSolver(mpq_class ninfinity, mpq_class infinity, Config config, const
       solution_{},
       dual_solution_{},
       solve_cb_{},
+      partial_solve_cb_{},
+      is_min_{true},
       ninfinity_{std::move(ninfinity)},
       infinity_{std::move(infinity)} {}
 
@@ -187,12 +189,15 @@ void LpSolver::SetOption(const std::string& key, const std::string& value) {
 }
 
 void LpSolver::SetObjective(const Expression& objective) {
+  ResetObjective();
   for (const auto& [column, value] : objective.addends()) SetObjective(column, value);
 }
 void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective) {
+  ResetObjective();
   for (const auto& [column, value] : objective) SetObjective(column, value);
 }
 void LpSolver::SetObjective(const std::vector<mpq_class>& objective) {
+  ResetObjective();
   for (int i = 0; i < static_cast<int>(objective.size()); ++i) SetObjective(i, objective.at(i));
 }
 LpResult LpSolver::Solve() {
@@ -218,13 +223,21 @@ void LpSolver::AddColumns(const std::span<Column>& columns) {
 template <TypedIterable<std::pair<const Variable, mpq_class>> T>
 void LpSolver::Maximise(const T& objective_function) {
   DELPI_TRACE_FMT("LpSolver::Maximise({})", objective_function);
-  for (const auto& [var, coeff] : objective_function) SetObjective(var, -coeff);
+  EnsureSense(false);
+  ResetObjective();
+  for (const auto& [var, coeff] : objective_function) SetObjective(var, coeff);
 }
 void LpSolver::Minimise(const Expression& objective_function) { Minimise(objective_function.addends()); }
 template <TypedIterable<std::pair<const Variable, mpq_class>> T>
 void LpSolver::Minimise(const T& objective_function) {
   DELPI_TRACE_FMT("LpSolver::Minimise({})", objective_function);
+  EnsureSense(true);
+  ResetObjective();
   for (const auto& [var, coeff] : objective_function) SetObjective(var, coeff);
+}
+
+void LpSolver::ResetObjective() {
+  for (int i = 0; i < num_columns(); ++i) SetObjective(i, 0);
 }
 
 bool LpSolver::CheckAgainstExpected(const LpResult result) const {
@@ -254,6 +267,10 @@ bool LpSolver::Verify() const {
     }
   }
   return true;
+}
+void LpSolver::EnsureSense(const bool is_min) {
+  is_min_ = is_min;
+  EnsureSenseCore();
 }
 bool LpSolver::SetSimpleBoundInsteadOfAddRow(const std::vector<Expression::Addend>& addends, const mpq_class& lb,
                                              const mpq_class& ub) {

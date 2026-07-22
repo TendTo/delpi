@@ -126,14 +126,15 @@ bool LpDriver::ParseFileCore(const std::string& filename) {
   return scanner.ParseFile(filename);
 }
 
-bool LpDriver::ParseStringCore(std::string_view input) {
+bool LpDriver::ParseStringCore(const std::string_view input) {
   LpScanner scanner(*this);
   return scanner.ParseString(input);
 }
 
 Column& LpDriver::GetOrCreateColumn(const std::string_view var_name) {
   const auto it = columns_.find(var_name);
-  return it == columns_.end() ? columns_.emplace(var_name, Column{Variable{var_name}}).first->second : it->second;
+  return it == columns_.end() ? columns_.emplace(var_name, Column{Variable{std::string{var_name}}}).first->second
+                              : it->second;
 }
 
 }  // namespace delpi::lp

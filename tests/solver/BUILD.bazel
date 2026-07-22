@@ -12,6 +12,15 @@ delpi_cc_googletest(
 )
 
 delpi_cc_googletest(
+    name = "test_obj_sense",
+    tags = ["solver"],
+    deps = [
+        "//delpi/solver:lp_solver",
+        "//tests:test_utils",
+    ],
+)
+
+delpi_cc_googletest(
     name = "test_lp_solver_mps",
     data = glob(["mps/*.mps"]),
     tags = ["solver"],

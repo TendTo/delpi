@@ -53,6 +53,7 @@ void init_solver(py::module_ &m) {
       .def_property_readonly("config", &LpSolver::config)
       .def_property_readonly("obj_lb", &LpSolver::obj_lb)
       .def_property_readonly("obj_ub", &LpSolver::obj_ub)
+      .def_property_readonly("is_min", &LpSolver::is_min)
       .def("var", &LpSolver::var, py::arg("column_idx"))
       .def("parse", &LpSolver::Parse)
       .def("parse_file", &LpSolver::ParseFile, py::arg("filename"))

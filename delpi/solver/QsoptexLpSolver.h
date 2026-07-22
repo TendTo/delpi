@@ -82,6 +82,11 @@ class QsoptexLpSolver final : public LpSolver {
    * The useful information will be stored in @ref solution_.
    */
   void UpdateFeasible();
+
+ protected:
+  void EnsureSenseCore() override;
+
+ private:
 #if 0
   /**
    * Use the result from the lp solver to update the infeasible ray with the conflict that has been detected.
