@@ -25,12 +25,14 @@ PERMISSIONS = (
 
 
 def get_bazel_target_args(command):
+    disk_cache = os.environ.get("DELPI_BAZEL_DISK_CACHE", "~/.cache/bazel-pydelpi-disk-cache")
     if command == "build":
         return [
             "bazel",
             "build",
             "--config=python",
             f"--python_version={sysconfig.get_python_version()}",
+            f"--disk_cache={disk_cache}",
         ]
     if command == "cquery":
         return [
@@ -39,12 +41,14 @@ def get_bazel_target_args(command):
             "--output=files",
             "--config=python",
             f"--python_version={sysconfig.get_python_version()}",
+            f"--disk_cache={disk_cache}",
         ]
     if command == "query":
         return [
             "bazel",
             "query",
             "--output=build",
+            f"--disk_cache={disk_cache}",
         ]
 
 
@@ -80,8 +84,9 @@ class BuildBazelExtension(build_ext.build_ext):
     def run(self):
         for ext in self.extensions:
             self.bazel_build(ext)
-        # Run the Bazel shutdown command to clean up
-        self.spawn(["bazel", "shutdown"])
+        if os.environ.get("DELPI_BAZEL_SHUTDOWN", ""):
+            # Run the Bazel shutdown command to clean up
+            self.spawn(["bazel", "shutdown"])
 
     def bazel_build(self, ext: BazelExtension):
         if shutil.which("bazel") is None:
