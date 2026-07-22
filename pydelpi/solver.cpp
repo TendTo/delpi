@@ -51,10 +51,14 @@ void init_solver(py::module_ &m) {
       .def_property_readonly("ninfinity", &LpSolver::ninfinity)
       .def_property_readonly("infinity", &LpSolver::infinity)
       .def_property_readonly("config", &LpSolver::config)
+      .def_property_readonly("obj_lb", &LpSolver::obj_lb)
+      .def_property_readonly("obj_ub", &LpSolver::obj_ub)
       .def("var", &LpSolver::var, py::arg("column_idx"))
       .def("parse", &LpSolver::Parse)
       .def("parse_file", &LpSolver::ParseFile, py::arg("filename"))
       .def("parse_string", &LpSolver::ParseString, py::arg("input"))
+      .def("reserve_columns", &LpSolver::ReserveColumns)
+      .def("reserve_rows", &LpSolver::ReserveRows)
       .def("add_column", py::overload_cast<const Variable &>(&LpSolver::AddColumn), py::arg("column"))
       .def("add_column", py::overload_cast<const Variable &, const mpq_class &>(&LpSolver::AddColumn),
            py::arg("column"), py::arg("obj"))
@@ -68,6 +72,12 @@ void init_solver(py::module_ &m) {
       .def("add_row", py::overload_cast<const Formula &>(&LpSolver::AddRow), py::arg("formula"))
       .def("add_row", py::overload_cast<const Expression &, FormulaKind, const mpq_class &>(&LpSolver::AddRow),
            py::arg("formula"), py::arg("kind"), py::arg("rhs"))
+      .def(
+          "maximise", [](LpSolver &self, const Expression &objective) { self.Maximise(objective); },
+          py::arg("objective"))
+      .def(
+          "minimise", [](LpSolver &self, const Expression &objective) { self.Minimise(objective); },
+          py::arg("objective"))
       .def("solve", &LpSolver::Solve)
       .def("solution", [](const LpSolver &self) { return self.solution(); })
       .def("solution", [](const LpSolver &self, const Variable &var) { return self.solution(var); })

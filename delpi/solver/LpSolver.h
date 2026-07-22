@@ -156,6 +156,11 @@ class LpSolver {
   [[nodiscard]] const std::vector<mpq_class>& solution() const { return solution_; }
   /** @getter{dual solution\, if the lp is feasible\,, lp solver} */
   [[nodiscard]] const std::vector<mpq_class>& dual_solution() const { return dual_solution_; }
+  /** @getter{lower bound of the exact objective function, feasible lp problem} */
+  [[nodiscard]] const mpq_class& obj_lb() const { return obj_lb_; }
+  /** @getter{upper bound of the exact objective function, feasible lp problem} */
+  [[nodiscard]] const mpq_class& obj_ub() const { return obj_ub_; }
+
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
   [[nodiscard]] const std::unordered_map<Variable, int>& var_to_col() const { return var_to_col_; }
   /** @getter{vector of all the variables, lp solver} */
@@ -383,6 +388,11 @@ class LpSolver {
    */
   virtual void SetCoefficient(RowIndex row, ColumnIndex column, const mpq_class& value) = 0;
 
+  /**
+   * Set the objective coefficients of the LP problem to the given `objective`.
+   * @param objective expression of the objective coefficients
+   */
+  void SetObjective(const Expression& objective);
   /**
    * Set the objective coefficients of the LP problem to the given `objective`.
    * @param objective map from column index to objective coefficient

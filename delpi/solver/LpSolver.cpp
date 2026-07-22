@@ -186,6 +186,9 @@ void LpSolver::SetOption(const std::string& key, const std::string& value) {
   }
 }
 
+void LpSolver::SetObjective(const Expression& objective) {
+  for (const auto& [column, value] : objective.addends()) SetObjective(column, value);
+}
 void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective) {
   for (const auto& [column, value] : objective) SetObjective(column, value);
 }
