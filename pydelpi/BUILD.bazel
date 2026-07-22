@@ -1,7 +1,8 @@
 load("@pypi//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 load("@rules_python//python:packaging.bzl", "py_wheel")
-load("//tools:rules_cc.bzl", "DELPI_AUTHOR", "DELPI_AUTHOR_EMAIL", "DELPI_CLASSIFIERS", "DELPI_DESCRIPTION", "DELPI_HOMEPAGE", "DELPI_LICENSE", "DELPI_SOURCE", "DELPI_TRACKER", "DELPI_VERSION", "delpi_pybind_extension", "delpi_pyblind_library")
+load("//tools:rules_cc.bzl", "delpi_pybind_extension", "delpi_pyblind_library")
+load("//tools:variables.bzl", "DELPI_AUTHOR", "DELPI_AUTHOR_EMAIL", "DELPI_CLASSIFIERS", "DELPI_DESCRIPTION", "DELPI_HOMEPAGE", "DELPI_LICENSE", "DELPI_SOURCE", "DELPI_TRACKER", "DELPI_VERSION")
 
 delpi_pyblind_library(
     name = "interrupt",

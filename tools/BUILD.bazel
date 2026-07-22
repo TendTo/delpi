@@ -1,9 +1,8 @@
 """A BUILD file providing the configuration for the project."""
 
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
-load("@pypi//:requirements.bzl", "requirement")
-load("@rules_python//python:defs.bzl", "py_binary")
 load("//tools:make_var_substitution.bzl", "make_var_substitution")
+load("//tools:variables.bzl", "DELPI_DESCRIPTION", "DELPI_VERSION", "expose_variable")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -13,6 +12,20 @@ exports_files([
     "requirements.txt",
     "ignore_includes.json",
 ])
+
+######################################################################################
+# Expose project metadata as targets, which can be detected using `bazel query`
+######################################################################################
+
+expose_variable(
+    name = "delpi_version",
+    value = DELPI_VERSION,
+)
+
+expose_variable(
+    name = "delpi_description",
+    value = DELPI_DESCRIPTION,
+)
 
 ######################################################################################
 # Custom flags that control build behavior

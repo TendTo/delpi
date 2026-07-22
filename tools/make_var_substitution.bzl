@@ -1,6 +1,6 @@
 """Provides a set of variables to the template engine."""
 
-load("//tools:rules_cc.bzl", "DELPI_AUTHOR", "DELPI_AUTHOR_EMAIL", "DELPI_DESCRIPTION", "DELPI_HOMEPAGE", "DELPI_LICENSE", "DELPI_NAME", "DELPI_SOURCE", "DELPI_TRACKER", "DELPI_VERSION")
+load("//tools:variables.bzl", "DELPI_AUTHOR", "DELPI_AUTHOR_EMAIL", "DELPI_DESCRIPTION", "DELPI_HOMEPAGE", "DELPI_LICENSE", "DELPI_NAME", "DELPI_SOURCE", "DELPI_TRACKER", "DELPI_VERSION")
 
 def _make_var_substitution_impl(ctx):
     vars = dict(ctx.attr.variables)

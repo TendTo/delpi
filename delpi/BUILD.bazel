@@ -1,5 +1,6 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:rules_cc.bzl", "DELPI_DESCRIPTION", "DELPI_NAME", "DELPI_VERSION", "delpi_cc_binary", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
+load("//tools:rules_cc.bzl", "delpi_cc_binary", "delpi_cc_library", "delpi_hdrs_tar", "delpi_srcs")
+load("//tools:variables.bzl", "DELPI_DESCRIPTION", "DELPI_NAME", "DELPI_VERSION")
 
 package(default_visibility = ["//visibility:public"])
 

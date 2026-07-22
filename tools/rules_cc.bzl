@@ -7,37 +7,6 @@ load("@pybind11_bazel//:build_defs.bzl", "pybind_extension", "pybind_library")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
-# Warning: The following comment is used to extract metadata from this file. Do not remove it.
-# GLOBAL VARIABLES
-DELPI_NAME = "delpi"
-DELPI_VERSION = "0.0.1"
-DELPI_AUTHOR = "Ernesto Casablanca"
-DELPI_AUTHOR_EMAIL = "casablancaernesto@gmail.com"
-DELPI_DESCRIPTION = "Exact LP solver with support for delta relaxation"
-DELPI_HOMEPAGE = "https://github.com/TendTo/delpi"
-DELPI_SOURCE = "https://github.com/TendTo/delpi"
-DELPI_TRACKER = "https://github.com/TendTo/delpi/issues"
-DELPI_LICENSE = "BSD 3-Clause License"
-# END GLOBAL VARIABLES
-
-# Can't parse the list
-DELPI_CLASSIFIERS = [
-    "Development Status :: 1 - Planning",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
-    "Operating System :: POSIX :: Linux",
-    "Programming Language :: C++",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Scientific/Engineering :: Mathematics",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-]
-
 # The CXX_FLAGS will be enabled for all C++ rules in the project
 # building with any linux compiler.
 CXX_FLAGS = [
