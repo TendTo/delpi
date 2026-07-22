@@ -30,7 +30,10 @@ void init_util(py::module_ &m) {
       .value("QSOPTEX", Config::LpSolver::QSOPTEX)
       .value("SOPLEX", Config::LpSolver::SOPLEX);
 
-  py::enum_<Config::Format>(m, "Format").value("AUTO", Config::Format::AUTO).value("MPS", Config::Format::MPS);
+  py::enum_<Config::Format>(m, "Format")
+      .value("AUTO", Config::Format::AUTO)
+      .value("MPS", Config::Format::MPS)
+      .value("LP", Config::Format::LP);
 
   py::enum_<Config::LpMode>(m, "LpMode")
       .value("AUTO", Config::LpMode::AUTO)
@@ -40,24 +43,24 @@ void init_util(py::module_ &m) {
 
   py::class_<Config>(m, "Config")
       .def(py::init<>())
-      .def(py::init<>([](const std::string &filename, const Config::LpSolver &lp_solver, const double precision,
-                         const bool csv, const bool continuous_output, const bool debug_parsing,
-                         const bool debug_scanning, const Config::Format &format, const Config::LpMode &lp_mode,
-                         const int number_of_jobs, const bool skip_optimise, const bool produce_models,
-                         const int random_seed, const bool read_from_stdin, const bool silent, const int verbose_delpi,
+      .def(py::init<>([](const std::string &filename, const bool continuous_output, const bool csv,
+                         const bool debug_parsing, const double delta, const Config::Format &format,
+                         const Config::LpMode &lp_mode, const Config::LpSolver &lp_solver, const int number_of_jobs,
+                         const bool skip_optimise, const bool dry_run, const bool produce_models, const int random_seed,
+                         const bool read_from_stdin, const bool silent, const int verbose_delpi,
                          const int verbose_simplex, const bool verify, const bool with_timings) {
              std::unique_ptr<Config> config{std::make_unique<Config>()};
-             config->m_csv() = csv;
-             config->m_continuous_output() = continuous_output;
-             config->m_debug_parsing() = debug_parsing;
-             config->m_debug_scanning() = debug_scanning;
              config->m_filename() = filename;
+             config->m_continuous_output() = continuous_output;
+             config->m_csv() = csv;
+             config->m_debug_parsing() = debug_parsing;
+             config->m_delta() = delta;
              config->m_format() = format;
              config->m_lp_mode() = lp_mode;
              config->m_lp_solver() = lp_solver;
              config->m_number_of_jobs() = number_of_jobs;
              config->m_skip_optimise() = skip_optimise;
-             config->m_precision() = precision;
+             config->m_dry_run() = dry_run;
              config->m_produce_models() = produce_models;
              config->m_random_seed() = random_seed;
              config->m_read_from_stdin() = read_from_stdin;
@@ -68,15 +71,13 @@ void init_util(py::module_ &m) {
              config->m_with_timings() = with_timings;
              return config;
            }),
-           py::arg("filename") = "", py::arg_v("lp_solver", Config::default_lp_solver, "LpSolverName.SOPLEX"),
-           py::arg("precision") = Config::default_precision, py::arg("csv") = Config::default_csv,
-           py::arg("continuous_output") = Config::default_continuous_output,
-           py::arg("debug_parsing") = Config::default_debug_parsing,
-           py::arg("debug_scanning") = Config::default_debug_scanning,
-           py::arg_v("format", Config::default_format, "Format.AUTO"),
+           py::arg("filename") = "", py::arg("continuous_output") = Config::default_continuous_output,
+           py::arg("csv") = Config::default_csv, py::arg("debug_parsing") = Config::default_debug_parsing,
+           py::arg("delta") = Config::default_delta, py::arg_v("format", Config::default_format, "Format.AUTO"),
            py::arg_v("lp_mode", Config::default_lp_mode, "LpMode.AUTO"),
+           py::arg_v("lp_solver", Config::default_lp_solver, "LpSolverName.SOPLEX"),
            py::arg("number_of_jobs") = Config::default_number_of_jobs,
-           py::arg("skip_optimise") = Config::default_skip_optimise,
+           py::arg("skip_optimise") = Config::default_skip_optimise, py::arg("dry_run") = Config::default_dry_run,
            py::arg("produce_models") = Config::default_produce_models,
            py::arg("random_seed") = Config::default_random_seed,
            py::arg("read_from_stdin") = Config::default_read_from_stdin, py::arg("silent") = Config::default_silent,
@@ -101,8 +102,6 @@ void init_util(py::module_ &m) {
                     [](Config &self, const bool value) { self.m_continuous_output() = value; })
       .def_property("debug_parsing", &Config::debug_parsing,
                     [](Config &self, const bool value) { self.m_debug_parsing() = value; })
-      .def_property("debug_scanning", &Config::debug_scanning,
-                    [](Config &self, const bool value) { self.m_debug_scanning() = value; })
       .def_property("filename", &Config::filename,
                     [](Config &self, const std::string &value) { self.m_filename() = value; })
       .def_property("format", &Config::format,
@@ -115,13 +114,15 @@ void init_util(py::module_ &m) {
                     [](Config &self, const int value) { self.m_number_of_jobs() = value; })
       .def_property("skip_optimise", &Config::skip_optimise,
                     [](Config &self, const bool value) { self.m_skip_optimise() = value; })
-      .def_property("precision", &Config::precision, [](Config &self, double value) { self.m_precision() = value; })
+      .def_property("dry_run", &Config::dry_run, [](Config &self, const bool value) { self.m_dry_run() = value; })
+      .def_property("delta", &Config::delta, [](Config &self, const double value) { self.m_delta() = value; })
       .def_property("produce_model", &Config::produce_models,
                     [](Config &self, const bool value) { self.m_produce_models() = value; })
-      .def_property("random_seed", &Config::random_seed, [](Config &self, int value) { self.m_random_seed() = value; })
+      .def_property("random_seed", &Config::random_seed,
+                    [](Config &self, const int value) { self.m_random_seed() = value; })
       .def_property("read_from_stdin", &Config::read_from_stdin,
                     [](Config &self, const bool value) { self.m_read_from_stdin() = value; })
-      .def_property("silent", &Config::silent, [](Config &self, bool value) { self.m_silent() = value; })
+      .def_property("silent", &Config::silent, [](Config &self, const bool value) { self.m_silent() = value; })
       .def_property("verbose_delpi", &Config::verbose_delpi,
                     [](Config &self, const int value) { self.m_verbose_delpi() = value; })
       .def_property("verbose_simplex", &Config::verbose_simplex,

@@ -6,6 +6,9 @@ module(name = "delpi")
 # Available dependencies from the Bazel registry (https://registry.bazel.build/)
 #################################################################################
 
+# Apache License 2.0 | Constraint values for specifying platforms and toolchains
+bazel_dep(name = "platforms", version = "1.1.0")
+
 # Apache License 2.0 | rules_cc for building C++ libraries with Bazel
 bazel_dep(name = "rules_cc", version = "0.2.18")
 
@@ -19,7 +22,7 @@ bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "rules_pkg", version = "1.2.0")
 
 # Apache License 2.0 | rules_python for building python targets
-bazel_dep(name = "rules_python", version = "1.9.0")
+bazel_dep(name = "rules_python", version = "2.0.1")
 
 # MIT | argparse implementation for modern C++
 bazel_dep(name = "argparse", version = "3.2.0")

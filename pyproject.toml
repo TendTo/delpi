@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pydelpi"
+readme = "README.md"
+authors = [
+    { name = "Ernesto Casablanca", email = "casablancaernesto@gmail.com" },
+]
+maintainers = [
+    { name = "Ernesto Casablanca", email = "casablancaernesto@gmail.com" },
+]
+license-files = ["LICEN[CS]E*"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
+]
+keywords = ["neural network", "kernel"]
+requires-python = ">= 3.9"
+dynamic = ["version", "description"]
+
+[project.urls]
+Homepage = "https://tendto.github.io/delpi/"
+Documentation = "https://tendto.github.io/delpi/"
+Repository = "https://github.com/TendTo/delpi.git"
+Issues = "https://github.com/TendTo/delpi/issues"
+Changelog = "https://github.com/TendTo/delpi/blob/main/docs/Changelog.md"
+
+[project.optional-dependencies]
+test = ["pytest"]
+benchmark = ["mlflow>=3.1"]
+
+[project.scripts]
+pylucid = "pylucid.__main__:main"
+pylucid-gui = "pylucid.gui:main"
+
+[tool.setuptools]
+packages = []
+
+# Black configuration (code formatter)
+[tool.black]
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312', 'py313']
+line-length = 120
+include = '(benchmarks|bindings/pylucid|tests/bindings/pylucid)\/.*\.py'
+
+# Isort configuration (import sorter)
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+python_files = "Test*.py"

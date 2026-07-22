@@ -41,9 +41,10 @@ py_library(
         "__init__.py",
         "__main__.py",
     ],
-    data = [":_pydelpi.so"],
+    data = [":_pydelpi"],
     imports = ["."],
     srcs_version = "PY3",
+    visibility = ["//visibility:public"],
 )
 
 py_binary(

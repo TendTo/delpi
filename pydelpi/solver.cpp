@@ -46,6 +46,11 @@ void init_solver(py::module_ &m) {
       .def_static("get_instance", &LpSolver::GetInstance, py::arg("config"))
       .def_property_readonly("variables", &LpSolver::variables)
       .def_property_readonly("constraints", &LpSolver::constraints)
+      .def_property_readonly("num_rows", &LpSolver::num_rows)
+      .def_property_readonly("num_columns", &LpSolver::num_columns)
+      .def_property_readonly("ninfinity", &LpSolver::ninfinity)
+      .def_property_readonly("infinity", &LpSolver::infinity)
+      .def_property_readonly("config", &LpSolver::config)
       .def("var", &LpSolver::var, py::arg("column_idx"))
       .def("parse", &LpSolver::Parse)
       .def("parse_file", &LpSolver::ParseFile, py::arg("filename"))
@@ -63,9 +68,10 @@ void init_solver(py::module_ &m) {
       .def("add_row", py::overload_cast<const Formula &>(&LpSolver::AddRow), py::arg("formula"))
       .def("add_row", py::overload_cast<const Expression &, FormulaKind, const mpq_class &>(&LpSolver::AddRow),
            py::arg("formula"), py::arg("kind"), py::arg("rhs"))
-      .def("solve", &LpSolver::Solve, py::arg("delta"), py::arg("store_solution") = true)
+      .def("solve", &LpSolver::Solve)
       .def("solution", [](const LpSolver &self) { return self.solution(); })
       .def("solution", [](const LpSolver &self, const Variable &var) { return self.solution(var); })
+      .def("dual_solution", [](const LpSolver &self) { return self.dual_solution(); })
       .def("row", &LpSolver::row, py::arg("row_idx"))
       .def("column", &LpSolver::column, py::arg("column_idx"));
 }
