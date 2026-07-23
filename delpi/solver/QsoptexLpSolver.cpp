@@ -35,7 +35,11 @@ extern "C" void QsoptexPartialSolutionCb(mpq_QSdata const* /*prob*/, const mpq_t
 }
 
 QsoptexLpSolver::QsoptexLpSolver(Config config, const std::string& class_name)
-    : LpSolver{0, 0, std::move(config), class_name}, qsx_{nullptr}, ray_{0}, x_{0} {
+    : LpSolver{0, 0, std::move(config), class_name},
+      qsx_{nullptr},
+      basis_{.nstruct = 0, .nrows = 0, .cstat = nullptr, .rstat = nullptr},
+      ray_{0},
+      x_{0} {
   qsopt_ex::QSXStart();
   ninfinity_ = mpq_class{mpq_NINFTY};
   infinity_ = mpq_class{mpq_INFTY};
@@ -182,7 +186,7 @@ LpResult QsoptexLpSolver::SolveCore() {
   unsigned int precision;
   int lp_status = -1;
   const int status = QSdelta_full_solver(qsx_, mpq_class{config_.delta()}.get_mpq_t(), x_, ray_, obj_lb_.get_mpq_t(),
-                                         obj_ub_.get_mpq_t(), nullptr, PRIMAL_SIMPLEX, &lp_status, &precision,
+                                         obj_ub_.get_mpq_t(), &basis_, PRIMAL_SIMPLEX, &lp_status, &precision,
                                          config_.continuous_output() ? QsoptexPartialSolutionCb : nullptr, this);
 
   if (status) {
@@ -229,9 +233,7 @@ void QsoptexLpSolver::UpdateFeasible() {
   for (int i = 0; i < colcount; i++) solution_.emplace_back(x_[i]);
   for (int i = 0; i < rowcount; i++) dual_solution_.emplace_back(ray_[i]);
 }
-void QsoptexLpSolver::EnsureSenseCore() {
-  mpq_QSchange_objsense(qsx_, is_min_ ? QS_MIN : QS_MAX);
-}
+void QsoptexLpSolver::EnsureSenseCore() { mpq_QSchange_objsense(qsx_, is_min_ ? QS_MIN : QS_MAX); }
 
 void QsoptexLpSolver::UpdateStats(unsigned int precision) {
   stats_.precision = precision;

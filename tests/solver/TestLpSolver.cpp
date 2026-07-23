@@ -105,3 +105,29 @@ TEST_P(TestLpSolver, Optimise) {
   EXPECT_EQ(solver_->solution(x_), 0);
   EXPECT_EQ(solver_->solution(y_), 10);
 }
+
+TEST_P(TestLpSolver, OptimiseMultiple) {
+  solver_->AddColumn(x_, 9);
+  solver_->AddColumn(y_, 1);
+  solver_->AddRow(x_ + y_, FormulaKind::Geq, 10);
+  mpq_class precision{0};
+  EXPECT_EQ(solver_->Solve(), delpi::LpResult::OPTIMAL);
+  EXPECT_EQ(solver_->solution(x_), 0);
+  EXPECT_EQ(solver_->solution(y_), 10);
+
+  solver_->AddRow(y_, FormulaKind::Leq, 5);
+  EXPECT_EQ(solver_->Solve(), delpi::LpResult::OPTIMAL);
+  EXPECT_EQ(solver_->solution(x_), 5);
+  EXPECT_EQ(solver_->solution(y_), 5);
+
+  solver_->Maximise(2 * x_ + 4 * y_);
+  EXPECT_EQ(solver_->Solve(), delpi::LpResult::UNBOUNDED);
+
+  solver_->AddRow(x_ + y_, FormulaKind::Leq, 20);
+  EXPECT_EQ(solver_->Solve(), delpi::LpResult::OPTIMAL);
+  EXPECT_EQ(solver_->solution(x_), 15);
+  EXPECT_EQ(solver_->solution(y_), 5);
+
+  solver_->AddRow(x_ + y_, FormulaKind::Leq, 2);
+  EXPECT_EQ(solver_->Solve(), delpi::LpResult::INFEASIBLE);
+}

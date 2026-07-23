@@ -104,6 +104,7 @@ class QsoptexLpSolver final : public LpSolver {
 #endif
 
   mpq_QSprob qsx_;  ///< QSopt_ex LP solver
+  QSbasis basis_;   ///< Last basis
 
   qsopt_ex::MpqArray ray_;  ///< Ray of the last infeasible solution
   qsopt_ex::MpqArray x_;    ///< Solution vector
