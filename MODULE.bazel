@@ -89,9 +89,9 @@ github_archive = use_repo_rule("//tools:git_archive.bzl", "github_archive")
 github_archive(
     name = "qsopt_ex",
     build_file = "//third_party:qsopt_ex.BUILD.bazel",
-    commit = "dcfac765728466dc725a344d0432f07535ccb081",
+    commit = "caac498f76661adfd35eff5d8b5b1e5e7f706bae",
     repository = "TendTo/qsopt-ex",
-    sha256 = "6aaadc88952fbd536799060928ddd3239b06a42130796a1117d683fbb297fd44",
+    sha256 = "535550d315ff3470ff38a3f839362049b7ee3868f96673ac1320568311c0a835",
 )
 
 #################################################################################
